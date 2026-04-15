@@ -184,5 +184,13 @@ export const va221990: FormDefinition = {
         { id: 'remarks', label: 'Remarks', type: 'textarea' },
       ],
     },
+    {
+      id: 'signature',
+      title: 'Certification & Signature',
+      description: 'By completing this section, you certify that all statements in this application are true and correct to the best of your knowledge.',
+      fields: [
+        { id: 'signatureDate', label: 'Date Signed', type: 'date', required: true },
+      ],
+    },
   ],
 };

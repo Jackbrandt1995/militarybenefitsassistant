@@ -1,11 +1,69 @@
 import { PDFDocument, PDFCheckBox, PDFRadioGroup, PDFTextField, PDFDropdown } from 'pdf-lib';
 
+export interface FieldMappingEntry {
+  pdfFieldName: string;
+  type: 'text' | 'checkbox' | 'radio' | 'dropdown';
+  transform?: (value: string) => string;
+}
+
+// One wizard field can map to one PDF field or multiple (e.g., SSN → 3 boxes)
 export interface FieldMapping {
-  [wizardFieldId: string]: {
-    pdfFieldName: string;
-    type: 'text' | 'checkbox' | 'radio' | 'dropdown';
-    transform?: (value: string) => string;
-  };
+  [wizardFieldId: string]: FieldMappingEntry | FieldMappingEntry[];
+}
+
+function fillOneField(
+  form: ReturnType<PDFDocument['getForm']>,
+  fieldNames: string[],
+  entry: FieldMappingEntry,
+  rawValue: string | boolean,
+) {
+  if (!fieldNames.includes(entry.pdfFieldName)) {
+    console.warn(`PDF field not found: ${entry.pdfFieldName}`);
+    return;
+  }
+
+  try {
+    const value = entry.transform
+      ? entry.transform(String(rawValue))
+      : String(rawValue);
+
+    switch (entry.type) {
+      case 'text': {
+        const textField = form.getField(entry.pdfFieldName);
+        if (textField instanceof PDFTextField) {
+          textField.setText(value);
+        }
+        break;
+      }
+      case 'checkbox': {
+        const checkField = form.getField(entry.pdfFieldName);
+        if (checkField instanceof PDFCheckBox) {
+          if (rawValue === true || value === 'true' || value === 'Yes') {
+            checkField.check();
+          } else {
+            checkField.uncheck();
+          }
+        }
+        break;
+      }
+      case 'radio': {
+        const radioField = form.getField(entry.pdfFieldName);
+        if (radioField instanceof PDFRadioGroup) {
+          radioField.select(value);
+        }
+        break;
+      }
+      case 'dropdown': {
+        const dropField = form.getField(entry.pdfFieldName);
+        if (dropField instanceof PDFDropdown) {
+          dropField.select(value);
+        }
+        break;
+      }
+    }
+  } catch (err) {
+    console.warn(`Error filling field ${entry.pdfFieldName}:`, err);
+  }
 }
 
 export async function fillPdf(
@@ -26,52 +84,12 @@ export async function fillPdf(
     const rawValue = answers[wizardId];
     if (rawValue === undefined || rawValue === null || rawValue === '') continue;
 
-    if (!fieldNames.includes(mapping.pdfFieldName)) {
-      console.warn(`PDF field not found: ${mapping.pdfFieldName} (wizard: ${wizardId})`);
-      continue;
-    }
-
-    try {
-      const value = mapping.transform
-        ? mapping.transform(String(rawValue))
-        : String(rawValue);
-
-      switch (mapping.type) {
-        case 'text': {
-          const textField = form.getField(mapping.pdfFieldName);
-          if (textField instanceof PDFTextField) {
-            textField.setText(value);
-          }
-          break;
-        }
-        case 'checkbox': {
-          const checkField = form.getField(mapping.pdfFieldName);
-          if (checkField instanceof PDFCheckBox) {
-            if (rawValue === true || value === 'true' || value === 'Yes') {
-              checkField.check();
-            } else {
-              checkField.uncheck();
-            }
-          }
-          break;
-        }
-        case 'radio': {
-          const radioField = form.getField(mapping.pdfFieldName);
-          if (radioField instanceof PDFRadioGroup) {
-            radioField.select(value);
-          }
-          break;
-        }
-        case 'dropdown': {
-          const dropField = form.getField(mapping.pdfFieldName);
-          if (dropField instanceof PDFDropdown) {
-            dropField.select(value);
-          }
-          break;
-        }
+    if (Array.isArray(mapping)) {
+      for (const entry of mapping) {
+        fillOneField(form, fieldNames, entry, rawValue);
       }
-    } catch (err) {
-      console.warn(`Error filling field ${mapping.pdfFieldName}:`, err);
+    } else {
+      fillOneField(form, fieldNames, mapping, rawValue);
     }
   }
 
