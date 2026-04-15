@@ -40,22 +40,32 @@ export function useProfile() {
     fetchProfile();
   }, [fetchProfile]);
 
+  // Optimistic update for core profile fields (no refetch)
   const updateProfile = async (updates: Partial<Profile>) => {
     if (!user) return;
+    setProfile(prev => prev ? { ...prev, profile: { ...prev.profile, ...updates } } : prev);
     await supabase.from('profiles').update(updates).eq('id', user.id);
-    await fetchProfile();
   };
 
+  // Service Periods
   const addServicePeriod = async (period: Partial<ServicePeriod>) => {
     if (!user) return;
     await supabase.from('service_periods').insert({ ...period, user_id: user.id });
-    await fetchProfile();
+    await fetchProfile(); // Need server-generated ID
   };
 
   const updateServicePeriod = async (id: string, updates: Partial<ServicePeriod>) => {
     if (!user) return;
+    setProfile(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        servicePeriods: prev.servicePeriods.map(sp =>
+          sp.id === id ? { ...sp, ...updates } : sp
+        ),
+      };
+    });
     await supabase.from('service_periods').update(updates).eq('id', id);
-    await fetchProfile();
   };
 
   const deleteServicePeriod = async (id: string) => {
@@ -64,6 +74,7 @@ export function useProfile() {
     await fetchProfile();
   };
 
+  // Education
   const addEducation = async (record: Partial<EducationRecord>) => {
     if (!user) return;
     await supabase.from('education_history').insert({ ...record, user_id: user.id });
@@ -72,8 +83,16 @@ export function useProfile() {
 
   const updateEducation = async (id: string, updates: Partial<EducationRecord>) => {
     if (!user) return;
+    setProfile(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        educationHistory: prev.educationHistory.map(ed =>
+          ed.id === id ? { ...ed, ...updates } : ed
+        ),
+      };
+    });
     await supabase.from('education_history').update(updates).eq('id', id);
-    await fetchProfile();
   };
 
   const deleteEducation = async (id: string) => {
@@ -82,6 +101,7 @@ export function useProfile() {
     await fetchProfile();
   };
 
+  // Employment
   const addEmployment = async (record: Partial<EmploymentRecord>) => {
     if (!user) return;
     await supabase.from('employment_history').insert({ ...record, user_id: user.id });
@@ -90,8 +110,16 @@ export function useProfile() {
 
   const updateEmployment = async (id: string, updates: Partial<EmploymentRecord>) => {
     if (!user) return;
+    setProfile(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        employmentHistory: prev.employmentHistory.map(emp =>
+          emp.id === id ? { ...emp, ...updates } : emp
+        ),
+      };
+    });
     await supabase.from('employment_history').update(updates).eq('id', id);
-    await fetchProfile();
   };
 
   const deleteEmployment = async (id: string) => {
@@ -100,17 +128,28 @@ export function useProfile() {
     await fetchProfile();
   };
 
+  // Direct Deposit
   const updateDirectDeposit = async (deposit: Partial<DirectDeposit>) => {
     if (!user) return;
+    setProfile(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        directDeposit: prev.directDeposit
+          ? { ...prev.directDeposit, ...deposit }
+          : { ...deposit, user_id: user.id } as DirectDeposit,
+      };
+    });
     const existing = profile?.directDeposit;
     if (existing) {
       await supabase.from('direct_deposit').update(deposit).eq('id', existing.id);
     } else {
       await supabase.from('direct_deposit').insert({ ...deposit, user_id: user.id });
+      await fetchProfile(); // Need server-generated ID for future updates
     }
-    await fetchProfile();
   };
 
+  // Dependents
   const addDependent = async (dep: Partial<Dependent>) => {
     if (!user) return;
     await supabase.from('dependents').insert({ ...dep, user_id: user.id });
