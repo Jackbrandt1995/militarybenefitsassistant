@@ -150,6 +150,36 @@ export async function fillPdf(
   return pdfDoc.save();
 }
 
+/**
+ * Merge one or more File objects (PDFs only) as additional pages appended to
+ * the base PDF. Non-PDF files are silently skipped. Returns updated bytes.
+ */
+export async function mergePdfsWithAttachments(
+  basePdfBytes: Uint8Array,
+  attachments: File[],
+): Promise<Uint8Array> {
+  const pdfAttachments = attachments.filter(f => f.type === 'application/pdf');
+  if (pdfAttachments.length === 0) return basePdfBytes;
+
+  const mergedDoc = await PDFDocument.load(basePdfBytes, { ignoreEncryption: true });
+
+  for (const file of pdfAttachments) {
+    try {
+      const bytes = await file.arrayBuffer();
+      const attachDoc = await PDFDocument.load(bytes, { ignoreEncryption: true });
+      const indices = attachDoc.getPageIndices();
+      const copiedPages = await mergedDoc.copyPages(attachDoc, indices);
+      for (const page of copiedPages) {
+        mergedDoc.addPage(page);
+      }
+    } catch (err) {
+      console.warn(`Could not merge attachment "${file.name}":`, err);
+    }
+  }
+
+  return mergedDoc.save();
+}
+
 export function downloadPdf(pdfBytes: Uint8Array, filename: string) {
   const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);

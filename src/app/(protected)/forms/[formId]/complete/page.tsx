@@ -4,7 +4,7 @@ import { use, useState, useEffect } from 'react';
 import { notFound, useRouter } from 'next/navigation';
 import { getFormById } from '@/lib/forms/registry';
 import { useAuth } from '@/components/AuthProvider';
-import { fillPdf, downloadPdf } from '@/lib/pdf/fillPdf';
+import { fillPdf, downloadPdf, mergePdfsWithAttachments } from '@/lib/pdf/fillPdf';
 import { getFieldMapping } from '@/lib/pdf/fieldMappings';
 import { createClient } from '@/lib/supabase/client';
 import DocumentUploader from '@/components/DocumentUploader';
@@ -108,6 +108,18 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
         .eq('id', submissionId);
 
       setUploadedFiles(uploaded);
+
+      // Merge any PDF attachments into the form PDF so the download is one package
+      const pdfFiles = files.filter(f => f.type === 'application/pdf');
+      if (pdfFiles.length > 0 && pdfBytes) {
+        try {
+          const merged = await mergePdfsWithAttachments(pdfBytes, pdfFiles);
+          setPdfBytes(merged);
+        } catch (mergeErr) {
+          console.warn('PDF merge (non-fatal):', mergeErr);
+        }
+      }
+
       setIsUploading(false);
     } catch (err: any) {
       console.error('Document upload error:', err);
@@ -145,8 +157,11 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
 
             {uploadedFiles.length > 0 && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <p className="text-sm font-semibold text-green-900">
-                  ✓ {uploadedFiles.length} document(s) uploaded successfully
+                <p className="text-sm font-semibold text-green-900 mb-1">
+                  ✓ {uploadedFiles.length} document{uploadedFiles.length > 1 ? 's' : ''} attached
+                </p>
+                <p className="text-xs text-green-700">
+                  PDF attachments have been merged into your download. The button below will include all pages.
                 </p>
               </div>
             )}
@@ -160,7 +175,10 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
 
             {uploadedFiles.length === 0 && (
               <div>
-                <h2 className="text-lg font-semibold text-slate-900 mb-4">Upload Supporting Documents</h2>
+                <h2 className="text-lg font-semibold text-slate-900 mb-4">Attach Supporting Documents</h2>
+                <p className="text-sm text-slate-500 mb-3">
+                  PDF files will be appended directly to your downloaded form. All files are also saved to your submission record.
+                </p>
                 <DocumentUploader
                   onFilesSelected={setSelectedFiles}
                   isLoading={isUploading}
@@ -171,7 +189,7 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
                     disabled={isUploading}
                     className="w-full mt-4"
                   >
-                    {isUploading ? 'Uploading...' : 'Upload Documents'}
+                    {isUploading ? 'Attaching...' : `Attach ${selectedFiles.length} Document${selectedFiles.length > 1 ? 's' : ''}`}
                   </Button>
                 )}
               </div>

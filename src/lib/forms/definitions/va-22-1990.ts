@@ -156,7 +156,6 @@ export const va221990: FormDefinition = {
           id: 'phonePrimary',
           label: 'Home Phone',
           type: 'phone',
-          required: true,
           profilePath: 'profile.phone_home',
           helpText: 'Your home or landline number.',
         },
