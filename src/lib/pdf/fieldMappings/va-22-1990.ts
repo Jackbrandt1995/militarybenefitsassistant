@@ -31,10 +31,10 @@ export const va221990Mapping: FieldMapping = {
     { pdfFieldName: 'form1[0].#subform[6].ssna3[3]', type: 'text', transform: v => formatSSNParts(v).last4 },
   ],
 
-  // Sex → draw-check overlays (XFA). male cx=262.4 cy=634.4, female cx=316.4 cy=634.4 (page 3).
+  // Sex → draw-check overlays (XFA). Confirmed from user testing: left box (262.4) = Female, right box (316.4) = Male.
   sex: [
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Male' ? 'true' : '', checkPage: 3, checkCX: 262.4, checkCY: 634.4, checkSize: 6 },
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Female' ? 'true' : '', checkPage: 3, checkCX: 316.4, checkCY: 634.4, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Male' ? 'true' : '', checkPage: 3, checkCX: 316.4, checkCY: 634.4, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Female' ? 'true' : '', checkPage: 3, checkCX: 262.4, checkCY: 634.4, checkSize: 6 },
   ],
 
   // DOB → 3 fields (MM, DD, YYYY)
