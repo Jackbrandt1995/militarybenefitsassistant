@@ -12,6 +12,7 @@ export interface FieldDef {
   placeholder?: string;
   maxLength?: number;
   condition?: { field: string; value: string | boolean };
+  sensitive?: boolean; // show/hide toggle for bank account numbers, etc.
 }
 
 export interface FormStepDef {

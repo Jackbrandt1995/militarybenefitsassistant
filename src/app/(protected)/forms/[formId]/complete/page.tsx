@@ -53,6 +53,7 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
           const { data, error } = await supabase.from('form_submissions').insert({
             user_id: user.id,
             form_id: formId,
+            form_name: form!.title,
             answers_json: answers,
           }).select('id').single();
 
@@ -83,14 +84,16 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
     }
 
     setIsUploading(true);
+    setErrorMsg('');
     try {
       const supabase = createClient();
       const uploaded: string[] = [];
 
       for (const file of files) {
         const timestamp = Date.now();
-        const fileName = `${submissionId}/${timestamp}-${file.name}`;
-        const { data, error } = await supabase.storage
+        // Path: userId/submissionId/timestamp-filename (userId first for RLS policy)
+        const fileName = `${user.id}/${submissionId}/${timestamp}-${file.name}`;
+        const { error } = await supabase.storage
           .from('form_submissions')
           .upload(fileName, file);
 
@@ -98,13 +101,11 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
         uploaded.push(fileName);
       }
 
-      // Update submission record with file references
-      const { error } = await supabase
+      // Update submission record with file references (non-fatal if column doesn't exist yet)
+      await supabase
         .from('form_submissions')
         .update({ document_files: uploaded })
         .eq('id', submissionId);
-
-      if (error) throw error;
 
       setUploadedFiles(uploaded);
       setIsUploading(false);

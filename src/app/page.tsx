@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { Shield, FileText, UserCheck, Zap } from 'lucide-react';
+import Image from 'next/image';
+import { FileText, UserCheck, Zap } from 'lucide-react';
 
 const forms = [
   { number: '22-1990', title: 'Application for VA Education Benefits' },
@@ -23,7 +24,7 @@ export default function Home() {
       <section className="bg-slate-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
           <div className="flex justify-center mb-6">
-            <Shield className="h-16 w-16 text-blue-400" />
+            <Image src="/seal.png" alt="Military Benefits Assistant Seal" width={120} height={120} className="rounded-full" />
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold mb-6 leading-tight">
             Take Control of Your<br />

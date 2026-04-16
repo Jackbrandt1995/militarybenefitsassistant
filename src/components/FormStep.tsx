@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import type { FormStepDef } from '@/lib/forms/types';
+import SignaturePad from '@/components/SignaturePad';
 
 interface FormStepProps {
   step: FormStepDef;
@@ -11,6 +13,16 @@ interface FormStepProps {
 }
 
 export default function FormStep({ step, answers, errors, preFilledFields, onAnswer }: FormStepProps) {
+  const [visibleFields, setVisibleFields] = useState<Set<string>>(new Set());
+
+  function toggleVisible(fieldId: string) {
+    setVisibleFields(prev => {
+      const next = new Set(prev);
+      if (next.has(fieldId)) next.delete(fieldId); else next.add(fieldId);
+      return next;
+    });
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -150,11 +162,33 @@ export default function FormStep({ step, answers, errors, preFilledFields, onAns
                 />
               ) : field.type === 'document' ? (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap font-mono">{field.helpText}</p>
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{field.helpText}</p>
                 </div>
               ) : field.type === 'signature' ? (
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm text-gray-600">
-                  Signature drawing will be available in the next step.
+                <SignaturePad
+                  value={String(value || '')}
+                  onChange={dataUrl => onAnswer(field.id, dataUrl)}
+                />
+              ) : field.sensitive ? (
+                <div className="relative">
+                  <input
+                    type={visibleFields.has(field.id) ? 'text' : 'password'}
+                    id={field.id}
+                    value={String(value)}
+                    onChange={e => onAnswer(field.id, e.target.value)}
+                    placeholder={field.placeholder}
+                    maxLength={field.maxLength}
+                    className={`w-full rounded-md border px-3 py-2 pr-20 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      error ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => toggleVisible(field.id)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    {visibleFields.has(field.id) ? 'Hide' : 'Show'}
+                  </button>
                 </div>
               ) : (
                 <input

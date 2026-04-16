@@ -205,5 +205,15 @@ export const va221990Mapping: FieldMapping = {
   previouslyApplied: { pdfFieldName: 'form1[0].#subform[6].Checkhere[0]', type: 'checkbox', transform: v => v === 'true' ? 'true' : '' },
 
   // ── SIGNATURE (Step 12) ──
+  // signaturePad: drawn as image overlay on the signature field area (page 6, bottom)
+  signaturePad: {
+    pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY',
+    type: 'image',
+    imagePage: 6,
+    imageX: 36,
+    imageY: 25,
+    imageWidth: 200,
+    imageHeight: 40,
+  },
   signatureDate: { pdfFieldName: 'form1[0].#subform[6].Datesigned[0]', type: 'text', transform: formatDateString },
 };

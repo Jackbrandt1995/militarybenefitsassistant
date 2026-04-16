@@ -60,8 +60,8 @@ export const va221990: FormDefinition = {
         { id: 'accountType', label: 'Account Type', type: 'radio', profilePath: 'directDeposit.account_type', options: [
           { label: 'Checking', value: 'Checking' }, { label: 'Savings', value: 'Savings' },
         ]},
-        { id: 'routingNumber', label: 'Routing/Transit Number', type: 'text', profilePath: 'directDeposit.routing_number_encrypted', maxLength: 9 },
-        { id: 'accountNumber', label: 'Account Number', type: 'text', profilePath: 'directDeposit.account_number_encrypted' },
+        { id: 'routingNumber', label: 'Routing/Transit Number', type: 'text', profilePath: 'directDeposit.routing_number_encrypted', maxLength: 9, sensitive: true },
+        { id: 'accountNumber', label: 'Account Number', type: 'text', profilePath: 'directDeposit.account_number_encrypted', sensitive: true },
       ],
     },
     {
@@ -218,8 +218,9 @@ export const va221990: FormDefinition = {
     {
       id: 'signature',
       title: 'Certification & Signature',
-      description: 'By certifying below, you attest that all statements in this application are true and correct to the best of your knowledge and belief. Providing false information may result in disciplinary action and recovery of benefits.',
+      description: 'CERTIFICATION: I certify that all statements on this application are true and correct to the best of my knowledge and belief. WARNING: Title 38, United States Code, allows VA to request and receive certain information to determine eligibility for benefits. VA will not disclose information collected on this form to any source other than what has been authorized under the Privacy Act of 1974. Respondents are not required to respond to this collection of information unless it displays a valid OMB Control Number.',
       fields: [
+        { id: 'signaturePad', label: 'Signature', type: 'signature', required: true },
         { id: 'signatureDate', label: 'Date Signed', type: 'date', required: true },
       ],
     },

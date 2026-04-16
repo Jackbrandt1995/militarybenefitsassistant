@@ -2,8 +2,14 @@ import { PDFDocument, PDFCheckBox, PDFRadioGroup, PDFTextField, PDFDropdown } fr
 
 export interface FieldMappingEntry {
   pdfFieldName: string;
-  type: 'text' | 'checkbox' | 'radio' | 'dropdown';
+  type: 'text' | 'checkbox' | 'radio' | 'dropdown' | 'image';
   transform?: (value: string) => string;
+  // For 'image' type — draw the value (data URL) as an image overlay on the PDF
+  imagePage?: number; // 0-indexed page number
+  imageX?: number;
+  imageY?: number;
+  imageWidth?: number;
+  imageHeight?: number;
 }
 
 // One wizard field can map to one PDF field or multiple (e.g., SSN → 3 boxes)
@@ -11,21 +17,43 @@ export interface FieldMapping {
   [wizardFieldId: string]: FieldMappingEntry | FieldMappingEntry[];
 }
 
-function fillOneField(
+async function fillOneField(
   form: ReturnType<PDFDocument['getForm']>,
+  pdfDoc: PDFDocument,
   fieldNames: string[],
   entry: FieldMappingEntry,
   rawValue: string | boolean,
 ) {
-  if (!fieldNames.includes(entry.pdfFieldName)) {
-    console.warn(`PDF field not found: ${entry.pdfFieldName}`);
-    return;
-  }
-
   try {
     const value = entry.transform
       ? entry.transform(String(rawValue))
       : String(rawValue);
+
+    // Image type: embed the data URL as a PNG overlay (used for signatures)
+    if (entry.type === 'image') {
+      const dataUrl = String(rawValue);
+      if (!dataUrl.startsWith('data:image/')) return;
+      const base64 = dataUrl.split(',')[1];
+      if (!base64) return;
+      const imageBytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+      const image = await pdfDoc.embedPng(imageBytes);
+      const pageIndex = entry.imagePage ?? 0;
+      const pages = pdfDoc.getPages();
+      if (pageIndex < pages.length) {
+        pages[pageIndex].drawImage(image, {
+          x: entry.imageX ?? 36,
+          y: entry.imageY ?? 25,
+          width: entry.imageWidth ?? 200,
+          height: entry.imageHeight ?? 40,
+        });
+      }
+      return;
+    }
+
+    if (!fieldNames.includes(entry.pdfFieldName)) {
+      console.warn(`PDF field not found: ${entry.pdfFieldName}`);
+      return;
+    }
 
     switch (entry.type) {
       case 'text': {
@@ -87,10 +115,10 @@ export async function fillPdf(
 
     if (Array.isArray(mapping)) {
       for (const entry of mapping) {
-        fillOneField(form, fieldNames, entry, rawValue);
+        await fillOneField(form, pdfDoc, fieldNames, entry, rawValue);
       }
     } else {
-      fillOneField(form, fieldNames, mapping, rawValue);
+      await fillOneField(form, pdfDoc, fieldNames, mapping, rawValue);
     }
   }
 
