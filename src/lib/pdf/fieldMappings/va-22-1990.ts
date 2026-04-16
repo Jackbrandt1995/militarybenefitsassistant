@@ -3,12 +3,14 @@ import { formatSSNParts, formatPhoneParts, formatDateForPdf, formatDateString } 
 
 export const va221990Mapping: FieldMapping = {
   // ── BENEFIT SELECTION (Step 1) ──
-  // Wizard gives a single radio value like "chapter33"; we check the matching PDF checkbox
+  // XFA form — AcroForm checkboxes don't render; draw filled squares at precise coordinates instead.
+  // Coordinates from pypdf field-rect analysis (page 3, 0-indexed).
+  // Part II order confirmed: part2_1 (top) = Chapter 33, part2_2 = Chapter 30.
   benefitChapter: [
-    { pdfFieldName: 'form1[0].#subform[3].part2_1[0]', type: 'checkbox', transform: v => v === 'chapter30' ? 'true' : '' },
-    { pdfFieldName: 'form1[0].#subform[3].part2_2[0]', type: 'checkbox', transform: v => v === 'chapter33' ? 'true' : '' },
-    { pdfFieldName: 'form1[0].#subform[3].part2_3[0]', type: 'checkbox', transform: v => v === 'chapter1606' ? 'true' : '' },
-    { pdfFieldName: 'form1[0].#subform[3].part2_5[0]', type: 'checkbox', transform: v => v === 'chapter32' ? 'true' : '' },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'chapter33' ? 'true' : '', checkPage: 3, checkCX: 46, checkCY: 315, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'chapter30' ? 'true' : '', checkPage: 3, checkCX: 46, checkCY: 296.4, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'chapter1606' ? 'true' : '', checkPage: 3, checkCX: 46, checkCY: 284.4, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'chapter32' ? 'true' : '', checkPage: 3, checkCX: 46, checkCY: 270.6, checkSize: 6 },
   ],
 
   // ── PERSONAL INFORMATION (Step 2) ──
@@ -29,10 +31,10 @@ export const va221990Mapping: FieldMapping = {
     { pdfFieldName: 'form1[0].#subform[6].ssna3[3]', type: 'text', transform: v => formatSSNParts(v).last4 },
   ],
 
-  // Sex → two checkboxes
+  // Sex → draw-check overlays (XFA). male cx=262.4 cy=634.4, female cx=316.4 cy=634.4 (page 3).
   sex: [
-    { pdfFieldName: 'form1[0].#subform[3].male[0]', type: 'checkbox', transform: v => v === 'Male' ? 'true' : '' },
-    { pdfFieldName: 'form1[0].#subform[3].female[0]', type: 'checkbox', transform: v => v === 'Female' ? 'true' : '' },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Male' ? 'true' : '', checkPage: 3, checkCX: 262.4, checkCY: 634.4, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Female' ? 'true' : '', checkPage: 3, checkCX: 316.4, checkCY: 634.4, checkSize: 6 },
   ],
 
   // DOB → 3 fields (MM, DD, YYYY)
@@ -43,7 +45,7 @@ export const va221990Mapping: FieldMapping = {
   ],
 
   firstName: { pdfFieldName: 'form1[0].#subform[3].namefirst[0]', type: 'text' },
-  middleName: { pdfFieldName: 'form1[0].#subform[3].namemiddle[0]', type: 'text' },
+  middleName: { pdfFieldName: 'form1[0].#subform[3].namemiddle[0]', type: 'text', transform: v => v ? v.charAt(0).toUpperCase() : '' },
   lastName: { pdfFieldName: 'form1[0].#subform[3].namelast[0]', type: 'text' },
 
   // ── CONTACT INFORMATION (Step 3) ──
@@ -70,9 +72,10 @@ export const va221990Mapping: FieldMapping = {
   ],
 
   // ── DIRECT DEPOSIT (Step 4) ──
+  // checking cx=248.7 cy=417.1, savings cx=308.7 cy=417.1 (page 3)
   accountType: [
-    { pdfFieldName: 'form1[0].#subform[3].checking[0]', type: 'checkbox', transform: v => v === 'Checking' ? 'true' : '' },
-    { pdfFieldName: 'form1[0].#subform[3].savings[0]', type: 'checkbox', transform: v => v === 'Savings' ? 'true' : '' },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Checking' ? 'true' : '', checkPage: 3, checkCX: 248.7, checkCY: 417.1, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Savings' ? 'true' : '', checkPage: 3, checkCX: 308.7, checkCY: 417.1, checkSize: 6 },
   ],
   routingNumber: { pdfFieldName: 'form1[0].#subform[3].routingno1[0]', type: 'text' },
   accountNumber: { pdfFieldName: 'form1[0].#subform[3].accountno1[0]', type: 'text' },

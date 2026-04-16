@@ -1,8 +1,8 @@
-import { PDFDocument, PDFCheckBox, PDFRadioGroup, PDFTextField, PDFDropdown } from 'pdf-lib';
+import { PDFDocument, PDFCheckBox, PDFRadioGroup, PDFTextField, PDFDropdown, rgb } from 'pdf-lib';
 
 export interface FieldMappingEntry {
   pdfFieldName: string;
-  type: 'text' | 'checkbox' | 'radio' | 'dropdown' | 'image';
+  type: 'text' | 'checkbox' | 'radio' | 'dropdown' | 'image' | 'draw-check';
   transform?: (value: string) => string;
   // For 'image' type — draw the value (data URL) as an image overlay on the PDF
   imagePage?: number; // 0-indexed page number
@@ -10,6 +10,11 @@ export interface FieldMappingEntry {
   imageY?: number;
   imageWidth?: number;
   imageHeight?: number;
+  // For 'draw-check' type — draw a filled rectangle at precise coordinates (XFA form workaround)
+  checkPage?: number; // 0-indexed page number
+  checkCX?: number;   // center x coordinate (PDF points)
+  checkCY?: number;   // center y coordinate (PDF points)
+  checkSize?: number; // side length of the filled square (default 6)
 }
 
 // One wizard field can map to one PDF field or multiple (e.g., SSN → 3 boxes)
@@ -28,6 +33,26 @@ async function fillOneField(
     const value = entry.transform
       ? entry.transform(String(rawValue))
       : String(rawValue);
+
+    // Draw-check type: draw a filled square at precise page coordinates (XFA checkbox workaround)
+    if (entry.type === 'draw-check') {
+      if (value !== 'true' && rawValue !== true) return;
+      const pages = pdfDoc.getPages();
+      const pageIndex = entry.checkPage ?? 0;
+      if (pageIndex >= pages.length) return;
+      const page = pages[pageIndex];
+      const size = entry.checkSize ?? 6;
+      const cx = entry.checkCX ?? 0;
+      const cy = entry.checkCY ?? 0;
+      page.drawRectangle({
+        x: cx - size / 2,
+        y: cy - size / 2,
+        width: size,
+        height: size,
+        color: rgb(0, 0, 0),
+      });
+      return;
+    }
 
     // Image type: embed the data URL as a PNG overlay (used for signatures)
     if (entry.type === 'image') {
