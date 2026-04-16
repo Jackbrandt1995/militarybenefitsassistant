@@ -1,4 +1,4 @@
-export type FieldType = 'text' | 'date' | 'select' | 'checkbox' | 'radio' | 'ssn' | 'phone' | 'textarea' | 'number' | 'email';
+export type FieldType = 'text' | 'date' | 'select' | 'checkbox' | 'radio' | 'ssn' | 'phone' | 'textarea' | 'number' | 'email' | 'signature' | 'document';
 
 export interface FieldDef {
   id: string;

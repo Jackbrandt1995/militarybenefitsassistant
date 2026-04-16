@@ -33,7 +33,7 @@ export const va221990: FormDefinition = {
         ]},
         { id: 'dob', label: 'Date of Birth', type: 'date', required: true, profilePath: 'profile.dob' },
         { id: 'firstName', label: 'First Name', type: 'text', required: true, profilePath: 'profile.first_name', maxLength: 30 },
-        { id: 'middleName', label: 'Middle Name', type: 'text', profilePath: 'profile.middle_name' },
+        { id: 'middleName', label: 'Middle Initial', type: 'text', profilePath: 'profile.middle_name', maxLength: 1 },
         { id: 'lastName', label: 'Last Name', type: 'text', required: true, profilePath: 'profile.last_name', maxLength: 30 },
       ],
     },
@@ -42,7 +42,7 @@ export const va221990: FormDefinition = {
       title: 'Contact Information',
       fields: [
         { id: 'street', label: 'Street Address', type: 'text', required: true, profilePath: 'profile.address_street' },
-        { id: 'street2', label: 'Street Address Line 2', type: 'text' },
+        { id: 'street2', label: 'Street Address Line 2', type: 'text', profilePath: 'profile.address_apt2' },
         { id: 'apt', label: 'Apt/Unit Number', type: 'text', profilePath: 'profile.address_apt' },
         { id: 'city', label: 'City', type: 'text', required: true, profilePath: 'profile.address_city' },
         { id: 'state', label: 'State', type: 'select', required: true, profilePath: 'profile.address_state', options: stateOptions },
@@ -136,6 +136,7 @@ export const va221990: FormDefinition = {
         { id: 'edu2Name', label: 'College/Training 2 - Name & Location', type: 'text', profilePath: 'educationHistory[1].institution' },
         { id: 'edu2From', label: 'College 2 - From', type: 'date', profilePath: 'educationHistory[1].date_from' },
         { id: 'edu2To', label: 'College 2 - To', type: 'date', profilePath: 'educationHistory[1].date_to' },
+        { id: 'edu2Hours', label: 'College 2 - Hours (type)', type: 'text', profilePath: 'educationHistory[1].hours_count' },
         { id: 'edu2Degree', label: 'College 2 - Degree/Diploma', type: 'text', profilePath: 'educationHistory[1].degree' },
         { id: 'edu2Major', label: 'College 2 - Major Field', type: 'text', profilePath: 'educationHistory[1].major' },
       ],
@@ -143,14 +144,14 @@ export const va221990: FormDefinition = {
     {
       id: 'employment',
       title: 'Employment History',
-      description: 'Only complete if you held a license or journeyman rating.',
+      description: 'Only complete if you held a license or journeyman rating in a licensed profession (electrician, plumber, contractor, etc.).',
       fields: [
-        { id: 'emp1Occupation', label: 'Before Service - Occupation', type: 'text', profilePath: 'employmentHistory[0].principal_occupation' },
+        { id: 'emp1Occupation', label: 'Before Service - Licensed Occupation', type: 'text', profilePath: 'employmentHistory[0].principal_occupation', helpText: 'e.g., Electrician, Licensed Plumber, Contractor, Nurse' },
         { id: 'emp1Months', label: 'Before Service - Months Worked', type: 'number' },
-        { id: 'emp1License', label: 'Before Service - License/Rating', type: 'text', profilePath: 'employmentHistory[0].license_or_rating' },
-        { id: 'emp2Occupation', label: 'After Service - Occupation', type: 'text' },
+        { id: 'emp1License', label: 'Before Service - License/Rating Number', type: 'text', profilePath: 'employmentHistory[0].license_or_rating' },
+        { id: 'emp2Occupation', label: 'After Service - Licensed Occupation', type: 'text', helpText: 'e.g., Electrician, Licensed Plumber, Contractor, Nurse' },
         { id: 'emp2Months', label: 'After Service - Months Worked', type: 'number' },
-        { id: 'emp2License', label: 'After Service - License/Rating', type: 'text' },
+        { id: 'emp2License', label: 'After Service - License/Rating Number', type: 'text' },
       ],
     },
     {
@@ -181,13 +182,43 @@ export const va221990: FormDefinition = {
         { id: 'dependentParent', label: 'Do you have a dependent parent?', type: 'radio', options: [
           { label: 'Yes', value: 'Yes' }, { label: 'No', value: 'No' },
         ]},
-        { id: 'remarks', label: 'Remarks', type: 'textarea' },
+        { id: 'previousFederalBenefits', label: 'Have you received benefits under any federal education program (GI Bill, ROTC, etc.)?', type: 'radio', options: [
+          { label: 'Yes', value: 'Yes' }, { label: 'No', value: 'No' },
+        ]},
+        { id: 'previousVABenefits', label: 'Have you previously applied for or received VA education benefits?', type: 'radio', options: [
+          { label: 'Yes', value: 'Yes' }, { label: 'No', value: 'No' },
+        ]},
+        { id: 'previouslyApplied', label: 'I have previously applied for or received the benefit I am now seeking', type: 'checkbox' },
+        { id: 'remarks', label: 'Remarks (Optional)', type: 'textarea', helpText: 'Use this space to clarify anything in your application. Examples: changes in your educational plans, correction of any information above, explanation of gaps in service or education.' },
+      ],
+    },
+    {
+      id: 'documents',
+      title: 'Supporting Documents',
+      description: 'Gather the following documents to submit with your application. You can upload them in the next step.',
+      fields: [
+        {
+          id: 'documentsInfo',
+          label: 'Required/Recommended Documents',
+          type: 'document',
+          helpText: `Please prepare and upload the following documents:
+• DD Form 214 or similar discharge papers (proof of service)
+• Voided blank check or bank account verification (for direct deposit)
+• VA Form 22-1999 (Statement of Benefits - if applicable)
+• NOBE (Notice of Basic Eligibility) letter
+• Any conditional approval letters or STEM kicker contract
+• Birth certificate (recommended)
+• Marriage certificate (if applicable)
+• Divorce decree (if applicable)
+• Proof of high school diploma or GED
+• Official college transcripts (if transferring credits)`
+        },
       ],
     },
     {
       id: 'signature',
       title: 'Certification & Signature',
-      description: 'By completing this section, you certify that all statements in this application are true and correct to the best of your knowledge.',
+      description: 'By certifying below, you attest that all statements in this application are true and correct to the best of your knowledge and belief. Providing false information may result in disciplinary action and recovery of benefits.',
       fields: [
         { id: 'signatureDate', label: 'Date Signed', type: 'date', required: true },
       ],

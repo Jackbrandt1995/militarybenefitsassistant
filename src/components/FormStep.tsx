@@ -148,6 +148,14 @@ export default function FormStep({ step, answers, errors, preFilledFields, onAns
                     error ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
+              ) : field.type === 'document' ? (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap font-mono">{field.helpText}</p>
+                </div>
+              ) : field.type === 'signature' ? (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm text-gray-600">
+                  Signature drawing will be available in the next step.
+                </div>
               ) : (
                 <input
                   type={field.type === 'email' ? 'email' : field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
@@ -163,7 +171,7 @@ export default function FormStep({ step, answers, errors, preFilledFields, onAns
               )}
 
               {/* Help text */}
-              {field.helpText && field.type !== 'checkbox' && (
+              {field.helpText && field.type !== 'checkbox' && field.type !== 'document' && field.type !== 'signature' && (
                 <p className="mt-1 text-xs text-gray-500">{field.helpText}</p>
               )}
 

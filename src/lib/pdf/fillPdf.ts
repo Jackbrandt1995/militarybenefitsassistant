@@ -83,6 +83,7 @@ export async function fillPdf(
   for (const [wizardId, mapping] of Object.entries(fieldMapping)) {
     const rawValue = answers[wizardId];
     if (rawValue === undefined || rawValue === null || rawValue === '') continue;
+    if (!mapping) continue;
 
     if (Array.isArray(mapping)) {
       for (const entry of mapping) {
@@ -133,4 +134,13 @@ export function formatPhoneParts(phone: string): { areaCode: string; first3: str
     first3: digits.substring(3, 6),
     last4: digits.substring(6, 10),
   };
+}
+
+export function formatDateString(dateStr: string): string {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    return `${parts[1]}/${parts[2]}/${parts[0]}`;
+  }
+  return '';
 }
