@@ -7,7 +7,9 @@ import { useAutoFill } from '@/hooks/useAutoFill';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/components/AuthProvider';
 import { saveFormAnswersToProfile } from '@/lib/profile/saveToProfile';
+import { cacheFormFiles } from '@/lib/fileCache';
 import FormStep from '@/components/FormStep';
+import DocumentUploader from '@/components/DocumentUploader';
 import Button from '@/components/ui/Button';
 import { useRouter } from 'next/navigation';
 
@@ -23,6 +25,7 @@ export default function FormWizard({ form }: FormWizardProps) {
   const preFilledFields = new Set(Object.keys(preFilledAnswers));
   const [isSaving, setIsSaving] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
 
   const {
     currentStep,
@@ -44,6 +47,9 @@ export default function FormWizard({ form }: FormWizardProps) {
     if (!validateCurrentStep()) return;
 
     if (isLastStep) {
+      // Save attached files to module cache so complete/page.tsx can merge them
+      cacheFormFiles(attachedFiles);
+
       // Save answers back to profile so other forms can pre-fill from them
       if (user) {
         setIsSaving(true);
@@ -170,13 +176,63 @@ export default function FormWizard({ form }: FormWizardProps) {
 
           {/* Step card */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <FormStep
-              step={stepDef}
-              answers={answers}
-              errors={errors}
-              preFilledFields={preFilledFields}
-              onAnswer={setAnswer}
-            />
+
+            {stepDef.id === 'attachments' ? (
+              /* ── Document attachment step ───────────────────────────────── */
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">{stepDef.title}</h2>
+                  {stepDef.description && (
+                    <p className="mt-1 text-sm text-gray-600">{stepDef.description}</p>
+                  )}
+                </div>
+
+                {/* Required docs checklist */}
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-2">
+                  <p className="text-sm font-semibold text-amber-900">Required documents (attach below)</p>
+                  <ul className="text-sm text-amber-800 space-y-1 list-disc list-inside">
+                    <li>DD Form 214 – Certificate of Release or Discharge from Active Duty (one per service period)</li>
+                    <li>Voided check or bank letter – for direct deposit verification</li>
+                  </ul>
+                </div>
+
+                {/* Optional docs checklist */}
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-2">
+                  <p className="text-sm font-semibold text-gray-700">Optional / recommended documents</p>
+                  <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
+                    <li>Notice of Basic Eligibility (NOBE) letter – required for Chapter 1606</li>
+                    <li>ROTC scholarship contract or service academy commissioning document – if applicable</li>
+                    <li>Official college transcripts – if you previously attended college</li>
+                    <li>Marriage certificate or divorce decree – if claiming dependents</li>
+                    <li>Birth certificates of dependent children – if applicable</li>
+                    <li>Any prior VA conditional approval letters</li>
+                  </ul>
+                </div>
+
+                {/* File uploader */}
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-3">
+                    Upload files <span className="text-gray-400 font-normal">(PDF files will be merged into your downloaded form)</span>
+                  </p>
+                  <DocumentUploader onFilesSelected={setAttachedFiles} />
+                </div>
+
+                {attachedFiles.length > 0 && (
+                  <p className="text-sm text-green-700 font-medium">
+                    ✓ {attachedFiles.length} file{attachedFiles.length > 1 ? 's' : ''} ready to attach
+                  </p>
+                )}
+              </div>
+            ) : (
+              /* ── Regular step ───────────────────────────────────────────── */
+              <FormStep
+                step={stepDef}
+                answers={answers}
+                errors={errors}
+                preFilledFields={preFilledFields}
+                onAnswer={setAnswer}
+              />
+            )}
 
             <div className="flex justify-between items-center mt-8 pt-4 border-t border-gray-100">
               <Button variant="outline" onClick={goBack} disabled={isFirstStep}>

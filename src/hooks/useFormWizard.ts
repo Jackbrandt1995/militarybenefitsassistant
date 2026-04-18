@@ -13,6 +13,8 @@ interface WizardState {
 export function useFormWizard(form: FormDefinition | undefined, preFilledAnswers: Record<string, string | boolean> = {}) {
   const storageKey = form ? `wizard-${form.id}` : null;
 
+  const totalStepCount = form?.steps.length ?? 0;
+
   const [state, setState] = useState<WizardState>(() => {
     // Try to restore from localStorage
     if (storageKey && typeof window !== 'undefined') {
@@ -20,10 +22,16 @@ export function useFormWizard(form: FormDefinition | undefined, preFilledAnswers
         const saved = localStorage.getItem(storageKey);
         if (saved) {
           const parsed = JSON.parse(saved);
-          return {
-            ...parsed,
-            touched: new Set(parsed.touched || []),
-          };
+          // Invalidate cached state if the form step count has changed
+          // (e.g., new steps were added to the form definition).
+          if (parsed.totalStepCount && parsed.totalStepCount !== totalStepCount) {
+            localStorage.removeItem(storageKey);
+          } else {
+            return {
+              ...parsed,
+              touched: new Set(parsed.touched || []),
+            };
+          }
         }
       } catch {
         // Ignore parse errors
@@ -56,18 +64,19 @@ export function useFormWizard(form: FormDefinition | undefined, preFilledAnswers
     }
   }, [preFilledAnswers]);
 
-  // Persist to localStorage on change
+  // Persist to localStorage on change (include totalStepCount for cache invalidation)
   useEffect(() => {
     if (storageKey && typeof window !== 'undefined') {
       const toSave = {
         ...state,
         touched: Array.from(state.touched),
+        totalStepCount,
       };
       localStorage.setItem(storageKey, JSON.stringify(toSave));
     }
-  }, [state, storageKey]);
+  }, [state, storageKey, totalStepCount]);
 
-  const totalSteps = form?.steps.length ?? 0;
+  const totalSteps = totalStepCount;
   const currentStepDef = form?.steps[state.currentStep];
 
   const setAnswer = useCallback((fieldId: string, value: string | boolean) => {

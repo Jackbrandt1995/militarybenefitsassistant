@@ -1,4 +1,4 @@
-import { PDFDocument, PDFCheckBox, PDFRadioGroup, PDFTextField, PDFDropdown, rgb } from 'pdf-lib';
+import { PDFDocument, PDFCheckBox, PDFRadioGroup, PDFTextField, PDFDropdown, StandardFonts, rgb } from 'pdf-lib';
 
 export interface FieldMappingEntry {
   pdfFieldName: string;
@@ -75,16 +75,26 @@ async function fillOneField(
       return;
     }
 
+    // Try exact match first; if not found, fall through to try/catch below.
+    // We intentionally let form.getField() throw rather than silently skip —
+    // the outer try/catch logs a warning so we can diagnose mismatches.
     if (!fieldNames.includes(entry.pdfFieldName)) {
-      console.warn(`PDF field not found: ${entry.pdfFieldName}`);
-      return;
+      // Attempt a partial-name fallback (useful if pdf-lib returns leaf names only)
+      const fallback = fieldNames.find(n => n === entry.pdfFieldName || n.endsWith(`.${entry.pdfFieldName}`) || entry.pdfFieldName.endsWith(`.${n}`));
+      if (!fallback) {
+        console.warn(`[fillPdf] field not found: "${entry.pdfFieldName}"`);
+        return;
+      }
+      console.warn(`[fillPdf] using fallback name "${fallback}" for "${entry.pdfFieldName}"`);
     }
 
     switch (entry.type) {
       case 'text': {
         const textField = form.getField(entry.pdfFieldName);
         if (textField instanceof PDFTextField) {
-          textField.setText(value);
+          textField.setText(value || '');
+        } else {
+          console.warn(`[fillPdf] "${entry.pdfFieldName}" is not a PDFTextField (got ${textField?.constructor?.name})`);
         }
         break;
       }
@@ -130,8 +140,19 @@ export async function fillPdf(
   const pdfDoc = await PDFDocument.load(templateBytes, { ignoreEncryption: true });
   const form = pdfDoc.getForm();
 
+  // Embed Helvetica so pdf-lib can regenerate appearance streams after filling,
+  // including Comb fields (Ff bit 25) like routing/account numbers.
+  const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
   const fields = form.getFields();
   const fieldNames = fields.map(f => f.getName());
+
+  // Debug: log field lookup results for banking fields
+  const bankFields = ['routingno1', 'accountno1'];
+  bankFields.forEach(partial => {
+    const match = fieldNames.find(n => n.includes(partial));
+    console.log(`[fillPdf] "${partial}" -> ${match ?? 'NOT FOUND'}`);
+  });
 
   for (const [wizardId, mapping] of Object.entries(fieldMapping)) {
     const rawValue = answers[wizardId];
@@ -145,6 +166,15 @@ export async function fillPdf(
     } else {
       await fillOneField(form, pdfDoc, fieldNames, mapping, rawValue);
     }
+  }
+
+  // Regenerate all field appearances with embedded Helvetica.
+  // This is critical for Comb text fields (routing/account numbers) which have no
+  // pre-existing AP stream — without this call their text won't render visually.
+  try {
+    form.updateFieldAppearances(helvetica);
+  } catch (err) {
+    console.warn('[fillPdf] updateFieldAppearances failed (non-fatal):', err);
   }
 
   return pdfDoc.save();

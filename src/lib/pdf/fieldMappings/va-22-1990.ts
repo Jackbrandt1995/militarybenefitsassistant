@@ -140,24 +140,25 @@ export const va221990Mapping: FieldMapping = {
   service3Branch:    { pdfFieldName: 'form1[0].#subform[4].servicecomp3[0]',   type: 'text' },
 
   // Q14a: ROTC (yes cx=38.6 no cx=176.9 cy=137.3) — page 4
+  // Q14b: Service Academy — same row, right column (yes cx=322.2 no cx=364.2 cy=136.7) — page 4
   seniorROTC: [
     { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 4, checkCX:  38.6, checkCY: 137.3, checkSize: 6 },
     { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 4, checkCX: 176.9, checkCY: 137.3, checkSize: 6 },
   ],
+  serviceAcademy: [
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 4, checkCX: 322.2, checkCY: 136.7, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 4, checkCX: 364.2, checkCY: 136.7, checkSize: 6 },
+  ],
+  // serviceAcademyYear maps to gradyear[0] (page 5) — user-confirmed as service academy graduation year
+  serviceAcademyYear: { pdfFieldName: 'form1[0].#subform[5].gradyear[0]', type: 'text' },
 
   // ── EDUCATION BACKGROUND (page 5) ────────────────────────────────────────
   // Q7: HS diploma — yes cx=450.3 no cx=492.3 cy=462.0
   // Q8: FAA certs  — yes cx=450.3 no cx=492.3 cy=426.0
-  //
-  // gradyear[0] is the HIGH SCHOOL graduation year field in Part IV (confirmed via
-  // field position at cy=372 on the education history page). It is NOT the service
-  // academy year. The interview question "Date diploma or GED was awarded" maps to it.
   hsGrad: [
     { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true'  ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 462.0, checkSize: 6 },
     { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'false' ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 462.0, checkSize: 6 },
   ],
-  // gradyear takes only the 4-digit year from the date picker value (YYYY-MM-DD)
-  hsGradDate: { pdfFieldName: 'form1[0].#subform[5].gradyear[0]', type: 'text', transform: v => v.split('-')[0] },
   faaFlightCerts: [
     { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 426.0, checkSize: 6 },
     { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 426.0, checkSize: 6 },

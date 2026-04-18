@@ -6,6 +6,7 @@ import { getFormById } from '@/lib/forms/registry';
 import { useAuth } from '@/components/AuthProvider';
 import { fillPdf, downloadPdf, mergePdfsWithAttachments } from '@/lib/pdf/fillPdf';
 import { getFieldMapping } from '@/lib/pdf/fieldMappings';
+import { getFormFiles, clearFormFiles } from '@/lib/fileCache';
 import { createClient } from '@/lib/supabase/client';
 import DocumentUploader from '@/components/DocumentUploader';
 import Button from '@/components/ui/Button';
@@ -23,6 +24,7 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [wizardAttachedCount, setWizardAttachedCount] = useState(0);
 
   useEffect(() => {
     if (!form) return;
@@ -43,7 +45,20 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
           return;
         }
 
-        const bytes = await fillPdf(form!.pdfTemplate, answers, mapping);
+        let bytes = await fillPdf(form!.pdfTemplate, answers, mapping);
+
+        // Merge files that were attached in the wizard's "Attach Documents" step
+        const wizardFiles = getFormFiles();
+        if (wizardFiles.length > 0) {
+          try {
+            bytes = await mergePdfsWithAttachments(bytes, wizardFiles);
+            setWizardAttachedCount(wizardFiles.filter(f => f.type === 'application/pdf').length);
+          } catch (mergeErr) {
+            console.warn('Wizard attachment merge (non-fatal):', mergeErr);
+          }
+          clearFormFiles();
+        }
+
         setPdfBytes(bytes);
 
         // Save submission record
@@ -155,13 +170,26 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
               </p>
             </div>
 
+            {/* Wizard-attached files confirmation */}
+            {wizardAttachedCount > 0 && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <p className="text-sm font-semibold text-green-900 mb-1">
+                  ✓ {wizardAttachedCount} PDF{wizardAttachedCount > 1 ? 's' : ''} from your application merged
+                </p>
+                <p className="text-xs text-green-700">
+                  Documents you attached during the wizard have been merged into this download.
+                </p>
+              </div>
+            )}
+
+            {/* Additional documents uploaded here */}
             {uploadedFiles.length > 0 && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <p className="text-sm font-semibold text-green-900 mb-1">
-                  ✓ {uploadedFiles.length} document{uploadedFiles.length > 1 ? 's' : ''} attached
+                  ✓ {uploadedFiles.length} additional document{uploadedFiles.length > 1 ? 's' : ''} attached
                 </p>
                 <p className="text-xs text-green-700">
-                  PDF attachments have been merged into your download. The button below will include all pages.
+                  PDF attachments merged. The download below includes all pages.
                 </p>
               </div>
             )}
@@ -173,11 +201,12 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
               </div>
             )}
 
+            {/* Additional documents — always available */}
             {uploadedFiles.length === 0 && (
               <div>
-                <h2 className="text-lg font-semibold text-slate-900 mb-4">Attach Supporting Documents</h2>
+                <h2 className="text-lg font-semibold text-slate-900 mb-2">Attach Additional Documents</h2>
                 <p className="text-sm text-slate-500 mb-3">
-                  PDF files will be appended directly to your downloaded form. All files are also saved to your submission record.
+                  Forgot something? You can attach more documents here. PDFs are merged into your download.
                 </p>
                 <DocumentUploader
                   onFilesSelected={setSelectedFiles}

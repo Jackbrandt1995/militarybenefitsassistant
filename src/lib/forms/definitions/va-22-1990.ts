@@ -201,7 +201,8 @@ export const va221990: FormDefinition = {
           type: 'text',
           profilePath: 'directDeposit.account_number_encrypted',
           sensitive: true,
-          helpText: 'Found at the bottom of a check, after the routing number.',
+          maxLength: 13,
+          helpText: 'Found at the bottom of a check, after the routing number. Up to 13 digits.',
         },
       ],
     },
@@ -302,7 +303,7 @@ export const va221990: FormDefinition = {
     {
       id: 'serviceHistory',
       title: 'Service History',
-      description: 'Enter your military service periods. List them in order, starting with the most recent. You must include all active duty periods that qualify you for the benefit you selected. Dates should match your DD-214.',
+      description: 'Enter your military service periods in order, starting with the most recent. Dates should match your DD-214. Also answer the ROTC and service academy questions at the bottom — select No if they do not apply to you.',
       fields: [
         // Period 1
         { id: 'service1Branch', label: 'Period 1 – Branch / Component', type: 'select', profilePath: 'servicePeriods[0].branch', options: branchOptions, helpText: 'e.g., Army Active Duty, Marine Corps Reserve, Navy' },
@@ -321,6 +322,39 @@ export const va221990: FormDefinition = {
         { id: 'service3Branch', label: 'Period 3 – Branch / Component', type: 'select', profilePath: 'servicePeriods[2].branch', options: branchOptions },
         { id: 'service3Entered', label: 'Period 3 – Date Entered Service', type: 'date', profilePath: 'servicePeriods[2].date_entered' },
         { id: 'service3Separated', label: 'Period 3 – Date Separated / Discharged', type: 'date', profilePath: 'servicePeriods[2].date_separated' },
+
+        // Q14: ROTC / Service Academy
+        {
+          id: 'seniorROTC',
+          label: 'Were you commissioned through a Senior ROTC scholarship program?',
+          type: 'radio',
+          required: true,
+          helpText: 'Applies to officers who received a Senior ROTC scholarship during college. Select No if this does not apply.',
+          options: [
+            { label: 'Yes – I was commissioned via Senior ROTC scholarship', value: 'Yes' },
+            { label: 'No', value: 'No' },
+          ],
+        },
+        {
+          id: 'serviceAcademy',
+          label: 'Did you graduate from a federal military service academy?',
+          type: 'radio',
+          required: true,
+          helpText: 'Service academies include West Point (Army), Annapolis (Navy), Air Force Academy, Coast Guard Academy, and Merchant Marine Academy. Select No if this does not apply.',
+          options: [
+            { label: 'Yes – I graduated from a military service academy', value: 'Yes' },
+            { label: 'No', value: 'No' },
+          ],
+        },
+        {
+          id: 'serviceAcademyYear',
+          label: 'Year of service academy graduation',
+          type: 'text',
+          maxLength: 4,
+          placeholder: 'e.g., 2018',
+          helpText: 'Enter the 4-digit year you graduated from the service academy.',
+          condition: { field: 'serviceAcademy', value: 'Yes' },
+        },
       ],
     },
 
@@ -341,21 +375,15 @@ export const va221990: FormDefinition = {
           ],
         },
         {
-          id: 'hsGradDate',
-          label: 'Date diploma or GED was awarded',
-          type: 'date',
-          profilePath: 'profile.high_school_diploma_date',
-          helpText: 'Approximate year is fine if you do not remember the exact date.',
-        },
-        {
           id: 'faaFlightCerts',
           label: 'Do you hold any FAA flight certificates or ratings?',
           type: 'radio',
+          required: true,
           options: [
             { label: 'Yes – I hold FAA pilot/flight certificates', value: 'Yes' },
             { label: 'No', value: 'No' },
           ],
-          helpText: 'Relevant only if you selected Vocational Flight Training in the previous section.',
+          helpText: 'Select No if this does not apply to you. The VA form requires an answer either way.',
         },
       ],
     },
@@ -455,16 +483,6 @@ export const va221990: FormDefinition = {
           helpText: 'Similar to the Active Duty Kicker, but for Selected Reserve (Chapter 1606) members.',
           options: [
             { label: 'Yes – my contract includes a Reserve Kicker', value: 'Yes' },
-            { label: 'No', value: 'No' },
-          ],
-        },
-        {
-          id: 'seniorROTC',
-          label: 'Were you commissioned through a Senior ROTC scholarship program?',
-          type: 'radio',
-          helpText: 'Applies to officers who received a Senior ROTC scholarship during college and are now applying for VA education benefits.',
-          options: [
-            { label: 'Yes – I was commissioned via Senior ROTC scholarship', value: 'Yes' },
             { label: 'No', value: 'No' },
           ],
         },
@@ -608,6 +626,16 @@ HELPFUL (submit if available):
           required: true,
         },
       ],
+    },
+
+    // ── STEP 17: Attach Supporting Documents ──────────────────────────────
+    // Fields array is intentionally empty — FormWizard renders DocumentUploader
+    // directly for steps with id === 'attachments'.
+    {
+      id: 'attachments',
+      title: 'Attach Supporting Documents',
+      description: 'Upload any documents that support your application. PDF files will be merged directly into your downloaded form. All files are also saved to your submission record.',
+      fields: [],
     },
   ],
 };
