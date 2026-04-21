@@ -83,6 +83,9 @@ export const va221990Mapping: FieldMapping = {
     { pdfFieldName: 'form1[0].#subform[3].secondaryphone1[0]', type: 'text', transform: v => formatPhoneParts(v).first3 },
     { pdfFieldName: 'form1[0].#subform[3].secondaryphone4[0]', type: 'text', transform: v => formatPhoneParts(v).last4 },
   ],
+  // "None" telephone checkbox — injected when both phonePrimary and phoneSecondary are empty.
+  // Estimated coordinates; adjust if square lands in wrong location after testing.
+  phoneNone: { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 3, checkCX: 43, checkCY: 508, checkSize: 6 },
 
   // ── DIRECT DEPOSIT ────────────────────────────────────────────────────────
   // checking cx=248.7 cy=417.1, savings cx=308.7 cy=417.1 — page 3
@@ -244,15 +247,18 @@ export const va221990Mapping: FieldMapping = {
   // ── REMARKS & SIGNATURE (page 6) ─────────────────────────────────────────
   remarks: { pdfFieldName: 'form1[0].#subform[6].remarks[0]', type: 'text' },
 
-  // Signature drawn as image overlay (page 6, signatureofapp field area)
+  // Signature drawn as image overlay on the certification page (page 6).
+  // imageY=80 positions the signature ~80–130 pts from the bottom edge of the page
+  // (roughly 1–1.8 inches up), which aligns with the "SIGNATURE OF APPLICANT" line.
+  // If the square appears above or below the line, adjust imageY in 10-pt increments.
   signaturePad: {
     pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY',
     type: 'image',
     imagePage: 6,
     imageX: 36,
-    imageY: 25,
-    imageWidth: 200,
-    imageHeight: 40,
+    imageY: 80,
+    imageWidth: 230,
+    imageHeight: 50,
   },
   signatureDate: { pdfFieldName: 'form1[0].#subform[6].Datesigned[0]', type: 'text', transform: formatDateString },
 };

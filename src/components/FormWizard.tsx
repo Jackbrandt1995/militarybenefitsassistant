@@ -61,7 +61,23 @@ export default function FormWizard({ form }: FormWizardProps) {
           setIsSaving(false);
         }
       }
-      localStorage.setItem(`form-wizard-${form.id}`, JSON.stringify({ answers }));
+
+      // Build final answers, applying any form-specific computed fields
+      const finalAnswers = { ...answers };
+
+      // VA 22-1990: auto-check the "None" telephone checkbox when both phone
+      // fields were left blank, as required by the PDF form instructions.
+      if (form.id === 'va-22-1990') {
+        const primaryDigits  = String(finalAnswers.phonePrimary  || '').replace(/\D/g, '');
+        const secondaryDigits = String(finalAnswers.phoneSecondary || '').replace(/\D/g, '');
+        if (primaryDigits.length === 0 && secondaryDigits.length === 0) {
+          finalAnswers.phoneNone = 'true';
+        } else {
+          delete finalAnswers.phoneNone;
+        }
+      }
+
+      localStorage.setItem(`form-wizard-${form.id}`, JSON.stringify({ answers: finalAnswers }));
       router.push(`/forms/${form.id}/review`);
     } else {
       goNext();
