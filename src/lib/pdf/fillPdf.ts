@@ -2,7 +2,7 @@ import { PDFDocument, PDFCheckBox, PDFRadioGroup, PDFTextField, PDFDropdown, Sta
 
 export interface FieldMappingEntry {
   pdfFieldName: string;
-  type: 'text' | 'checkbox' | 'radio' | 'dropdown' | 'image' | 'draw-check';
+  type: 'text' | 'checkbox' | 'radio' | 'dropdown' | 'image' | 'draw-check' | 'draw-text';
   transform?: (value: string) => string;
   // For 'image' type — draw the value (data URL) as an image overlay on the PDF
   imagePage?: number; // 0-indexed page number
@@ -15,6 +15,11 @@ export interface FieldMappingEntry {
   checkCX?: number;   // center x coordinate (PDF points)
   checkCY?: number;   // center y coordinate (PDF points)
   checkSize?: number; // side length of the filled square (default 6)
+  // For 'draw-text' type — draw text directly on the page (reliable fallback for XFA text fields)
+  textPage?: number;  // 0-indexed page number
+  textX?: number;     // left edge x coordinate (PDF points)
+  textY?: number;     // baseline y coordinate (PDF points)
+  textSize?: number;  // font size in points (default 10)
 }
 
 // One wizard field can map to one PDF field or multiple (e.g., SSN → 3 boxes)
@@ -54,23 +59,47 @@ async function fillOneField(
       return;
     }
 
+    // Draw-text type: draw text directly on a page (reliable fallback for XFA fields)
+    if (entry.type === 'draw-text') {
+      const pages = pdfDoc.getPages();
+      const pageIndex = entry.textPage ?? 0;
+      if (pageIndex >= pages.length) return;
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      pages[pageIndex].drawText(value, {
+        x: entry.textX ?? 0,
+        y: entry.textY ?? 0,
+        size: entry.textSize ?? 10,
+        font,
+        color: rgb(0, 0, 0),
+      });
+      return;
+    }
+
     // Image type: embed the data URL as a PNG overlay (used for signatures)
     if (entry.type === 'image') {
       const dataUrl = String(rawValue);
-      if (!dataUrl.startsWith('data:image/')) return;
+      if (!dataUrl.startsWith('data:image/')) {
+        console.warn('[fillPdf] signaturePad value does not look like a data URL (length:', String(rawValue).length, ')');
+        return;
+      }
       const base64 = dataUrl.split(',')[1];
       if (!base64) return;
-      const imageBytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-      const image = await pdfDoc.embedPng(imageBytes);
-      const pageIndex = entry.imagePage ?? 0;
-      const pages = pdfDoc.getPages();
-      if (pageIndex < pages.length) {
-        pages[pageIndex].drawImage(image, {
-          x: entry.imageX ?? 36,
-          y: entry.imageY ?? 25,
-          width: entry.imageWidth ?? 200,
-          height: entry.imageHeight ?? 40,
-        });
+      try {
+        const imageBytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+        const image = await pdfDoc.embedPng(imageBytes);
+        const pageIndex = entry.imagePage ?? 0;
+        const pages = pdfDoc.getPages();
+        console.log(`[fillPdf] drawing signature image on page ${pageIndex} (total pages: ${pages.length}) at x=${entry.imageX} y=${entry.imageY}`);
+        if (pageIndex < pages.length) {
+          pages[pageIndex].drawImage(image, {
+            x: entry.imageX ?? 36,
+            y: entry.imageY ?? 80,
+            width: entry.imageWidth ?? 230,
+            height: entry.imageHeight ?? 50,
+          });
+        }
+      } catch (imgErr) {
+        console.error('[fillPdf] failed to embed signature PNG:', imgErr);
       }
       return;
     }

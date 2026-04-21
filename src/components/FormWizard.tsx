@@ -62,6 +62,22 @@ export default function FormWizard({ form }: FormWizardProps) {
         }
       }
 
+      // Before submitting, verify all required fields in the signature step are filled.
+      // Users can bypass step validation via sidebar navigation, so we gate here.
+      const signatureStepIdx = form.steps.findIndex(s => s.id === 'signature');
+      if (signatureStepIdx !== -1) {
+        const sigStep = form.steps[signatureStepIdx];
+        const missingInSig = sigStep.fields.filter(f => {
+          if (!f.required) return false;
+          const val = answers[f.id];
+          return val === undefined || val === null || val === '' || val === false;
+        });
+        if (missingInSig.length > 0) {
+          goToStep(signatureStepIdx);
+          return; // Force user to complete signature step first
+        }
+      }
+
       // Build final answers, applying any form-specific computed fields
       const finalAnswers = { ...answers };
 

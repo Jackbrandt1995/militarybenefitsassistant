@@ -14,6 +14,7 @@ export function useFormWizard(form: FormDefinition | undefined, preFilledAnswers
   const storageKey = form ? `wizard-${form.id}` : null;
 
   const totalStepCount = form?.steps.length ?? 0;
+  const formVersion = form?.version ?? 1;
 
   const [state, setState] = useState<WizardState>(() => {
     // Try to restore from localStorage
@@ -22,9 +23,11 @@ export function useFormWizard(form: FormDefinition | undefined, preFilledAnswers
         const saved = localStorage.getItem(storageKey);
         if (saved) {
           const parsed = JSON.parse(saved);
-          // Invalidate cached state if the form step count has changed
-          // (e.g., new steps were added to the form definition).
-          if (parsed.totalStepCount && parsed.totalStepCount !== totalStepCount) {
+          // Invalidate cached state if the form version changed (definition was updated)
+          // or if the step count changed (steps were added/removed).
+          const versionMismatch = parsed.formVersion !== undefined && parsed.formVersion !== formVersion;
+          const stepMismatch = parsed.totalStepCount && parsed.totalStepCount !== totalStepCount;
+          if (versionMismatch || stepMismatch) {
             localStorage.removeItem(storageKey);
           } else {
             return {
@@ -64,17 +67,18 @@ export function useFormWizard(form: FormDefinition | undefined, preFilledAnswers
     }
   }, [preFilledAnswers]);
 
-  // Persist to localStorage on change (include totalStepCount for cache invalidation)
+  // Persist to localStorage on change (include totalStepCount + formVersion for cache invalidation)
   useEffect(() => {
     if (storageKey && typeof window !== 'undefined') {
       const toSave = {
         ...state,
         touched: Array.from(state.touched),
         totalStepCount,
+        formVersion,
       };
       localStorage.setItem(storageKey, JSON.stringify(toSave));
     }
-  }, [state, storageKey, totalStepCount]);
+  }, [state, storageKey, totalStepCount, formVersion]);
 
   const totalSteps = totalStepCount;
   const currentStepDef = form?.steps[state.currentStep];

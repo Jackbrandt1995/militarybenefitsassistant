@@ -32,4 +32,6 @@ export interface FormDefinition {
   pdfTemplate: string;
   category: FormCategory;
   steps: FormStepDef[];
+  /** Bump this number to force-clear any cached wizard state in localStorage. */
+  version?: number;
 }

@@ -3,6 +3,7 @@ import { branchOptions, stateOptions } from '@/lib/validation';
 
 export const va221990: FormDefinition = {
   id: 'va-22-1990',
+  version: 2,
   formNumber: 'VA 22-1990',
   title: 'Application for VA Education Benefits',
   description: 'Apply for VA education benefits under the GI Bill, MGIB, VEAP, or other programs. This is the primary application form for veterans seeking education benefits.',
