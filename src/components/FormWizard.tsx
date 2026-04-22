@@ -62,34 +62,42 @@ export default function FormWizard({ form }: FormWizardProps) {
         }
       }
 
-      // Before submitting, verify all required fields in the signature step are filled.
-      // Users can bypass step validation via sidebar navigation, so we gate here.
-      const signatureStepIdx = form.steps.findIndex(s => s.id === 'signature');
-      if (signatureStepIdx !== -1) {
-        const sigStep = form.steps[signatureStepIdx];
-        const missingInSig = sigStep.fields.filter(f => {
-          if (!f.required) return false;
-          const val = answers[f.id];
-          return val === undefined || val === null || val === '' || val === false;
-        });
-        if (missingInSig.length > 0) {
-          goToStep(signatureStepIdx);
-          return; // Force user to complete signature step first
+      // Before submitting, verify all required fields in the privacyAct and signature
+      // steps are filled. Users can bypass step validation via sidebar navigation, so
+      // we gate here and redirect them back to the first incomplete required step.
+      for (const gateStepId of ['privacyAct', 'signature']) {
+        const gateIdx = form.steps.findIndex(s => s.id === gateStepId);
+        if (gateIdx !== -1) {
+          const gateStep = form.steps[gateIdx];
+          const missing = gateStep.fields.filter(f => {
+            if (!f.required) return false;
+            const val = answers[f.id];
+            return val === undefined || val === null || val === '' || val === false;
+          });
+          if (missing.length > 0) {
+            goToStep(gateIdx);
+            return; // Force user to complete this step first
+          }
         }
       }
 
       // Build final answers, applying any form-specific computed fields
       const finalAnswers = { ...answers };
 
-      // VA 22-1990: auto-check the "None" telephone checkbox when both phone
-      // fields were left blank, as required by the PDF form instructions.
+      // VA 22-1990: auto-check the per-phone "None" checkbox when that specific
+      // phone field is left blank, as required by the PDF form instructions.
       if (form.id === 'va-22-1990') {
-        const primaryDigits  = String(finalAnswers.phonePrimary  || '').replace(/\D/g, '');
+        const primaryDigits   = String(finalAnswers.phonePrimary   || '').replace(/\D/g, '');
         const secondaryDigits = String(finalAnswers.phoneSecondary || '').replace(/\D/g, '');
-        if (primaryDigits.length === 0 && secondaryDigits.length === 0) {
+        if (primaryDigits.length === 0) {
           finalAnswers.phoneNone = 'true';
         } else {
           delete finalAnswers.phoneNone;
+        }
+        if (secondaryDigits.length === 0) {
+          finalAnswers.phoneMobileNone = 'true';
+        } else {
+          delete finalAnswers.phoneMobileNone;
         }
       }
 

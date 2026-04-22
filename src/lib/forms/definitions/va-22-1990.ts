@@ -3,7 +3,7 @@ import { branchOptions, stateOptions } from '@/lib/validation';
 
 export const va221990: FormDefinition = {
   id: 'va-22-1990',
-  version: 2,
+  version: 3,
   formNumber: 'VA 22-1990',
   title: 'Application for VA Education Benefits',
   description: 'Apply for VA education benefits under the GI Bill, MGIB, VEAP, or other programs. This is the primary application form for veterans seeking education benefits.',
@@ -607,19 +607,40 @@ HELPFUL (submit if available):
       ],
     },
 
-    // ── STEP 16: Certification & Signature ────────────────────────────────
+    // ── STEP 16: Privacy Act Notice ───────────────────────────────────────
+    {
+      id: 'privacyAct',
+      title: 'Privacy Act Notice',
+      description: 'Please read the following notice carefully before signing your application.',
+      fields: [
+        {
+          id: 'privacyActText',
+          label: 'Privacy Act Notice',
+          type: 'document',
+          helpText: `PRIVACY ACT NOTICE
+
+The VA will not disclose information collected on this form to any source other than what has been authorized under the Privacy Act of 1974 or Title 38, Code of Federal Regulations 1.576 for routine uses (i.e., civil or criminal law enforcement, congressional communications, epidemiological or research studies, the collection of money owed to the United States, litigation in which the United States is a party or has an interest, the administration of VA programs and delivery of VA benefits, verification of identity and status, and personnel administration) as identified in the VA system of records, 58VA21/22/28, Compensation, Pension, Education, and Vocational Rehabilitation and Employment Records - VA, published in the Federal Register.
+
+Your obligation to respond is required to obtain or retain education benefits. Giving us your SSN account information is mandatory. Applicants are required to provide their SSN under Title 38 U.S.C. 5101(c)(1). VA will not deny an individual benefits for refusing to provide their SSN unless the disclosure of the SSN is required by a Federal Statute of law enacted before January 1, 1975, and still in effect. The responses you submit are considered confidential (38 U.S.C. 5701). Information submitted is subject to verification through computer matching programs with other agencies.
+
+RESPONDENT BURDEN: We need this information to determine your eligibility for education benefits (38 U.S.C. Chapter 30, Chapter 33, Chapter 35, Chapter 1606 and Chapter 1607). Title 38, United States Code, allows us to ask for this information. We estimate that you will need an average of 60 minutes to review the instructions, find the information, and complete this form. VA cannot conduct or sponsor a collection of information unless a valid OMB control number is displayed. You are not required to respond to a collection of information if this number is not displayed. Valid OMB control numbers can be located on the OMB Internet Page at www.reginfo.gov/public/do/PRAMain. If desired, you can call 1-800-827-1000 to get information on where to send comments or suggestions about this form.`,
+        },
+        {
+          id: 'privacyActAck',
+          label: 'I have read and acknowledge the Privacy Act Notice above.',
+          type: 'checkbox',
+          required: true,
+          helpText: 'You must check this box to acknowledge the Privacy Act Notice before signing your application.',
+        },
+      ],
+    },
+
+    // ── STEP 17: Certification & Signature ────────────────────────────────
     {
       id: 'signature',
       title: 'Certification & Signature',
-      description: 'CERTIFICATION: I certify that all statements on this form are true and correct to the best of my knowledge and belief. WARNING: Title 38, United States Code, allows VA to request certain information to determine eligibility for benefits. Respondents are not required to respond unless it displays a valid OMB Control Number. Title 38 USC 1001 provides severe penalties for intentional misrepresentation.\n\nPRIVACY ACT NOTICE: The VA will not disclose information collected on this form to any source other than what has been authorized under the Privacy Act of 1974 or Title 38, Code of Federal Regulations 1.576 for routine uses (i.e., civil or criminal law enforcement, congressional communications, epidemiological or research studies, the collection of money owed to the United States, litigation in which the United States is a party or has an interest, the administration of VA programs and delivery of VA benefits, verification of identity and status, and personnel administration) as identified in the VA system of records. Your obligation to respond is required to obtain or retain education benefits. Providing your SSN is mandatory under Title 38 U.S.C. 5101(c)(1).',
+      description: 'CERTIFICATION: I certify that all statements on this form are true and correct to the best of my knowledge and belief. WARNING: Title 38, United States Code, allows VA to request certain information to determine eligibility for benefits. Respondents are not required to respond unless it displays a valid OMB Control Number. Title 38 USC 1001 provides severe penalties for intentional misrepresentation.',
       fields: [
-        {
-          id: 'privacyAct',
-          label: 'I have read and understand the Privacy Act Notice above.',
-          type: 'checkbox',
-          required: true,
-          helpText: 'You must check this box to certify that you have read the Privacy Act Notice before signing.',
-        },
         {
           id: 'signaturePad',
           label: 'Your Signature',
