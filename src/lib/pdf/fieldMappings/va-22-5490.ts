@@ -57,10 +57,13 @@ export const va225490Mapping: FieldMapping = {
   sp1Discharge: { pdfFieldName: 'form1[0].Page_3[0].#subform[0].#subform[2].characterdischarge1[0]', type: 'text' },
 
   // Signature image overlay + draw-text date fallback
+  // AcroForm fields confirmed: SignatureField11[0] page=2 x=36 y=288 w=378 h=24 (applicant)
+  //                            DateSigned[2] page=2 x=426 y=288
   signaturePad: [
-    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 0, imageX: 36, imageY: 80, imageWidth: 230, imageHeight: 50 },
+    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 2, imageX: 36, imageY: 284, imageWidth: 230, imageHeight: 24 },
   ],
   signatureDate: [
-    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 370, textY: 88, textSize: 10 },
+    { pdfFieldName: 'form1[0].Page_3[0].DateSigned[2]', type: 'text', transform: formatDateString },
+    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 2, textX: 426, textY: 290, textSize: 10 },
   ],
 };

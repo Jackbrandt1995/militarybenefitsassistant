@@ -41,10 +41,11 @@ export const va220803Mapping: FieldMapping = {
   remarks: { pdfFieldName: 'F[0].Page_1[0].Remarks[0]', type: 'text' },
 
   // Signature image overlay + draw-text date fallback
+  // Sig area is XFA-only; field DatelastAttendance lands near y=73 on page 0.
   signaturePad: [
-    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 0, imageX: 36, imageY: 80, imageWidth: 230, imageHeight: 50 },
+    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 0, imageX: 36, imageY: 69, imageWidth: 230, imageHeight: 20 },
   ],
   signatureDate: [
-    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 370, textY: 88, textSize: 10 },
+    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 454, textY: 75, textSize: 10 },
   ],
 };

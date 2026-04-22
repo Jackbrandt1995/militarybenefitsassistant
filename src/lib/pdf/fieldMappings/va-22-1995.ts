@@ -70,11 +70,13 @@ export const va221995Mapping: FieldMapping = {
   ],
   remarks: { pdfFieldName: 'form1[0].#subform[1].EnterRemarks[0]', type: 'text' },
 
-  // Signature image overlay + draw-text date fallback
+  // Signature is on page 1 (second page, 0-indexed). AcroForm date EnterDateSigned[0]: page=1 x=456 y=42
+  // Sig box is XFA-only; image placed at same page/y.
   signaturePad: [
-    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 0, imageX: 36, imageY: 80, imageWidth: 230, imageHeight: 50 },
+    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 1, imageX: 36, imageY: 38, imageWidth: 200, imageHeight: 20 },
   ],
   signatureDate: [
-    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 370, textY: 88, textSize: 10 },
+    { pdfFieldName: 'form1[0].#subform[1].EnterDateSigned[0]', type: 'text', transform: formatDateString },
+    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 1, textX: 456, textY: 44, textSize: 10 },
   ],
 };

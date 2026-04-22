@@ -57,11 +57,14 @@ export const va221990tMapping: FieldMapping = {
     { pdfFieldName: 'form1[0].#subform[0].OTHER[0]', type: 'checkbox', transform: v => v === 'other' ? 'true' : 'false' },
   ],
 
-  // Signature image overlay + draw-text date fallback
+  // Section 13 is the student/veteran certification (applicant signature).
+  // AcroForm fields: SIG13A[0] page=0 x=32 y=315 w=259 h=13
+  //                  DATESIGNED13B[0] page=0 x=298 y=314
   signaturePad: [
-    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 0, imageX: 36, imageY: 80, imageWidth: 230, imageHeight: 50 },
+    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 0, imageX: 32, imageY: 311, imageWidth: 230, imageHeight: 18 },
   ],
   signatureDate: [
-    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 370, textY: 88, textSize: 10 },
+    { pdfFieldName: 'form1[0].#subform[0].DATESIGNED13B[0]', type: 'text', transform: formatDateString },
+    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 298, textY: 316, textSize: 10 },
   ],
 };

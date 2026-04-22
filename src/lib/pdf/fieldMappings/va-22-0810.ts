@@ -28,11 +28,13 @@ export const va220810Mapping: FieldMapping = {
   examCost: { pdfFieldName: 'F[0].Page_1[0].ItemizeExamCost[0]', type: 'text' },
   remarks: { pdfFieldName: 'F[0].Page_1[0].Remarks[0]', type: 'text' },
 
-  // Signature image overlay + draw-text date fallback
+  // AcroForm fields confirmed: Signature1[0] page=0 x=36 y=102 w=396 h=12
+  //                            DateSigned[0] page=0 x=444 y=102
   signaturePad: [
-    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 0, imageX: 36, imageY: 80, imageWidth: 230, imageHeight: 50 },
+    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 0, imageX: 36, imageY: 98, imageWidth: 230, imageHeight: 20 },
   ],
   signatureDate: [
-    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 370, textY: 88, textSize: 10 },
+    { pdfFieldName: 'F[0].Page_1[0].DateSigned[0]', type: 'text', transform: formatDateString },
+    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 444, textY: 104, textSize: 10 },
   ],
 };

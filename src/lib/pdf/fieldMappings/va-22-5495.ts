@@ -62,11 +62,13 @@ export const va225495Mapping: FieldMapping = {
   whyStopped: { pdfFieldName: 'form1[0].Page_2[0].tessuswhen[0]', type: 'text' },
   remarks: { pdfFieldName: 'form1[0].Page_2[0].remarks27[0]', type: 'text' },
 
-  // Signature image overlay + draw-text date fallback
+  // AcroForm fields confirmed: Signature[0] page=1 x=84 y=36 w=330 h=12
+  //                            DateSigned[2] page=1 x=426 y=36
   signaturePad: [
-    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 0, imageX: 36, imageY: 80, imageWidth: 230, imageHeight: 50 },
+    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 1, imageX: 84, imageY: 32, imageWidth: 230, imageHeight: 18 },
   ],
   signatureDate: [
-    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 370, textY: 88, textSize: 10 },
+    { pdfFieldName: 'form1[0].Page_2[0].DateSigned[2]', type: 'text', transform: formatDateString },
+    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 1, textX: 426, textY: 38, textSize: 10 },
   ],
 };

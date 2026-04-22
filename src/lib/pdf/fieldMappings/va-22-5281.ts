@@ -20,11 +20,13 @@ export const va225281Mapping: FieldMapping = {
   ],
   otherReason: { pdfFieldName: 'F[0].Page_1[0].D\\.OTHERSpecify[0]', type: 'text' },
 
-  // Signature image overlay + draw-text date fallback
+  // AcroForm fields confirmed: SignatureField11[5] page=0 x=36 y=168 w=414 h=24 (applicant/claimant)
+  //                            DateSigned[6] page=0 x=462 y=168
   signaturePad: [
-    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 0, imageX: 36, imageY: 80, imageWidth: 230, imageHeight: 50 },
+    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 0, imageX: 36, imageY: 164, imageWidth: 230, imageHeight: 24 },
   ],
   signatureDate: [
-    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 370, textY: 88, textSize: 10 },
+    { pdfFieldName: 'F[0].Page_1[0].DateSigned[6]', type: 'text', transform: formatDateString },
+    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 462, textY: 170, textSize: 10 },
   ],
 };

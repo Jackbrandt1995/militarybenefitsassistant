@@ -55,11 +55,13 @@ export const va221990eMapping: FieldMapping = {
   smApt: { pdfFieldName: 'F[0].Page_4[0].AptUnitNumber2[0]', type: 'text' },
   smCity: { pdfFieldName: 'F[0].Page_4[0].CityStateZIPCode2[0]', type: 'text' },
 
-  // Signature image overlay + draw-text date fallback
+  // Signature is on page 3 (last page, 0-indexed). AcroForm date Date_Signed[0]: page=3 x=410 y=49
+  // Sig box is XFA-only; image placed at same page/y.
   signaturePad: [
-    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 0, imageX: 36, imageY: 80, imageWidth: 230, imageHeight: 50 },
+    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 3, imageX: 36, imageY: 45, imageWidth: 230, imageHeight: 20 },
   ],
   signatureDate: [
-    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 370, textY: 88, textSize: 10 },
+    { pdfFieldName: 'F[0].Page_4[0].Date_Signed[0]', type: 'text', transform: formatDateString },
+    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 3, textX: 410, textY: 51, textSize: 10 },
   ],
 };

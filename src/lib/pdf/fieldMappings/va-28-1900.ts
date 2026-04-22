@@ -46,12 +46,13 @@ export const va281900Mapping: FieldMapping = {
   // Education
   yearsOfEducation: { pdfFieldName: 'form1[0].#subform[0].Number_Of_Years_Of_Education[0]', type: 'text' },
 
-  // Signature — image overlay + draw-text date fallback (XFA forms may not expose AcroForm fields)
+  // AcroForm field confirmed: SignatureField11[0] page=1 x=36 y=522 w=348 h=30
+  // Signature is on page 1 (second page, 0-indexed).
   signaturePad: [
-    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 0, imageX: 36, imageY: 80, imageWidth: 230, imageHeight: 50 },
+    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 1, imageX: 36, imageY: 518, imageWidth: 230, imageHeight: 30 },
   ],
   signatureDate: [
-    { pdfFieldName: 'form1[0].#subform[0].DateSigned[0]', type: 'text', transform: formatDateString },
-    { pdfFieldName: 'DRAW_TEXT', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 370, textY: 88, textSize: 10 },
+    { pdfFieldName: 'form1[0].#subform[1].DateSigned[0]', type: 'text', transform: formatDateString },
+    { pdfFieldName: 'DRAW_TEXT', type: 'draw-text', transform: formatDateString, textPage: 1, textX: 400, textY: 524, textSize: 10 },
   ],
 };

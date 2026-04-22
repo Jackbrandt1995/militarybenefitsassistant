@@ -64,11 +64,12 @@ export const va228691Mapping: FieldMapping = {
   availFridayFrom: { pdfFieldName: 'form1[0].#subform[0].DateFromFri[0]', type: 'text' },
   availFridayTo: { pdfFieldName: 'form1[0].#subform[0].DateToFri[0]', type: 'text' },
 
-  // Signature image overlay + draw-text date fallback
+  // Sig area is XFA-only. AcroForm date Date[0]: page=0 x=431 y=138 (near applicant sig line).
   signaturePad: [
-    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 0, imageX: 36, imageY: 80, imageWidth: 230, imageHeight: 50 },
+    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 0, imageX: 36, imageY: 130, imageWidth: 230, imageHeight: 18 },
   ],
   signatureDate: [
-    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 370, textY: 88, textSize: 10 },
+    { pdfFieldName: 'form1[0].#subform[0].Date[0]', type: 'text', transform: formatDateString },
+    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 431, textY: 140, textSize: 10 },
   ],
 };
