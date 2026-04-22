@@ -62,9 +62,9 @@ export default function FormWizard({ form }: FormWizardProps) {
         }
       }
 
-      // Before submitting, verify all required fields in the privacyAct and signature
-      // steps are filled. Users can bypass step validation via sidebar navigation, so
-      // we gate here and redirect them back to the first incomplete required step.
+      // Before submitting, verify all required fields in the signature step are filled.
+      // Users can bypass step validation via sidebar navigation, so we gate here.
+      // Also check any 'privacyAct' step (present on some forms) for the same reason.
       for (const gateStepId of ['privacyAct', 'signature']) {
         const gateIdx = form.steps.findIndex(s => s.id === gateStepId);
         if (gateIdx !== -1) {
@@ -84,20 +84,32 @@ export default function FormWizard({ form }: FormWizardProps) {
       // Build final answers, applying any form-specific computed fields
       const finalAnswers = { ...answers };
 
-      // VA 22-1990: auto-check the per-phone "None" checkbox when that specific
-      // phone field is left blank, as required by the PDF form instructions.
+      // VA 22-1990: auto-check the "None" telephone checkbox when both phone
+      // fields were left blank, as required by the PDF form instructions.
       if (form.id === 'va-22-1990') {
-        const primaryDigits   = String(finalAnswers.phonePrimary   || '').replace(/\D/g, '');
+        const primaryDigits  = String(finalAnswers.phonePrimary  || '').replace(/\D/g, '');
         const secondaryDigits = String(finalAnswers.phoneSecondary || '').replace(/\D/g, '');
-        if (primaryDigits.length === 0) {
+        if (primaryDigits.length === 0 && secondaryDigits.length === 0) {
           finalAnswers.phoneNone = 'true';
         } else {
           delete finalAnswers.phoneNone;
         }
-        if (secondaryDigits.length === 0) {
-          finalAnswers.phoneMobileNone = 'true';
+      }
+
+      // VA 28-1900: auto-check each phone's "None" checkbox independently
+      // when that specific phone field is left blank.
+      if (form.id === 'va-28-1900') {
+        const mainDigits = String(finalAnswers.mainPhone || '').replace(/\D/g, '');
+        const cellDigits = String(finalAnswers.cellPhone || '').replace(/\D/g, '');
+        if (mainDigits.length === 0) {
+          finalAnswers.mainPhoneNone = 'true';
         } else {
-          delete finalAnswers.phoneMobileNone;
+          delete finalAnswers.mainPhoneNone;
+        }
+        if (cellDigits.length === 0) {
+          finalAnswers.cellPhoneNone = 'true';
+        } else {
+          delete finalAnswers.cellPhoneNone;
         }
       }
 

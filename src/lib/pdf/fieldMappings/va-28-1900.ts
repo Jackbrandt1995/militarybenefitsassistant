@@ -1,4 +1,5 @@
 import type { FieldMapping } from '../fillPdf';
+import { formatDateString } from '../fillPdf';
 
 export const va281900Mapping: FieldMapping = {
   // Personal
@@ -37,7 +38,20 @@ export const va281900Mapping: FieldMapping = {
   intlPhone: { pdfFieldName: 'form1[0].#subform[0].International_Telephone_Number_If_Applicable[0]', type: 'text' },
   email: { pdfFieldName: 'form1[0].#subform[0].Email_Address[0]', type: 'text' },
   agreeElectronic: { pdfFieldName: 'form1[0].#subform[0].CheckBox1[0]', type: 'checkbox' },
+  // "None" checkboxes — injected by FormWizard when that phone field is blank.
+  // Coordinates are estimates; adjust checkCY if squares land in wrong rows after testing.
+  mainPhoneNone: { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 0, checkCX: 43, checkCY: 510, checkSize: 6 },
+  cellPhoneNone: { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 0, checkCX: 43, checkCY: 493, checkSize: 6 },
 
   // Education
   yearsOfEducation: { pdfFieldName: 'form1[0].#subform[0].Number_Of_Years_Of_Education[0]', type: 'text' },
+
+  // Signature — image overlay + draw-text date fallback (XFA forms may not expose AcroForm fields)
+  signaturePad: [
+    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 0, imageX: 36, imageY: 80, imageWidth: 230, imageHeight: 50 },
+  ],
+  signatureDate: [
+    { pdfFieldName: 'form1[0].#subform[0].DateSigned[0]', type: 'text', transform: formatDateString },
+    { pdfFieldName: 'DRAW_TEXT', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 370, textY: 88, textSize: 10 },
+  ],
 };

@@ -83,11 +83,9 @@ export const va221990Mapping: FieldMapping = {
     { pdfFieldName: 'form1[0].#subform[3].secondaryphone1[0]', type: 'text', transform: v => formatPhoneParts(v).first3 },
     { pdfFieldName: 'form1[0].#subform[3].secondaryphone4[0]', type: 'text', transform: v => formatPhoneParts(v).last4 },
   ],
-  // "None" telephone checkboxes — injected independently per phone row when that phone is blank.
-  // Home phone "None" checkbox (primary row). Adjust checkCY if square lands in wrong row.
-  phoneNone:       { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 3, checkCX: 43, checkCY: 510, checkSize: 6 },
-  // Cell/mobile phone "None" checkbox (secondary row, ~15pt below home row).
-  phoneMobileNone: { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 3, checkCX: 43, checkCY: 493, checkSize: 6 },
+  // "None" telephone checkbox — injected when both phonePrimary and phoneSecondary are empty.
+  // Estimated coordinates; adjust if square lands in wrong location after testing.
+  phoneNone: { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 3, checkCX: 43, checkCY: 508, checkSize: 6 },
 
   // ── DIRECT DEPOSIT ────────────────────────────────────────────────────────
   // checking cx=248.7 cy=417.1, savings cx=308.7 cy=417.1 — page 3
