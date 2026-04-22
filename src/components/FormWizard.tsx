@@ -96,21 +96,24 @@ export default function FormWizard({ form }: FormWizardProps) {
         }
       }
 
-      // VA 28-1900: auto-check each phone's "None" checkbox independently
+      // Per-form phone "None" injection — checked independently per phone row
       // when that specific phone field is left blank.
-      if (form.id === 'va-28-1900') {
-        const mainDigits = String(finalAnswers.mainPhone || '').replace(/\D/g, '');
-        const cellDigits = String(finalAnswers.cellPhone || '').replace(/\D/g, '');
-        if (mainDigits.length === 0) {
-          finalAnswers.mainPhoneNone = 'true';
-        } else {
-          delete finalAnswers.mainPhoneNone;
-        }
-        if (cellDigits.length === 0) {
-          finalAnswers.cellPhoneNone = 'true';
-        } else {
-          delete finalAnswers.cellPhoneNone;
-        }
+      const dualPhoneFormConfigs: Record<string, [string, string, string, string]> = {
+        'va-28-1900':  ['mainPhone',      'cellPhone',       'mainPhoneNone',       'cellPhoneNone'],
+        'va-22-0803':  ['homePhone',      'mobilePhone',     'homePhoneNone',       'mobilePhoneNone'],
+        'va-22-0810':  ['daytimePhone',   'eveningPhone',    'daytimePhoneNone',    'eveningPhoneNone'],
+        'va-22-1990e': ['homePhone',      'mobilePhone',     'homePhoneNone',       'mobilePhoneNone'],
+        'va-22-1995':  ['homePhone',      'mobilePhone',     'homePhoneNone',       'mobilePhoneNone'],
+        'va-22-5490':  ['homePhone',      'mobilePhone',     'homePhoneNone',       'mobilePhoneNone'],
+        'va-22-5495':  ['primaryPhone',   'secondaryPhone',  'primaryPhoneNone',    'secondaryPhoneNone'],
+      };
+      const phoneConfig = dualPhoneFormConfigs[form.id];
+      if (phoneConfig) {
+        const [phone1Field, phone2Field, none1Key, none2Key] = phoneConfig;
+        const digits1 = String(finalAnswers[phone1Field] || '').replace(/\D/g, '');
+        const digits2 = String(finalAnswers[phone2Field] || '').replace(/\D/g, '');
+        if (digits1.length === 0) { finalAnswers[none1Key] = 'true'; } else { delete finalAnswers[none1Key]; }
+        if (digits2.length === 0) { finalAnswers[none2Key] = 'true'; } else { delete finalAnswers[none2Key]; }
       }
 
       localStorage.setItem(`form-wizard-${form.id}`, JSON.stringify({ answers: finalAnswers }));

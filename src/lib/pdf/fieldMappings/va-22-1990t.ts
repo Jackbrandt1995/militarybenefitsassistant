@@ -1,4 +1,5 @@
 import type { FieldMapping } from '../fillPdf';
+import { formatDateString } from '../fillPdf';
 
 export const va221990tMapping: FieldMapping = {
   // Applicant – split name fields
@@ -54,5 +55,13 @@ export const va221990tMapping: FieldMapping = {
     { pdfFieldName: 'form1[0].#subform[0].FOURYR[0]', type: 'checkbox', transform: v => v === 'fourYear' ? 'true' : 'false' },
     { pdfFieldName: 'form1[0].#subform[0].TWOYR[0]', type: 'checkbox', transform: v => v === 'twoYear' ? 'true' : 'false' },
     { pdfFieldName: 'form1[0].#subform[0].OTHER[0]', type: 'checkbox', transform: v => v === 'other' ? 'true' : 'false' },
+  ],
+
+  // Signature image overlay + draw-text date fallback
+  signaturePad: [
+    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 0, imageX: 36, imageY: 80, imageWidth: 230, imageHeight: 50 },
+  ],
+  signatureDate: [
+    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 370, textY: 88, textSize: 10 },
   ],
 };

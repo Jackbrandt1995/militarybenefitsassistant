@@ -1,4 +1,5 @@
 import type { FieldMapping } from '../fillPdf';
+import { formatDateString } from '../fillPdf';
 
 export const va225495Mapping: FieldMapping = {
   // Applicant – Page 1 (firstName maps to combined name field)
@@ -7,6 +8,8 @@ export const va225495Mapping: FieldMapping = {
   vaFileNumber: { pdfFieldName: 'form1[0].Page_1[0].VAFILENUMBER[0]', type: 'text' },
   primaryPhone: { pdfFieldName: 'form1[0].Page_1[0].PrimaryPhone[0]', type: 'text' },
   secondaryPhone: { pdfFieldName: 'form1[0].Page_1[0].SecondaryPhone[0]', type: 'text' },
+  primaryPhoneNone:   { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 0, checkCX: 43, checkCY: 510, checkSize: 6 },
+  secondaryPhoneNone: { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 0, checkCX: 43, checkCY: 493, checkSize: 6 },
   email: { pdfFieldName: 'form1[0].Page_1[0].APPLICANTSE-MAILADDRESS[0]', type: 'text' },
   dob: { pdfFieldName: 'form1[0].Page_1[0].DOB[0]', type: 'text' },
   sex: [
@@ -58,4 +61,12 @@ export const va225495Mapping: FieldMapping = {
   oldSchool: { pdfFieldName: 'form1[0].Page_2[0].ifchanging[0]', type: 'text' },
   whyStopped: { pdfFieldName: 'form1[0].Page_2[0].tessuswhen[0]', type: 'text' },
   remarks: { pdfFieldName: 'form1[0].Page_2[0].remarks27[0]', type: 'text' },
+
+  // Signature image overlay + draw-text date fallback
+  signaturePad: [
+    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 0, imageX: 36, imageY: 80, imageWidth: 230, imageHeight: 50 },
+  ],
+  signatureDate: [
+    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 370, textY: 88, textSize: 10 },
+  ],
 };

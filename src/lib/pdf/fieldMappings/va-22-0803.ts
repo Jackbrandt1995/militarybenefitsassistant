@@ -1,10 +1,13 @@
 import type { FieldMapping } from '../fillPdf';
+import { formatDateString } from '../fillPdf';
 
 export const va220803Mapping: FieldMapping = {
   // Applicant – name maps to combined PDF name field
   firstName: { pdfFieldName: 'F[0].Page_1[0].nameapp[0]', type: 'text' },
   address: { pdfFieldName: 'F[0].Page_1[0].mailing[0]', type: 'text' },
   homePhone: { pdfFieldName: 'F[0].Page_1[0].telephone[0]', type: 'text' },
+  homePhoneNone:   { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 0, checkCX: 43, checkCY: 510, checkSize: 6 },
+  mobilePhoneNone: { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 0, checkCX: 43, checkCY: 493, checkSize: 6 },
   vaFileNumber: { pdfFieldName: 'F[0].Page_1[0].VAFile[0]', type: 'text' },
 
   // Benefit chapter checkboxes (driven by benefitProgram radio)
@@ -36,4 +39,12 @@ export const va220803Mapping: FieldMapping = {
   test3Org: { pdfFieldName: 'F[0].Page_1[0].CompleteName3[0]', type: 'text' },
 
   remarks: { pdfFieldName: 'F[0].Page_1[0].Remarks[0]', type: 'text' },
+
+  // Signature image overlay + draw-text date fallback
+  signaturePad: [
+    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 0, imageX: 36, imageY: 80, imageWidth: 230, imageHeight: 50 },
+  ],
+  signatureDate: [
+    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 370, textY: 88, textSize: 10 },
+  ],
 };

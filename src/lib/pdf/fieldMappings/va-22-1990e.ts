@@ -1,4 +1,5 @@
 import type { FieldMapping } from '../fillPdf';
+import { formatDateString } from '../fillPdf';
 
 export const va221990eMapping: FieldMapping = {
   // Applicant Info - Page 3
@@ -10,6 +11,8 @@ export const va221990eMapping: FieldMapping = {
   city: { pdfFieldName: 'F[0].Page_3[0].CityStateZIPCode[0]', type: 'text' },
   homePhone: { pdfFieldName: 'F[0].Page_3[0].Home_Phone[0]', type: 'text' },
   mobilePhone: { pdfFieldName: 'F[0].Page_3[0].Mobile_Phone[0]', type: 'text' },
+  homePhoneNone:   { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 0, checkCX: 43, checkCY: 510, checkSize: 6 },
+  mobilePhoneNone: { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 0, checkCX: 43, checkCY: 493, checkSize: 6 },
   email: { pdfFieldName: 'F[0].Page_3[0].Email[0]', type: 'text' },
 
   // Education Type checkboxes (driven by educationType radio)
@@ -51,4 +54,12 @@ export const va221990eMapping: FieldMapping = {
   smStreet: { pdfFieldName: 'F[0].Page_4[0].NumberandStreet2[0]', type: 'text' },
   smApt: { pdfFieldName: 'F[0].Page_4[0].AptUnitNumber2[0]', type: 'text' },
   smCity: { pdfFieldName: 'F[0].Page_4[0].CityStateZIPCode2[0]', type: 'text' },
+
+  // Signature image overlay + draw-text date fallback
+  signaturePad: [
+    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 0, imageX: 36, imageY: 80, imageWidth: 230, imageHeight: 50 },
+  ],
+  signatureDate: [
+    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 370, textY: 88, textSize: 10 },
+  ],
 };

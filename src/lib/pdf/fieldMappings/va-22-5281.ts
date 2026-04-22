@@ -1,4 +1,5 @@
 import type { FieldMapping } from '../fillPdf';
+import { formatDateString } from '../fillPdf';
 
 export const va225281Mapping: FieldMapping = {
   // Applicant – firstName maps to combined name field
@@ -18,4 +19,12 @@ export const va225281Mapping: FieldMapping = {
     { pdfFieldName: 'F[0].Page_1[0].D\\.OTHER[0]', type: 'checkbox', transform: v => v === 'other' ? 'true' : 'false' },
   ],
   otherReason: { pdfFieldName: 'F[0].Page_1[0].D\\.OTHERSpecify[0]', type: 'text' },
+
+  // Signature image overlay + draw-text date fallback
+  signaturePad: [
+    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 0, imageX: 36, imageY: 80, imageWidth: 230, imageHeight: 50 },
+  ],
+  signatureDate: [
+    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 370, textY: 88, textSize: 10 },
+  ],
 };
