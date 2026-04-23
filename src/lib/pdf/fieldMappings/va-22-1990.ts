@@ -156,15 +156,16 @@ export const va221990Mapping: FieldMapping = {
   serviceAcademyYear: { pdfFieldName: 'form1[0].#subform[5].gradyear[0]', type: 'text' },
 
   // ── EDUCATION BACKGROUND (page 5) ────────────────────────────────────────
-  // Q7: HS diploma — yes cx=450.3 no cx=492.3 cy=462.0
-  // Q8: FAA certs  — yes cx=450.3 no cx=492.3 cy=426.0
+  // Q7: HS diploma — yes cx=492.3 no cx=450.3 cy=462.0
+  // Q8: FAA certs  — yes cx=492.3 no cx=450.3 cy=426.0
+  // Note: 492.3 is the YES box, 450.3 is the NO box (confirmed via user testing)
   hsGrad: [
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true'  ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 462.0, checkSize: 6 },
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'false' ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 462.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true'  ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 462.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'false' ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 462.0, checkSize: 6 },
   ],
   faaFlightCerts: [
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 426.0, checkSize: 6 },
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 426.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 426.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 426.0, checkSize: 6 },
   ],
 
   // ── COLLEGE & TRAINING HISTORY (page 5) ──────────────────────────────────
@@ -247,26 +248,17 @@ export const va221990Mapping: FieldMapping = {
   // ── REMARKS & SIGNATURE (page 6) ─────────────────────────────────────────
   remarks: { pdfFieldName: 'form1[0].#subform[6].remarks[0]', type: 'text' },
 
-  // Signature: image overlay (drawn PNG from SignaturePad) + draw-text fallback.
-  // The image is placed at imageY=80 (~1.1" from bottom) on the signature line.
-  // The draw-text entry at the same coordinates prints a text marker if the PNG
-  // ever fails to render (e.g., in strict XFA viewers).
-  signaturePad: [
-    {
-      pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY',
-      type: 'image',
-      imagePage: 6,
-      imageX: 36,
-      imageY: 80,
-      imageWidth: 230,
-      imageHeight: 50,
-    },
-  ],
+  // Signature: image overlay placed at the confirmed signature line position.
+  signaturePad: {
+    pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY',
+    type: 'image',
+    imagePage: 6,
+    imageX: 36,
+    imageY: 25,
+    imageWidth: 200,
+    imageHeight: 40,
+  },
 
-  // Signature date: try the AcroForm text field first; the draw-text entry burns
-  // the formatted date directly onto the page as a reliable fallback.
-  signatureDate: [
-    { pdfFieldName: 'form1[0].#subform[6].Datesigned[0]', type: 'text', transform: formatDateString },
-    { pdfFieldName: 'DRAW_TEXT', type: 'draw-text', transform: formatDateString, textPage: 6, textX: 370, textY: 88, textSize: 10 },
-  ],
+  // Signature date via AcroForm text field.
+  signatureDate: { pdfFieldName: 'form1[0].#subform[6].Datesigned[0]', type: 'text', transform: formatDateString },
 };

@@ -46,13 +46,25 @@ export const va281900Mapping: FieldMapping = {
   // Education
   yearsOfEducation: { pdfFieldName: 'form1[0].#subform[0].Number_Of_Years_Of_Education[0]', type: 'text' },
 
-  // AcroForm field confirmed: SignatureField11[0] page=1 x=36 y=522 w=348 h=30
-  // Signature is on page 1 (second page, 0-indexed).
-  signaturePad: [
-    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 1, imageX: 36, imageY: 518, imageWidth: 230, imageHeight: 30 },
-  ],
+  // AcroForm fields confirmed from annotation rects (page 1, 0-indexed):
+  //   SignatureField11[0]: x=36 y=522 w=348 h=30
+  //   IfIDontGiveMyInfo[0]: x=38.8 y=625.5 w=9 h=9  (checkCX=43, checkCY=630)
+  //   Month[1]: x=396 y=537  Day[1]: x=450 y=537  Year[1]: x=504 y=537
+  signaturePad: {
+    pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY',
+    type: 'image',
+    imagePage: 1,
+    imageX: 36,
+    imageY: 522,
+    imageWidth: 348,
+    imageHeight: 30,
+  },
+  // Date is split into three separate fields (same pattern as DOB)
   signatureDate: [
-    { pdfFieldName: 'form1[0].#subform[1].DateSigned[0]', type: 'text', transform: formatDateString },
-    { pdfFieldName: 'DRAW_TEXT', type: 'draw-text', transform: formatDateString, textPage: 1, textX: 400, textY: 524, textSize: 10 },
+    { pdfFieldName: 'form1[0].#subform[1].Month[1]', type: 'text', transform: (v: string) => v ? v.split('-')[1] || '' : '' },
+    { pdfFieldName: 'form1[0].#subform[1].Day[1]',   type: 'text', transform: (v: string) => v ? v.split('-')[2] || '' : '' },
+    { pdfFieldName: 'form1[0].#subform[1].Year[1]',  type: 'text', transform: (v: string) => v ? v.split('-')[0] || '' : '' },
   ],
+  // Privacy Act acknowledgment checkbox (IfIDontGiveMyInfo[0]), confirmed via annotation rect
+  privacyAct: { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: (v: string) => v === 'true' ? 'true' : '', checkPage: 1, checkCX: 43, checkCY: 630, checkSize: 6 },
 };
