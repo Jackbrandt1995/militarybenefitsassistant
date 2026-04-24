@@ -156,19 +156,23 @@ export const va221990Mapping: FieldMapping = {
   serviceAcademyYear: { pdfFieldName: 'form1[0].#subform[5].gradyear[0]', type: 'text' },
 
   // ── EDUCATION BACKGROUND (page 5) ────────────────────────────────────────
-  // Q7: HS diploma  — pypdf confirmed: yes7[0] cx=450.3, no7[0] cx=492.3, cy=462.0
-  // Q8: FAA certs   — pypdf confirmed: yes8[0] cx=450.3, no8[0] cx=492.3, cy=426.0
-  // cx=450.3 is LEFT (YES), cx=492.3 is RIGHT (NO)
+  // Q7: HS diploma  — AcroForm field names: yes7[0] at cx=450.3 (LEFT), no7[0] at cx=492.3 (RIGHT)
+  // Q8: FAA certs   — AcroForm field names: yes8[0] at cx=450.3 (LEFT), no8[0] at cx=492.3 (RIGHT)
+  // XFA INVERSION: the XFA renderer places the visual YES label on the RIGHT (cx=492.3) and
+  // NO label on the LEFT (cx=450.3) — opposite of the AcroForm widget names.
+  // draw-check draws on the page layer which the user sees, so we must match the VISUAL positions:
+  //   YES → cx=492.3 (RIGHT, where YES label is rendered by XFA)
+  //   NO  → cx=450.3 (LEFT, where NO label is rendered by XFA)
   // hsGradYear — no AcroForm widget; draw text to the right of the yes/no checkboxes (box 14)
   // Positioned at approximately x=512, y=458 on page 5 (right of no7[0] at cx=492.3, cy=462.0)
   hsGradYear: { pdfFieldName: 'DRAW_TEXT_YEAR', type: 'draw-text', textPage: 5, textX: 512, textY: 458, textSize: 9 },
   hsGrad: [
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true'  ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 462.0, checkSize: 6 },
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'false' ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 462.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true'  ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 462.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'false' ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 462.0, checkSize: 6 },
   ],
   faaFlightCerts: [
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 426.0, checkSize: 6 },
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 426.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 426.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 426.0, checkSize: 6 },
   ],
 
   // ── COLLEGE & TRAINING HISTORY (page 5) ──────────────────────────────────
@@ -195,37 +199,35 @@ export const va221990Mapping: FieldMapping = {
   emp2License:    { pdfFieldName: 'form1[0].#subform[5].licorrating2[0]',         type: 'text' },
 
   // ── CONTRIBUTIONS & SPECIAL BENEFITS (page 5) ────────────────────────────
-  // Q9: MGIB contributions — yes cx=450.3 no cx=492.3 cy=402.0
-  // Q10: Active duty kicker — yes cx=450.3 no cx=492.3 cy=354.0
-  // Q11[1]: Reserve kicker  — yes cx=450.3 no cx=492.3 cy=168.0
-  // Q12[1]: Military tuition — yes cx=450.3 no cx=492.3 cy=144.0
+  // XFA inversion applies: visual YES = cx=492.3 (RIGHT), visual NO = cx=450.3 (LEFT)
+  // Q9: MGIB contributions cy=402.0 | Q10: Active duty kicker cy=354.0
+  // Q11[1]: Reserve kicker cy=168.0 | Q12[1]: Military tuition cy=144.0
   mgibContributions: [
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 402.0, checkSize: 6 },
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 402.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 402.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 402.0, checkSize: 6 },
   ],
   activeDutyKicker: [
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 354.0, checkSize: 6 },
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 354.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 354.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 354.0, checkSize: 6 },
   ],
   reserveKicker: [
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 168.0, checkSize: 6 },
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 168.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 168.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 168.0, checkSize: 6 },
   ],
   receivingMilitaryTuition: [
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 144.0, checkSize: 6 },
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 144.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 144.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 144.0, checkSize: 6 },
   ],
 
   // ── PRIOR BENEFITS (page 5) ───────────────────────────────────────────────
-  // Q13: Federal benefits — yes cx=450.3 no cx=492.3 cy=114.0
-  // Q14: VA benefits      — yes cx=450.3 no cx=492.3 cy=66.0
+  // Q13: Federal benefits cy=114.0 | Q14: VA benefits cy=66.0
   previousFederalBenefits: [
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 114.0, checkSize: 6 },
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 114.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 114.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 114.0, checkSize: 6 },
   ],
   previousVABenefits: [
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY:  66.0, checkSize: 6 },
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY:  66.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY:  66.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY:  66.0, checkSize: 6 },
   ],
 
   // ── FAMILY & DEPENDENTS (page 6) ─────────────────────────────────────────
@@ -251,16 +253,18 @@ export const va221990Mapping: FieldMapping = {
   // ── REMARKS & SIGNATURE (page 6) ─────────────────────────────────────────
   remarks: { pdfFieldName: 'form1[0].#subform[6].remarks[0]', type: 'text' },
 
-  // Signature: exactly matches signatureofapp[0] AcroForm rect [36, 36, 450, 48] on page 6.
-  // imageY=36 (bottom of field from page bottom), imageWidth=414 (450-36), imageHeight=12 (48-36).
+  // Signature: field rect [36, 36, 450, 48] on page 6.
+  // Label "26A. SIGNATURE OF APPLICANT" is at y=64, so safe height from y=36 is ~20pt (top at y=56).
+  // The signature canvas is 560×120 (4.67:1). Use 200×20 = 10:1 — much less distorted than 414×12.
+  // imageX=36, imageY=36, so image spans x=36–236, y=36–56 (below label at y=64).
   signaturePad: {
     pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY',
     type: 'image',
     imagePage: 6,
     imageX: 36,
     imageY: 36,
-    imageWidth: 414,
-    imageHeight: 12,
+    imageWidth: 200,
+    imageHeight: 20,
   },
 
   // Signature date via AcroForm text field.
