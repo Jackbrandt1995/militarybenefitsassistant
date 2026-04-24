@@ -165,12 +165,26 @@ export const va221995: FormDefinition = {
     },
   ],
   computeAnswers: (answers) => {
-    const fullName = [answers.firstName, answers.middleName, answers.lastName]
-      .map(v => String(v || '').trim()).filter(Boolean).join(' ');
+    // Name format for 1995: Last, First MI
+    const mi = String(answers.middleName || '').trim().charAt(0);
+    const firstMI = [answers.firstName, mi].filter(Boolean).join(' ');
+    const fullName = [answers.lastName, firstMI].filter(Boolean).join(', ');
+
     const cityState = [answers.city, answers.state]
       .map(v => String(v || '').trim()).filter(Boolean).join(', ');
     const fullAddress = [answers.address, cityState, answers.zip]
       .map(v => String(v || '').trim()).filter(Boolean).join(', ');
-    return { ...answers, fullName, fullAddress };
+
+    // 7B: combine from/to dates into a single range string for the date range field
+    const fmt = (iso: string | boolean) => {
+      const s = String(iso || '');
+      if (!s || !s.includes('-')) return '';
+      const [y, m, d] = s.split('-');
+      return `${m}/${d}/${y}`;
+    };
+    const service1DateRange = [fmt(answers.service1From), fmt(answers.service1To)].filter(Boolean).join(' \u2013 ');
+    const service2DateRange = [fmt(answers.service2From), fmt(answers.service2To)].filter(Boolean).join(' \u2013 ');
+
+    return { ...answers, fullName, fullAddress, service1DateRange, service2DateRange };
   },
 };

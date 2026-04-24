@@ -49,15 +49,15 @@ export const va221995Mapping: FieldMapping = {
 
   // Service Periods – Page 2
   service1Branch: { pdfFieldName: 'form1[0].#subform[1].EnterBranchOfService1[0]', type: 'text' },
-  service1From: { pdfFieldName: 'form1[0].#subform[1].EnterActiveDutyDates1[0]', type: 'text' },
+  service1DateRange: { pdfFieldName: 'form1[0].#subform[1].EnterActiveDates1[0]', type: 'text' },
   service1DutyType: { pdfFieldName: 'form1[0].#subform[1].EnterTypeOfDutyE1[0]', type: 'text' },
   service1Discharge: { pdfFieldName: 'form1[0].#subform[1].EnterCharacterD1[0]', type: 'text' },
   service1Involuntary: [
     { pdfFieldName: 'form1[0].#subform[1].CheckBoxYesCalled1[0]', type: 'checkbox', transform: v => v === 'Yes' ? 'true' : 'false' },
     { pdfFieldName: 'form1[0].#subform[1].CheckBoxNoCalled1[0]', type: 'checkbox', transform: v => v === 'No' ? 'true' : 'false' },
   ],
-  service2Branch: { pdfFieldName: 'form1[0].#subform[1].EnterBranchOfService2[0]', type: 'text' },
-  service2From: { pdfFieldName: 'form1[0].#subform[1].EnterActiveDutyDates2[0]', type: 'text' },
+  service2Branch: { pdfFieldName: 'form1[0].#subform[1].EnterBranceOfService2[0]', type: 'text' },
+  service2DateRange: { pdfFieldName: 'form1[0].#subform[1].EnterActiveDutyDates2[0]', type: 'text' },
   service2DutyType: { pdfFieldName: 'form1[0].#subform[1].EnterTypeOfDutyE2[0]', type: 'text' },
   service2Discharge: { pdfFieldName: 'form1[0].#subform[1].EnterCharacterD2[0]', type: 'text' },
 

@@ -113,8 +113,10 @@ export const va220803: FormDefinition = {
   computeAnswers: (answers) => {
     const fullName = [answers.firstName, answers.middleName, answers.lastName]
       .map(v => String(v || '').trim()).filter(Boolean).join(' ');
-    const cityStateZip = [answers.city, answers.state, answers.zip]
+    const stateZip = [answers.state, answers.zip]
+      .map(v => String(v || '').trim()).filter(Boolean).join(' ');
+    const fullAddress = [answers.address, answers.city, stateZip]
       .map(v => String(v || '').trim()).filter(Boolean).join(', ');
-    return { ...answers, fullName, cityStateZip };
+    return { ...answers, fullName, fullAddress };
   },
 };

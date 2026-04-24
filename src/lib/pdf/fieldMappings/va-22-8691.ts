@@ -7,7 +7,7 @@ export const va228691Mapping: FieldMapping = {
   fullAddress: { pdfFieldName: 'form1[0].#subform[0].AddressofApplicant[0]', type: 'text' },
   vaFileNumber: { pdfFieldName: 'form1[0].#subform[0].VAFileNumber[0]', type: 'text' },
   ssn: { pdfFieldName: 'form1[0].#subform[0].SSN[0]', type: 'text' },
-  dob: { pdfFieldName: 'form1[0].#subform[0].DOB[0]', type: 'text' },
+  dob: { pdfFieldName: 'form1[0].#subform[0].DOB[0]', type: 'text', transform: formatDateString },
   phone: { pdfFieldName: 'form1[0].#subform[0].Telephone[0]', type: 'text' },
   email: { pdfFieldName: 'form1[0].#subform[0].Email[0]', type: 'text' },
   sex: [
@@ -18,10 +18,10 @@ export const va228691Mapping: FieldMapping = {
   // School & Enrollment
   schoolName: { pdfFieldName: 'form1[0].#subform[0].AddressofSchool[0]', type: 'text' },
   trainingProgram: { pdfFieldName: 'form1[0].#subform[0].TrainingProgram[0]', type: 'text' },
-  enrollBegin: { pdfFieldName: 'form1[0].#subform[0].ADate[0]', type: 'text' },
-  enrollEnd: { pdfFieldName: 'form1[0].#subform[0].BDate[0]', type: 'text' },
-  nextEnrollBegin: { pdfFieldName: 'form1[0].#subform[0].A8Date[0]', type: 'text' },
-  nextEnrollEnd: { pdfFieldName: 'form1[0].#subform[0].B8Date[0]', type: 'text' },
+  enrollBegin: { pdfFieldName: 'form1[0].#subform[0].ADate[0]', type: 'text', transform: formatDateString },
+  enrollEnd: { pdfFieldName: 'form1[0].#subform[0].BDate[0]', type: 'text', transform: formatDateString },
+  nextEnrollBegin: { pdfFieldName: 'form1[0].#subform[0].A8Date[0]', type: 'text', transform: formatDateString },
+  nextEnrollEnd: { pdfFieldName: 'form1[0].#subform[0].B8Date[0]', type: 'text', transform: formatDateString },
 
   // Benefit Chapter checkboxes (driven by benefitChapter radio)
   benefitChapter: [

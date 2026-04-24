@@ -30,7 +30,7 @@ export const va220810Mapping: FieldMapping = {
 
   // Exam
   examName: { pdfFieldName: 'F[0].Page_1[0].NameOfExam[0]', type: 'text' },
-  examDate: { pdfFieldName: 'F[0].Page_1[0].DateExamTaken[0]', type: 'text' },
+  examDate: { pdfFieldName: 'F[0].Page_1[0].DateExamTaken[0]', type: 'text', transform: formatDateString },
   organization: { pdfFieldName: 'F[0].Page_1[0].Organization[0]', type: 'text' },
   examCost: { pdfFieldName: 'F[0].Page_1[0].ItemizeExamCost[0]', type: 'text' },
   remarks: { pdfFieldName: 'F[0].Page_1[0].Remarks[0]', type: 'text' },

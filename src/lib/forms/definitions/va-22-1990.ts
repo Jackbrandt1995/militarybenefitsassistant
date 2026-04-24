@@ -376,6 +376,15 @@ export const va221990: FormDefinition = {
           ],
         },
         {
+          id: 'hsGradYear',
+          label: 'Year diploma or GED received',
+          type: 'text',
+          maxLength: 4,
+          placeholder: 'YYYY',
+          helpText: 'Enter the 4-digit year you received your high school diploma or GED.',
+          condition: { field: 'hsGrad', value: 'true' },
+        },
+        {
           id: 'faaFlightCerts',
           label: 'Do you hold any FAA flight certificates or ratings?',
           type: 'radio',

@@ -159,6 +159,9 @@ export const va221990Mapping: FieldMapping = {
   // Q7: HS diploma  — pypdf confirmed: yes7[0] cx=450.3, no7[0] cx=492.3, cy=462.0
   // Q8: FAA certs   — pypdf confirmed: yes8[0] cx=450.3, no8[0] cx=492.3, cy=426.0
   // cx=450.3 is LEFT (YES), cx=492.3 is RIGHT (NO)
+  // hsGradYear — no AcroForm widget; draw text to the right of the yes/no checkboxes (box 14)
+  // Positioned at approximately x=512, y=458 on page 5 (right of no7[0] at cx=492.3, cy=462.0)
+  hsGradYear: { pdfFieldName: 'DRAW_TEXT_YEAR', type: 'draw-text', textPage: 5, textX: 512, textY: 458, textSize: 9 },
   hsGrad: [
     { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true'  ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 462.0, checkSize: 6 },
     { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'false' ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 462.0, checkSize: 6 },
