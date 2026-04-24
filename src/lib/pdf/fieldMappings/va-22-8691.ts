@@ -2,9 +2,9 @@ import type { FieldMapping } from '../fillPdf';
 import { formatDateString } from '../fillPdf';
 
 export const va228691Mapping: FieldMapping = {
-  // Applicant – firstName maps to combined name field
-  firstName: { pdfFieldName: 'form1[0].#subform[0].NameofApplicant[0]', type: 'text' },
-  address: { pdfFieldName: 'form1[0].#subform[0].AddressofApplicant[0]', type: 'text' },
+  // fullName / fullAddress are computed by computeAnswers in the form definition
+  fullName: { pdfFieldName: 'form1[0].#subform[0].NameofApplicant[0]', type: 'text' },
+  fullAddress: { pdfFieldName: 'form1[0].#subform[0].AddressofApplicant[0]', type: 'text' },
   vaFileNumber: { pdfFieldName: 'form1[0].#subform[0].VAFileNumber[0]', type: 'text' },
   ssn: { pdfFieldName: 'form1[0].#subform[0].SSN[0]', type: 'text' },
   dob: { pdfFieldName: 'form1[0].#subform[0].DOB[0]', type: 'text' },
@@ -43,9 +43,10 @@ export const va228691Mapping: FieldMapping = {
     { pdfFieldName: 'form1[0].#subform[0].NO1[0]', type: 'checkbox', transform: v => v === 'No' ? 'true' : 'false' },
   ],
   priorWorkStudyWhere: { pdfFieldName: 'form1[0].#subform[0].IfYes[0]', type: 'text' },
-  workSitePreference: { pdfFieldName: 'form1[0].#subform[0].WorkSiteReference[0]', type: 'text' },
-  workExperience: { pdfFieldName: 'form1[0].#subform[0].WorkExperience[0]', type: 'text' },
-  qualifications: { pdfFieldName: 'form1[0].#subform[0].Qualification[0]', type: 'text' },
+  // Limit long free-text fields to ~2 lines (~200 chars) so text fits in the PDF box
+  workSitePreference: { pdfFieldName: 'form1[0].#subform[0].WorkSiteReference[0]', type: 'text', transform: v => v ? v.slice(0, 200) : '' },
+  workExperience: { pdfFieldName: 'form1[0].#subform[0].WorkExperience[0]', type: 'text', transform: v => v ? v.slice(0, 200) : '' },
+  qualifications: { pdfFieldName: 'form1[0].#subform[0].Qualification[0]', type: 'text', transform: v => v ? v.slice(0, 200) : '' },
 
   // Availability Schedule
   availMonday: { pdfFieldName: 'form1[0].#subform[0].MONDAY[0]', type: 'checkbox' },
@@ -70,6 +71,5 @@ export const va228691Mapping: FieldMapping = {
   ],
   signatureDate: [
     { pdfFieldName: 'form1[0].#subform[0].Date[0]', type: 'text', transform: formatDateString },
-    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 431, textY: 140, textSize: 10 },
   ],
 };

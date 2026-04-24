@@ -2,13 +2,20 @@ import type { FieldMapping } from '../fillPdf';
 import { formatDateString } from '../fillPdf';
 
 export const va220803Mapping: FieldMapping = {
-  // Applicant – name maps to combined PDF name field
-  firstName: { pdfFieldName: 'F[0].Page_1[0].nameapp[0]', type: 'text' },
+  // fullName / cityStateZip are computed by computeAnswers in the form definition
+  fullName: { pdfFieldName: 'F[0].Page_1[0].nameapp[0]', type: 'text' },
   address: { pdfFieldName: 'F[0].Page_1[0].mailing[0]', type: 'text' },
-  homePhone: { pdfFieldName: 'F[0].Page_1[0].telephone[0]', type: 'text' },
-  homePhoneNone:   { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 0, checkCX: 43, checkCY: 510, checkSize: 6 },
-  mobilePhoneNone: { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 0, checkCX: 43, checkCY: 493, checkSize: 6 },
+  // telephone[1] is mislabeled in the PDF but is actually the city/state/zip line
+  cityStateZip: { pdfFieldName: 'F[0].Page_1[0].telephone[1]', type: 'text' },
+  homePhone:   { pdfFieldName: 'F[0].Page_1[0].telephone[0]', type: 'text' },
+  mobilePhone: { pdfFieldName: 'F[0].Page_1[0].telephone[2]', type: 'text' },
   vaFileNumber: { pdfFieldName: 'F[0].Page_1[0].VAFile[0]', type: 'text' },
+
+  // 6A – have you previously applied for VA education benefits?
+  previouslyApplied: [
+    { pdfFieldName: 'F[0].Page_1[0].yes6a[0]', type: 'checkbox', transform: v => v === 'Yes' ? 'true' : 'false' },
+    { pdfFieldName: 'F[0].Page_1[0].no6a[0]',  type: 'checkbox', transform: v => v === 'No'  ? 'true' : 'false' },
+  ],
 
   // Benefit chapter checkboxes (driven by benefitProgram radio)
   benefitProgram: [
@@ -40,12 +47,11 @@ export const va220803Mapping: FieldMapping = {
 
   remarks: { pdfFieldName: 'F[0].Page_1[0].Remarks[0]', type: 'text' },
 
-  // Signature image overlay + draw-text date fallback
-  // Sig area is XFA-only; field DatelastAttendance lands near y=73 on page 0.
+  // Signature image overlay; date uses the AcroForm field DatelastAttendance[0]
   signaturePad: [
     { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 0, imageX: 36, imageY: 69, imageWidth: 230, imageHeight: 20 },
   ],
   signatureDate: [
-    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 454, textY: 75, textSize: 10 },
+    { pdfFieldName: 'F[0].Page_1[0].DatelastAttendance[0]', type: 'text', transform: formatDateString },
   ],
 };

@@ -21,7 +21,12 @@ export const va221990tMapping: FieldMapping = {
     { pdfFieldName: 'form1[0].#subform[0].FEMALE[0]', type: 'checkbox', transform: v => v === 'Female' ? 'true' : 'false' },
   ],
   vaFileNumber: { pdfFieldName: 'form1[0].#subform[0].filenumber[0]', type: 'text' },
-  address: { pdfFieldName: 'form1[0].#subform[0].mailingaddress[0]', type: 'text' },
+  // Address: numberandstreet = street, apartment = apt/rural route, mailingaddress = city, state, zip5
+  address: { pdfFieldName: 'form1[0].#subform[0].numberandstreet[0]', type: 'text' },
+  apt: { pdfFieldName: 'form1[0].#subform[0].apartment[0]', type: 'text' },
+  city: { pdfFieldName: 'form1[0].#subform[0].mailingaddress[0]', type: 'text' },
+  stateField: { pdfFieldName: 'form1[0].#subform[0].state[0]', type: 'text' },
+  zip: { pdfFieldName: 'form1[0].#subform[0].zip5[0]', type: 'text' },
   applicantEmail: { pdfFieldName: 'form1[0].#subform[0].EMAIL13c[0]', type: 'text' },
 
   // Course Info
@@ -65,6 +70,5 @@ export const va221990tMapping: FieldMapping = {
   ],
   signatureDate: [
     { pdfFieldName: 'form1[0].#subform[0].DATESIGNED13B[0]', type: 'text', transform: formatDateString },
-    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 0, textX: 298, textY: 316, textSize: 10 },
   ],
 };

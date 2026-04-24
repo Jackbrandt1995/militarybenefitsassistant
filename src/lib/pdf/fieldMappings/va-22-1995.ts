@@ -2,9 +2,9 @@ import type { FieldMapping } from '../fillPdf';
 import { formatDateString } from '../fillPdf';
 
 export const va221995Mapping: FieldMapping = {
-  // Applicant – firstName maps to combined name field
-  firstName: { pdfFieldName: 'form1[0].#subform[0].EnterNameOfApplicantFirstMiddleLast[0]', type: 'text' },
-  address: { pdfFieldName: 'form1[0].#subform[0].EnterMailingAddress[0]', type: 'text' },
+  // fullName / fullAddress are computed by computeAnswers in the form definition
+  fullName: { pdfFieldName: 'form1[0].#subform[0].EnterNameOfApplicantFirstMiddleLast[0]', type: 'text' },
+  fullAddress: { pdfFieldName: 'form1[0].#subform[0].EnterMailingAddress[0]', type: 'text' },
   homePhone: { pdfFieldName: 'form1[0].#subform[0].Enter_Home_Telephone_Number[0]', type: 'text' },
   mobilePhone: { pdfFieldName: 'form1[0].#subform[0].Enter_Mobile_Telephone_Number[0]', type: 'text' },
   homePhoneNone:   { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 0, checkCX: 43, checkCY: 510, checkSize: 6 },
@@ -47,26 +47,35 @@ export const va221995Mapping: FieldMapping = {
   routingNumber: { pdfFieldName: 'form1[0].#subform[1].TextField1[0]', type: 'text' },
   accountNumber: { pdfFieldName: 'form1[0].#subform[1].EnterACCOUNTNUMBER[0]', type: 'text' },
 
-  // Service Periods – Page 2 (updated field IDs to match new definition)
+  // Service Periods – Page 2
   service1Branch: { pdfFieldName: 'form1[0].#subform[1].EnterBranchOfService1[0]', type: 'text' },
-  service1From: { pdfFieldName: 'form1[0].#subform[1].EnterActiveDates1[0]', type: 'text' },
+  service1From: { pdfFieldName: 'form1[0].#subform[1].EnterActiveDutyDates1[0]', type: 'text' },
+  service1DutyType: { pdfFieldName: 'form1[0].#subform[1].EnterTypeOfDutyE1[0]', type: 'text' },
   service1Discharge: { pdfFieldName: 'form1[0].#subform[1].EnterCharacterD1[0]', type: 'text' },
   service1Involuntary: [
     { pdfFieldName: 'form1[0].#subform[1].CheckBoxYesCalled1[0]', type: 'checkbox', transform: v => v === 'Yes' ? 'true' : 'false' },
     { pdfFieldName: 'form1[0].#subform[1].CheckBoxNoCalled1[0]', type: 'checkbox', transform: v => v === 'No' ? 'true' : 'false' },
   ],
-  service2Branch: { pdfFieldName: 'form1[0].#subform[1].EnterBranceOfService2[0]', type: 'text' },
+  service2Branch: { pdfFieldName: 'form1[0].#subform[1].EnterBranchOfService2[0]', type: 'text' },
   service2From: { pdfFieldName: 'form1[0].#subform[1].EnterActiveDutyDates2[0]', type: 'text' },
+  service2DutyType: { pdfFieldName: 'form1[0].#subform[1].EnterTypeOfDutyE2[0]', type: 'text' },
   service2Discharge: { pdfFieldName: 'form1[0].#subform[1].EnterCharacterD2[0]', type: 'text' },
 
-  // Additional – driven by Yes/No radios
-  receivingGETA: [
-    { pdfFieldName: 'form1[0].#subform[1].CheckBoxGETAYes[0]', type: 'checkbox', transform: v => v === 'Yes' ? 'true' : 'false' },
-    { pdfFieldName: 'form1[0].#subform[1].CheckBoxGETANo[0]', type: 'checkbox', transform: v => v === 'No' ? 'true' : 'false' },
+  // 5B – Start or Stop EFT (draw-check because these are XFA checkboxes)
+  eftAction: [
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'start' ? 'true' : '', checkPage: 1, checkCX: 144, checkCY: 701, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'stop'  ? 'true' : '', checkPage: 1, checkCX: 202, checkCY: 701, checkSize: 6 },
   ],
+
+  // Q8 receivingGETA – actual field names confirmed: CheckBosYes[0] / CheckBoxNo[0]
+  receivingGETA: [
+    { pdfFieldName: 'form1[0].#subform[1].CheckBosYes[0]', type: 'checkbox', transform: v => v === 'Yes' ? 'true' : 'false' },
+    { pdfFieldName: 'form1[0].#subform[1].CheckBoxNo[0]',  type: 'checkbox', transform: v => v === 'No'  ? 'true' : 'false' },
+  ],
+  // Q9 receivingMilitaryFunds – actual field names confirmed: CheckBoxYes[0] / CheckBoxNo[1]
   receivingMilitaryFunds: [
-    { pdfFieldName: 'form1[0].#subform[1].CheckBoxMilitaryYes[0]', type: 'checkbox', transform: v => v === 'Yes' ? 'true' : 'false' },
-    { pdfFieldName: 'form1[0].#subform[1].CheckBoxMilitaryNo[0]', type: 'checkbox', transform: v => v === 'No' ? 'true' : 'false' },
+    { pdfFieldName: 'form1[0].#subform[1].CheckBoxYes[0]',  type: 'checkbox', transform: v => v === 'Yes' ? 'true' : 'false' },
+    { pdfFieldName: 'form1[0].#subform[1].CheckBoxNo[1]',   type: 'checkbox', transform: v => v === 'No'  ? 'true' : 'false' },
   ],
   remarks: { pdfFieldName: 'form1[0].#subform[1].EnterRemarks[0]', type: 'text' },
 
@@ -77,6 +86,5 @@ export const va221995Mapping: FieldMapping = {
   ],
   signatureDate: [
     { pdfFieldName: 'form1[0].#subform[1].EnterDateSigned[0]', type: 'text', transform: formatDateString },
-    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 1, textX: 456, textY: 44, textSize: 10 },
   ],
 };

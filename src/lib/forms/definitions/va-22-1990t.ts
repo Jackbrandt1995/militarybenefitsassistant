@@ -41,6 +41,7 @@ export const va221990t: FormDefinition = {
       description: 'Your current mailing address and email.',
       fields: [
         { id: 'address', label: 'Street Address', type: 'text', required: true, profilePath: 'profile.address_street' },
+        { id: 'apt', label: 'Apt / Unit # / Rural Route', type: 'text', helpText: 'Optional: apartment number, unit, or rural route.' },
         { id: 'city', label: 'City', type: 'text', required: true, profilePath: 'profile.address_city' },
         { id: 'stateField', label: 'State', type: 'text', profilePath: 'profile.address_state' },
         { id: 'zip', label: 'ZIP Code', type: 'text', profilePath: 'profile.address_zip' },
@@ -130,4 +131,33 @@ export const va221990t: FormDefinition = {
       fields: [],
     },
   ],
+  computeAnswers: (answers) => {
+    // Auto-sum session totals into totalPaymentDue (12F)
+    const s1 = parseFloat(String(answers.session1Total || '')) || 0;
+    const s2 = parseFloat(String(answers.session2Total || '')) || 0;
+    const s3 = parseFloat(String(answers.session3Total || '')) || 0;
+    const total = s1 + s2 + s3;
+    return {
+      ...answers,
+      totalPaymentDue: total > 0 ? String(total) : String(answers.totalPaymentDue || ''),
+    };
+  },
+  nextSteps: `After filling out the form, remember to:
+
+Step 2. Take to your tutor. The tutor must:
+\u2022 Sign and date the application in Items 14A and 14B.
+\u2022 Verify the information you provided.
+\u2022 Certify that he or she is the person who gave you individualized tutoring, and is not closely related to you (i.e., spouse, parent, brother, sister or child).
+
+Step 3. Take to the certifying official for VA Benefits at the school. The certifying official must:
+\u2022 Complete Items 15 and 16.
+\u2022 Sign in Items 17A and 17B.
+
+Step 4. Post-9/11 GI Bill. If you are requesting tutorial assistance under the Post-9/11 GI Bill, take this form to the professor or instructor of the course for which tutoring was necessary. The teacher must:
+\u2022 Sign Item 18A.
+\u2022 Complete Item 18B.
+
+Step 5. Review the form. After you have completed the form (see steps 1 through 4), send it to VA as soon as possible after your tutoring is complete. VA will not pay assistance for any tutoring received more than one year before the day VA actually receives your claim.
+
+Step 6. Where to Mail This Form. Mail the completed form to the Regional Processing Office for your state. See the chart on page 3.`,
 };

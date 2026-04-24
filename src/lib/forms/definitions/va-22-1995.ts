@@ -84,6 +84,10 @@ export const va221995: FormDefinition = {
       title: 'Direct Deposit Information',
       description: 'VA will deposit benefit payments directly into your bank account. Provide your routing and account number from a voided check.',
       fields: [
+        { id: 'eftAction', label: '5B – Start or Stop EFT?', type: 'radio', helpText: 'Select whether you are starting or stopping direct deposit (EFT). Leave blank if no change.', options: [
+          { label: 'Start EFT', value: 'start' },
+          { label: 'Stop EFT',  value: 'stop'  },
+        ]},
         { id: 'accountType', label: 'Account Type', type: 'radio', required: true, profilePath: 'directDeposit.account_type', options: [
           { label: 'Checking', value: 'Checking' }, { label: 'Savings', value: 'Savings' },
         ]},
@@ -100,6 +104,7 @@ export const va221995: FormDefinition = {
         { id: 'service1Branch', label: 'Period 1 – Branch', type: 'select', profilePath: 'servicePeriods[0].branch', options: branchOptions },
         { id: 'service1From', label: 'Period 1 – Date Entered', type: 'date', profilePath: 'servicePeriods[0].date_entered' },
         { id: 'service1To', label: 'Period 1 – Date Separated', type: 'date', profilePath: 'servicePeriods[0].date_separated' },
+        { id: 'service1DutyType', label: 'Period 1 – Type of Duty (7E)', type: 'text', helpText: 'e.g., Active Duty, Active Guard Reserve, Selected Reserve.' },
         { id: 'service1Involuntary', label: 'Period 1 – Involuntarily separated?', type: 'radio', required: true, helpText: 'Were you involuntarily called to active duty?', options: [
           { label: 'Yes', value: 'Yes' }, { label: 'No', value: 'No' },
         ]},
@@ -107,6 +112,7 @@ export const va221995: FormDefinition = {
         { id: 'service2Branch', label: 'Period 2 – Branch (if applicable)', type: 'select', profilePath: 'servicePeriods[1].branch', options: branchOptions },
         { id: 'service2From', label: 'Period 2 – Date Entered', type: 'date', profilePath: 'servicePeriods[1].date_entered' },
         { id: 'service2To', label: 'Period 2 – Date Separated', type: 'date', profilePath: 'servicePeriods[1].date_separated' },
+        { id: 'service2DutyType', label: 'Period 2 – Type of Duty (7E)', type: 'text', helpText: 'e.g., Active Duty, Active Guard Reserve, Selected Reserve.' },
         { id: 'service2Discharge', label: 'Period 2 – Character of Discharge', type: 'select', profilePath: 'servicePeriods[1].character_of_discharge', options: dischargeOptions },
       ],
     },
@@ -158,4 +164,13 @@ export const va221995: FormDefinition = {
       fields: [],
     },
   ],
+  computeAnswers: (answers) => {
+    const fullName = [answers.firstName, answers.middleName, answers.lastName]
+      .map(v => String(v || '').trim()).filter(Boolean).join(' ');
+    const cityState = [answers.city, answers.state]
+      .map(v => String(v || '').trim()).filter(Boolean).join(', ');
+    const fullAddress = [answers.address, cityState, answers.zip]
+      .map(v => String(v || '').trim()).filter(Boolean).join(', ');
+    return { ...answers, fullName, fullAddress };
+  },
 };

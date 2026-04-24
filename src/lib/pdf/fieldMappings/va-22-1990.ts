@@ -255,8 +255,8 @@ export const va221990Mapping: FieldMapping = {
     imagePage: 6,
     imageX: 36,
     imageY: 25,
-    imageWidth: 200,
-    imageHeight: 40,
+    imageWidth: 250,
+    imageHeight: 30,
   },
 
   // Signature date via AcroForm text field.

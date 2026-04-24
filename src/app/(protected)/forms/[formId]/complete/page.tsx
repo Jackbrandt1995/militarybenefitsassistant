@@ -37,7 +37,9 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
           setStatus('error');
           return;
         }
-        const { answers } = JSON.parse(stored);
+        const { answers: rawAnswers } = JSON.parse(stored);
+        // Apply form-specific answer transforms (e.g., build fullName, fullAddress, computed totals)
+        const answers = form!.computeAnswers ? form!.computeAnswers(rawAnswers) : rawAnswers;
         const mapping = getFieldMapping(formId);
         if (!mapping) {
           setErrorMsg('Field mapping not found for this form.');
@@ -221,6 +223,13 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
                     {isUploading ? 'Attaching...' : `Attach ${selectedFiles.length} Document${selectedFiles.length > 1 ? 's' : ''}`}
                   </Button>
                 )}
+              </div>
+            )}
+
+            {form.nextSteps && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
+                <h3 className="text-sm font-semibold text-blue-900 mb-2">Next Steps</h3>
+                <p className="text-sm text-blue-800 whitespace-pre-wrap">{form.nextSteps}</p>
               </div>
             )}
 

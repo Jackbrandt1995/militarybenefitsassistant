@@ -140,4 +140,13 @@ export const va228691: FormDefinition = {
       fields: [],
     },
   ],
+  computeAnswers: (answers) => {
+    const fullName = [answers.firstName, answers.middleName, answers.lastName]
+      .map(v => String(v || '').trim()).filter(Boolean).join(' ');
+    const stateZip = [answers.state, answers.zip]
+      .map(v => String(v || '').trim()).filter(Boolean).join(' ');
+    const fullAddress = [answers.address, answers.city, stateZip]
+      .map(v => String(v || '').trim()).filter(Boolean).join(', ');
+    return { ...answers, fullName, fullAddress };
+  },
 };

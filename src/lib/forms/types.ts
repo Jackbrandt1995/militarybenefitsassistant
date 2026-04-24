@@ -34,4 +34,16 @@ export interface FormDefinition {
   steps: FormStepDef[];
   /** Bump this number to force-clear any cached wizard state in localStorage. */
   version?: number;
+  /**
+   * Optional transform applied to wizard answers before PDF filling.
+   * Use this to build derived fields (e.g., fullName from first/middle/last,
+   * fullAddress from street/city/state/zip, computed totals) that the field
+   * mapping can then reference by their derived key.
+   */
+  computeAnswers?: (answers: Record<string, string | boolean>) => Record<string, string | boolean>;
+  /**
+   * Optional instructions displayed on the complete page above the download
+   * button, e.g., "Take this form to your tutor…".
+   */
+  nextSteps?: string;
 }
