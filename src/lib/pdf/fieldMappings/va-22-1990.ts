@@ -156,16 +156,16 @@ export const va221990Mapping: FieldMapping = {
   serviceAcademyYear: { pdfFieldName: 'form1[0].#subform[5].gradyear[0]', type: 'text' },
 
   // ── EDUCATION BACKGROUND (page 5) ────────────────────────────────────────
-  // Q7: HS diploma — yes cx=492.3 no cx=450.3 cy=462.0
-  // Q8: FAA certs  — yes cx=492.3 no cx=450.3 cy=426.0
-  // Note: 492.3 is the YES box, 450.3 is the NO box (confirmed via user testing)
+  // Q7: HS diploma  — pypdf confirmed: yes7[0] cx=450.3, no7[0] cx=492.3, cy=462.0
+  // Q8: FAA certs   — pypdf confirmed: yes8[0] cx=450.3, no8[0] cx=492.3, cy=426.0
+  // cx=450.3 is LEFT (YES), cx=492.3 is RIGHT (NO)
   hsGrad: [
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true'  ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 462.0, checkSize: 6 },
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'false' ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 462.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true'  ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 462.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'false' ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 462.0, checkSize: 6 },
   ],
   faaFlightCerts: [
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 426.0, checkSize: 6 },
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 426.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 426.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 426.0, checkSize: 6 },
   ],
 
   // ── COLLEGE & TRAINING HISTORY (page 5) ──────────────────────────────────
@@ -248,15 +248,16 @@ export const va221990Mapping: FieldMapping = {
   // ── REMARKS & SIGNATURE (page 6) ─────────────────────────────────────────
   remarks: { pdfFieldName: 'form1[0].#subform[6].remarks[0]', type: 'text' },
 
-  // Signature: image overlay placed at the confirmed signature line position.
+  // Signature: exactly matches signatureofapp[0] AcroForm rect [36, 36, 450, 48] on page 6.
+  // imageY=36 (bottom of field from page bottom), imageWidth=414 (450-36), imageHeight=12 (48-36).
   signaturePad: {
     pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY',
     type: 'image',
     imagePage: 6,
     imageX: 36,
-    imageY: 25,
-    imageWidth: 250,
-    imageHeight: 30,
+    imageY: 36,
+    imageWidth: 414,
+    imageHeight: 12,
   },
 
   // Signature date via AcroForm text field.
