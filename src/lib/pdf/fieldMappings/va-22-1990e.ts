@@ -3,12 +3,12 @@ import { formatDateString } from '../fillPdf';
 
 export const va221990eMapping: FieldMapping = {
   // Applicant Info - Page 3
-  firstName: { pdfFieldName: 'F[0].Page_3[0].Name_First_Middle_Initial_Last[0]', type: 'text' },
-  middleName: { pdfFieldName: 'F[0].Page_3[0].Name_First_Middle_Initial_Last[0]', type: 'text' },  // combined field
+  // fullName / cityStateZip / smFullName / smCityStateZip computed by computeAnswers
+  fullName: { pdfFieldName: 'F[0].Page_3[0].Name_First_Middle_Initial_Last[0]', type: 'text' },
   ssn: { pdfFieldName: 'F[0].Page_3[0].SSN[0]', type: 'text' },
   street: { pdfFieldName: 'F[0].Page_3[0].NumberandStreet[0]', type: 'text' },
   apt: { pdfFieldName: 'F[0].Page_3[0].AptUnitNumber[0]', type: 'text' },
-  city: { pdfFieldName: 'F[0].Page_3[0].CityStateZIPCode[0]', type: 'text' },
+  cityStateZip: { pdfFieldName: 'F[0].Page_3[0].CityStateZIPCode[0]', type: 'text' },
   homePhone: { pdfFieldName: 'F[0].Page_3[0].Home_Phone[0]', type: 'text' },
   mobilePhone: { pdfFieldName: 'F[0].Page_3[0].Mobile_Phone[0]', type: 'text' },
   homePhoneNone:   { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 0, checkCX: 43, checkCY: 510, checkSize: 6 },
@@ -42,18 +42,18 @@ export const va221990eMapping: FieldMapping = {
   edu2Degree: { pdfFieldName: 'F[0].Page_4[0].degree2[0]', type: 'text' },
   edu1Major: { pdfFieldName: 'F[0].Page_4[0].majorfield1[0]', type: 'text' },
   edu2Major: { pdfFieldName: 'F[0].Page_4[0].majorfield2[0]', type: 'text' },
-  edu1From: { pdfFieldName: 'F[0].Page_4[0].datetraing1[0]', type: 'text' },
-  edu1To: { pdfFieldName: 'F[0].Page_4[0].datetraing4[0]', type: 'text' },
-  edu2From: { pdfFieldName: 'F[0].Page_4[0].datetraing3[0]', type: 'text' },
-  edu2To: { pdfFieldName: 'F[0].Page_4[0].datetraing2[0]', type: 'text' },
+  edu1From: { pdfFieldName: 'F[0].Page_4[0].datetraing1[0]', type: 'text', transform: formatDateString },
+  edu1To: { pdfFieldName: 'F[0].Page_4[0].datetraing4[0]', type: 'text', transform: formatDateString },
+  edu2From: { pdfFieldName: 'F[0].Page_4[0].datetraing3[0]', type: 'text', transform: formatDateString },
+  edu2To: { pdfFieldName: 'F[0].Page_4[0].datetraing2[0]', type: 'text', transform: formatDateString },
 
-  // Service Member Info
+  // Service Member Info — smFullName / smCityStateZip computed by computeAnswers
   smBranch: { pdfFieldName: 'F[0].Page_4[0].Service_Members_Branch_Of_Service[0]', type: 'text' },
   smSSN: { pdfFieldName: 'F[0].Page_4[0].SSN2[0]', type: 'text' },
-  smFirstName: { pdfFieldName: 'F[0].Page_4[0].Service_Members_Name2[0]', type: 'text' },
+  smFullName: { pdfFieldName: 'F[0].Page_4[0].Service_Members_Name2[0]', type: 'text' },
   smStreet: { pdfFieldName: 'F[0].Page_4[0].NumberandStreet2[0]', type: 'text' },
   smApt: { pdfFieldName: 'F[0].Page_4[0].AptUnitNumber2[0]', type: 'text' },
-  smCity: { pdfFieldName: 'F[0].Page_4[0].CityStateZIPCode2[0]', type: 'text' },
+  smCityStateZip: { pdfFieldName: 'F[0].Page_4[0].CityStateZIPCode2[0]', type: 'text' },
 
   // Signature is on page 3 (last page, 0-indexed). AcroForm date Date_Signed[0]: page=3 x=410 y=49
   // Sig box is XFA-only; image placed at same page/y.

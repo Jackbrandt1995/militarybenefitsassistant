@@ -142,4 +142,19 @@ export const va221990e: FormDefinition = {
       fields: [],
     },
   ],
+  computeAnswers: (answers) => {
+    const fullName = [answers.firstName, answers.middleName, answers.lastName]
+      .map(v => String(v || '').trim()).filter(Boolean).join(' ');
+    const stateZip = [answers.state, answers.zip]
+      .map(v => String(v || '').trim()).filter(Boolean).join(' ');
+    const cityStateZip = [answers.city, stateZip]
+      .map(v => String(v || '').trim()).filter(Boolean).join(', ');
+    const smFullName = [answers.smFirstName, answers.smMiddleName, answers.smLastName]
+      .map(v => String(v || '').trim()).filter(Boolean).join(' ');
+    const smStateZip = [answers.smState, answers.smZip]
+      .map(v => String(v || '').trim()).filter(Boolean).join(' ');
+    const smCityStateZip = [answers.smCity, smStateZip]
+      .map(v => String(v || '').trim()).filter(Boolean).join(', ');
+    return { ...answers, fullName, cityStateZip, smFullName, smCityStateZip };
+  },
 };

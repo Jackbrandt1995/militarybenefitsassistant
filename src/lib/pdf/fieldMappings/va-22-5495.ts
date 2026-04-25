@@ -2,8 +2,9 @@ import type { FieldMapping } from '../fillPdf';
 import { formatDateString } from '../fillPdf';
 
 export const va225495Mapping: FieldMapping = {
-  // Applicant – Page 1 (firstName maps to combined name field)
-  firstName: { pdfFieldName: 'form1[0].Page_1[0].NameOfApplicant[0]', type: 'text' },
+  // Applicant – Page 1
+  // fullName / fullAddress computed by computeAnswers in the form definition
+  fullName: { pdfFieldName: 'form1[0].Page_1[0].NameOfApplicant[0]', type: 'text' },
   ssn: { pdfFieldName: 'form1[0].Page_1[0].SSN[0]', type: 'text' },
   vaFileNumber: { pdfFieldName: 'form1[0].Page_1[0].VAFILENUMBER[0]', type: 'text' },
   primaryPhone: { pdfFieldName: 'form1[0].Page_1[0].PrimaryPhone[0]', type: 'text' },
@@ -11,12 +12,12 @@ export const va225495Mapping: FieldMapping = {
   primaryPhoneNone:   { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 0, checkCX: 43, checkCY: 510, checkSize: 6 },
   secondaryPhoneNone: { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 0, checkCX: 43, checkCY: 493, checkSize: 6 },
   email: { pdfFieldName: 'form1[0].Page_1[0].APPLICANTSE-MAILADDRESS[0]', type: 'text' },
-  dob: { pdfFieldName: 'form1[0].Page_1[0].DOB[0]', type: 'text' },
+  dob: { pdfFieldName: 'form1[0].Page_1[0].DOB[0]', type: 'text', transform: formatDateString },
   sex: [
     { pdfFieldName: 'form1[0].Page_1[0].MALE[0]', type: 'checkbox', transform: v => v === 'Male' ? 'true' : 'false' },
     { pdfFieldName: 'form1[0].Page_1[0].FEMALE[0]', type: 'checkbox', transform: v => v === 'Female' ? 'true' : 'false' },
   ],
-  address: { pdfFieldName: 'form1[0].Page_1[0].Address[0]', type: 'text' },
+  fullAddress: { pdfFieldName: 'form1[0].Page_1[0].Address[0]', type: 'text' },
 
   // Direct Deposit
   accountType: [
@@ -36,8 +37,8 @@ export const va225495Mapping: FieldMapping = {
   qiFirstName: { pdfFieldName: 'form1[0].Page_1[0].NameofVeteran[0]', type: 'text' },
   qiSSN: { pdfFieldName: 'form1[0].Page_1[0].SSN2[0]', type: 'text' },
   qiBranch: { pdfFieldName: 'form1[0].Page_1[0].BRANCHOFSERVICE[0]', type: 'text' },
-  qiDOB: { pdfFieldName: 'form1[0].Page_1[0].DOBVet[0]', type: 'text' },
-  qiDateOfDeath: { pdfFieldName: 'form1[0].Page_1[0].DateDeath[0]', type: 'text' },
+  qiDOB: { pdfFieldName: 'form1[0].Page_1[0].DOBVet[0]', type: 'text', transform: formatDateString },
+  qiDateOfDeath: { pdfFieldName: 'form1[0].Page_1[0].DateDeath[0]', type: 'text', transform: formatDateString },
 
   // Benefit type checkboxes
   benefitType: [
