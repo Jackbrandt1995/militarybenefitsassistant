@@ -113,10 +113,15 @@ export const va221990eMapping: FieldMapping = {
   smApt: { pdfFieldName: 'F[0].Page_4[0].AptUnitNumber2[0]', type: 'text' },
   smCityStateZip: { pdfFieldName: 'F[0].Page_4[0].CityStateZIPCode2[0]', type: 'text' },
 
-  // Signature is on page 3 (last page, 0-indexed). AcroForm date Date_Signed[0]: page=3 x=410 y=49
-  // Sig box is XFA-only; image placed at same page/y.
+  // Signer type (Q16A) — RadioButtonList[3] on page 3 (cy=59, APPLICANT=left cx=40, PARENT/GUARDIAN=right cx=119)
+  signerType: [
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Applicant' ? 'true' : '', checkPage: 3, checkCX: 44.5, checkCY: 63.9, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Guardian'  ? 'true' : '', checkPage: 3, checkCX: 123.7, checkCY: 63.9, checkSize: 6 },
+  ],
+
+  // Signature — drawn within the 16A box (above checkboxes at cy=68, left of date at cx=410)
   signaturePad: [
-    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 3, imageX: 36, imageY: 95, imageWidth: 230, imageHeight: 35 },
+    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 3, imageX: 36, imageY: 72, imageWidth: 350, imageHeight: 42 },
   ],
   signatureDate: [
     { pdfFieldName: 'F[0].Page_4[0].Date_Signed[0]', type: 'text', transform: formatDateString },
