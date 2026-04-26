@@ -3,7 +3,7 @@ import { stateOptions } from '@/lib/validation';
 
 export const va221990e: FormDefinition = {
   id: 'va-22-1990e',
-  version: 2,
+  version: 3,
   formNumber: 'VA 22-1990e',
   title: 'Application for Family Members to Use Transferred Benefits',
   description: 'Apply for transferred Post-9/11 GI Bill benefits as a spouse or child of a service member who has transferred their benefits.',
@@ -22,6 +22,10 @@ export const va221990e: FormDefinition = {
         { id: 'dob', label: 'Date of Birth', type: 'date', required: true, profilePath: 'profile.dob' },
         { id: 'sex', label: 'Sex', type: 'radio', required: true, profilePath: 'profile.sex', options: [
           { label: 'Male', value: 'Male' }, { label: 'Female', value: 'Female' },
+        ]},
+        { id: 'relationship', label: 'Relationship to Service Member', type: 'radio', required: true, options: [
+          { label: 'Spouse', value: 'Spouse' },
+          { label: 'Child', value: 'Child' },
         ]},
       ],
     },
@@ -58,7 +62,16 @@ export const va221990e: FormDefinition = {
       title: 'Education & Training Plan',
       description: 'Tell VA what type of education or training you will pursue with your transferred benefits.',
       fields: [
+        { id: 'benefitChapter', label: 'Which benefit was transferred to you?', type: 'radio', required: true, helpText: 'Select the chapter that the service member transferred.', options: [
+          { label: 'Chapter 33 – Post-9/11 GI Bill', value: 'chapter33' },
+          { label: 'Chapter 30 – Montgomery GI Bill (MGIB)', value: 'chapter30' },
+          { label: 'Chapter 1606 – MGIB Selected Reserve', value: 'chapter1606' },
+        ]},
         { id: 'hsGrad', label: 'Do you have a high school diploma or GED?', type: 'radio', required: true, options: [
+          { label: 'Yes', value: 'Yes' }, { label: 'No', value: 'No' },
+        ]},
+        { id: 'hsGradDate', label: 'High School Graduation Date', type: 'date', required: false, helpText: 'Provide only if you answered Yes above.' },
+        { id: 'faaFlightCerts', label: 'Do you hold any FAA flight certificates?', type: 'radio', required: true, options: [
           { label: 'Yes', value: 'Yes' }, { label: 'No', value: 'No' },
         ]},
         { id: 'educationType', label: 'Type of Training', type: 'radio', required: true, helpText: 'Select the primary type of education or training you plan to pursue.', options: [
@@ -72,6 +85,12 @@ export const va221990e: FormDefinition = {
         ]},
         { id: 'schoolName', label: 'School Name and Address', type: 'textarea', helpText: 'Include full name, street, city, state, and ZIP.' },
         { id: 'educationObjective', label: 'Educational / Career Objective', type: 'text', helpText: 'Describe the degree, certificate, or career goal you are working toward.' },
+        { id: 'activeDutyMoney', label: 'Active duty applicants: Are you receiving money from the Armed Forces for this education?', type: 'radio', required: false, helpText: 'Answer only if you are on active duty. Leave blank if not applicable.', options: [
+          { label: 'Yes', value: 'Yes' }, { label: 'No', value: 'No' },
+        ]},
+        { id: 'civilianMoney', label: 'Government employees: Are you receiving money from your Agency for this education?', type: 'radio', required: false, helpText: 'Answer only if you are a federal civilian employee. Leave blank if not applicable.', options: [
+          { label: 'Yes', value: 'Yes' }, { label: 'No', value: 'No' },
+        ]},
       ],
     },
     {
@@ -160,6 +179,11 @@ export const va221990e: FormDefinition = {
     const dobMonth = dobParts.length === 3 ? dobParts[1] : '';
     const dobDay   = dobParts.length === 3 ? dobParts[2] : '';
     const dobYear  = dobParts.length === 3 ? dobParts[0] : '';
-    return { ...answers, fullName, cityStateZip, smFullName, smCityStateZip, dobMonth, dobDay, dobYear };
+    // Split HS graduation date (YYYY-MM-DD) into three comb fields
+    const hsGradParts = String(answers.hsGradDate || '').split('-');
+    const hsGradMonth = hsGradParts.length === 3 ? hsGradParts[1] : '';
+    const hsGradDay   = hsGradParts.length === 3 ? hsGradParts[2] : '';
+    const hsGradYear  = hsGradParts.length === 3 ? hsGradParts[0] : '';
+    return { ...answers, fullName, cityStateZip, smFullName, smCityStateZip, dobMonth, dobDay, dobYear, hsGradMonth, hsGradDay, hsGradYear };
   },
 };

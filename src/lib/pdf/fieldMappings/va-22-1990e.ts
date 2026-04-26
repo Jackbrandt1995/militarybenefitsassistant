@@ -20,16 +20,41 @@ export const va221990eMapping: FieldMapping = {
   dobDay:   { pdfFieldName: 'F[0].Page_3[0].Date_Day[1]',   type: 'text' },
   dobYear:  { pdfFieldName: 'F[0].Page_3[0].Date_Year[1]',  type: 'text' },
 
+  // HS diploma graduation date — split comb fields (Date_Month[0]/Day[0]/Year[0] at cy≈369 on page 2)
+  hsGradMonth: { pdfFieldName: 'F[0].Page_3[0].Date_Month[0]', type: 'text' },
+  hsGradDay:   { pdfFieldName: 'F[0].Page_3[0].Date_Day[0]',   type: 'text' },
+  hsGradYear:  { pdfFieldName: 'F[0].Page_3[0].Date_Year[0]',  type: 'text' },
+
   // Sex — draw-check at RadioButtonList[0] kid positions (page 2 / Page_3[0], cy≈652)
+  // form prints "FEMALE MALE" left→right: cx=260.0 → Female, cx=310.6 → Male
   sex: [
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Male'   ? 'true' : '', checkPage: 2, checkCX: 260.0, checkCY: 652.6, checkSize: 6 },
-    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Female' ? 'true' : '', checkPage: 2, checkCX: 310.6, checkCY: 652.6, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Female' ? 'true' : '', checkPage: 2, checkCX: 260.0, checkCY: 652.6, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Male'   ? 'true' : '', checkPage: 2, checkCX: 310.6, checkCY: 652.6, checkSize: 6 },
+  ],
+
+  // Relationship to Service Member — RadioButtonList[1] on page 2 (cy=380, SPOUSE=left cx=39, CHILD=right cx=90)
+  relationship: [
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Spouse' ? 'true' : '', checkPage: 2, checkCX: 43.5, checkCY: 384.5, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Child'  ? 'true' : '', checkPage: 2, checkCX: 94.5, checkCY: 384.5, checkSize: 6 },
   ],
 
   // HS diploma / GED — draw-check at YES[0] and NO[0] positions (page 2 / Page_3[0], cy≈378)
   hsGrad: [
     { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 2, checkCX: 241.5, checkCY: 378.0, checkSize: 6 },
     { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 2, checkCX: 506.5, checkCY: 378.3, checkSize: 6 },
+  ],
+
+  // FAA Flight Certificates (Q10A) — RadioButtonList[0] on page 3 (cy=719, YES=left cx=40, NO=right cx=82)
+  faaFlightCerts: [
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 3, checkCX: 44.5, checkCY: 723.5, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 3, checkCX: 86.5, checkCY: 723.5, checkSize: 6 },
+  ],
+
+  // Benefit Chapter — RadioButtonList[3] on page 2 (three kids: cy=322=Ch33, cy=299=Ch30, cy=271=Ch1606)
+  benefitChapter: [
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'chapter33'   ? 'true' : '', checkPage: 2, checkCX: 45.5, checkCY: 326.5, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'chapter30'   ? 'true' : '', checkPage: 2, checkCX: 44.5, checkCY: 303.5, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'chapter1606' ? 'true' : '', checkPage: 2, checkCX: 44.5, checkCY: 275.5, checkSize: 6 },
   ],
 
   // Education Type checkboxes (driven by educationType radio)
@@ -46,6 +71,18 @@ export const va221990eMapping: FieldMapping = {
   schoolName: { pdfFieldName: 'F[0].Page_3[0].FULL_NAME_AND_ADDRESS_OF_SCHOOL_IF_KNOWN[0]', type: 'text' },
   educationObjective: { pdfFieldName: 'F[0].Page_3[0].Specify_Your_Educational_Or_Career_Objective_If_Known[0]', type: 'text' },
 
+  // Active-duty money (Q11A) — RadioButtonList[1] on page 3 (cy=361, YES=left cx=424, NO=right cx=466)
+  activeDutyMoney: [
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 3, checkCX: 428.5, checkCY: 365.5, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 3, checkCX: 470.5, checkCY: 365.5, checkSize: 6 },
+  ],
+
+  // Civilian-employee money (Q11B) — RadioButtonList[2] on page 3 (cy=312, YES=left cx=423, NO=right cx=463)
+  civilianMoney: [
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 3, checkCX: 427.5, checkCY: 316.5, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 3, checkCX: 467.5, checkCY: 316.5, checkSize: 6 },
+  ],
+
   // Direct Deposit
   accountType: [
     { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Checking' ? 'true' : '', checkPage: 2, checkCX: 210.2, checkCY: 416.0, checkSize: 6 },
@@ -55,8 +92,8 @@ export const va221990eMapping: FieldMapping = {
   accountNumber: { pdfFieldName: 'F[0].Page_3[0].Account_Number[0]', type: 'text' },
 
   // Education history - Page 4
-  edu1Name: { pdfFieldName: 'F[0].Page_4[0].nameloc1[0]', type: 'text' },
-  edu2Name: { pdfFieldName: 'F[0].Page_4[0].nameloc2[0]', type: 'text' },
+  edu1Name: { pdfFieldName: 'F[0].Page_4[0].nameloc2[0]', type: 'text' },
+  edu2Name: { pdfFieldName: 'F[0].Page_4[0].nameloc1[0]', type: 'text' },
   edu1Hours: { pdfFieldName: 'F[0].Page_4[0].numberandtype1[0]', type: 'text' },
   edu2Hours: { pdfFieldName: 'F[0].Page_4[0].numberandtype1[1]', type: 'text' },
   edu1Degree: { pdfFieldName: 'F[0].Page_4[0].degree1[0]', type: 'text' },
@@ -64,9 +101,9 @@ export const va221990eMapping: FieldMapping = {
   edu1Major: { pdfFieldName: 'F[0].Page_4[0].majorfield1[0]', type: 'text' },
   edu2Major: { pdfFieldName: 'F[0].Page_4[0].majorfield2[0]', type: 'text' },
   edu1From: { pdfFieldName: 'F[0].Page_4[0].datetraing1[0]', type: 'text', transform: formatDateString },
-  edu1To: { pdfFieldName: 'F[0].Page_4[0].datetraing4[0]', type: 'text', transform: formatDateString },
+  edu1To: { pdfFieldName: 'F[0].Page_4[0].datetraing2[0]', type: 'text', transform: formatDateString },
   edu2From: { pdfFieldName: 'F[0].Page_4[0].datetraing3[0]', type: 'text', transform: formatDateString },
-  edu2To: { pdfFieldName: 'F[0].Page_4[0].datetraing2[0]', type: 'text', transform: formatDateString },
+  edu2To: { pdfFieldName: 'F[0].Page_4[0].datetraing4[0]', type: 'text', transform: formatDateString },
 
   // Service Member Info — smFullName / smCityStateZip computed by computeAnswers
   smBranch: { pdfFieldName: 'F[0].Page_4[0].Service_Members_Branch_Of_Service[0]', type: 'text' },
@@ -79,10 +116,9 @@ export const va221990eMapping: FieldMapping = {
   // Signature is on page 3 (last page, 0-indexed). AcroForm date Date_Signed[0]: page=3 x=410 y=49
   // Sig box is XFA-only; image placed at same page/y.
   signaturePad: [
-    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 3, imageX: 36, imageY: 45, imageWidth: 230, imageHeight: 20 },
+    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 3, imageX: 36, imageY: 95, imageWidth: 230, imageHeight: 35 },
   ],
   signatureDate: [
     { pdfFieldName: 'F[0].Page_4[0].Date_Signed[0]', type: 'text', transform: formatDateString },
-    { pdfFieldName: 'DRAW_TEXT_DATE', type: 'draw-text', transform: formatDateString, textPage: 3, textX: 410, textY: 51, textSize: 10 },
   ],
 };
