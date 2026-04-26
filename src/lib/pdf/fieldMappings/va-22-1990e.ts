@@ -5,7 +5,7 @@ export const va221990eMapping: FieldMapping = {
   // Applicant Info - Page 3
   // fullName / cityStateZip / smFullName / smCityStateZip computed by computeAnswers
   fullName: { pdfFieldName: 'F[0].Page_3[0].Name_First_Middle_Initial_Last[0]', type: 'text' },
-  ssn: { pdfFieldName: 'F[0].Page_3[0].SSN[0]', type: 'text' },
+  ssn: { pdfFieldName: 'F[0].Page_3[0].SSN[0]', type: 'text', transform: v => v.replace(/\D/g, '') },
   street: { pdfFieldName: 'F[0].Page_3[0].NumberandStreet[0]', type: 'text' },
   apt: { pdfFieldName: 'F[0].Page_3[0].AptUnitNumber[0]', type: 'text' },
   cityStateZip: { pdfFieldName: 'F[0].Page_3[0].CityStateZIPCode[0]', type: 'text' },
@@ -107,7 +107,7 @@ export const va221990eMapping: FieldMapping = {
 
   // Service Member Info — smFullName / smCityStateZip computed by computeAnswers
   smBranch: { pdfFieldName: 'F[0].Page_4[0].Service_Members_Branch_Of_Service[0]', type: 'text' },
-  smSSN: { pdfFieldName: 'F[0].Page_4[0].SSN2[0]', type: 'text' },
+  smSSN: { pdfFieldName: 'F[0].Page_4[0].SSN2[0]', type: 'text', transform: v => v.replace(/\D/g, '') },
   smFullName: { pdfFieldName: 'F[0].Page_4[0].Service_Members_Name2[0]', type: 'text' },
   smStreet: { pdfFieldName: 'F[0].Page_4[0].NumberandStreet2[0]', type: 'text' },
   smApt: { pdfFieldName: 'F[0].Page_4[0].AptUnitNumber2[0]', type: 'text' },
@@ -119,9 +119,9 @@ export const va221990eMapping: FieldMapping = {
     { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Guardian'  ? 'true' : '', checkPage: 3, checkCX: 123.7, checkCY: 63.9, checkSize: 6 },
   ],
 
-  // Signature — drawn within the 16A box (above checkboxes at cy=68, left of date at cx=410)
+  // Signature — 13pt gap between 16A label (y=72) and penalty text (y=85.5), left of date at cx=410
   signaturePad: [
-    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 3, imageX: 36, imageY: 72, imageWidth: 350, imageHeight: 42 },
+    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 3, imageX: 37, imageY: 72, imageWidth: 355, imageHeight: 13 },
   ],
   signatureDate: [
     { pdfFieldName: 'F[0].Page_4[0].Date_Signed[0]', type: 'text', transform: formatDateString },

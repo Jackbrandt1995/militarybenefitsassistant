@@ -7,7 +7,7 @@ export const va220810Mapping: FieldMapping = {
   address: { pdfFieldName: 'F[0].Page_1[0].Address[0]', type: 'text' },
   // Address[1] is the city/state/zip line directly below the street address
   cityStateZip: { pdfFieldName: 'F[0].Page_1[0].Address[1]', type: 'text' },
-  ssn: { pdfFieldName: 'F[0].Page_1[0].SSN[0]', type: 'text' },
+  ssn: { pdfFieldName: 'F[0].Page_1[0].SSN[0]', type: 'text' , transform: (v: string) => v.replace(/\D/g, '')},
   daytimePhone: { pdfFieldName: 'F[0].Page_1[0].DaytimePhone[0]', type: 'text' },
   eveningPhone: { pdfFieldName: 'F[0].Page_1[0].EveningPhone[0]', type: 'text' },
   vaFileNumber: { pdfFieldName: 'F[0].Page_1[0].VAFileNumber[0]', type: 'text' },

@@ -5,7 +5,7 @@ export const va225495Mapping: FieldMapping = {
   // Applicant – Page 1
   // fullName / fullAddress computed by computeAnswers in the form definition
   fullName: { pdfFieldName: 'form1[0].Page_1[0].NameOfApplicant[0]', type: 'text' },
-  ssn: { pdfFieldName: 'form1[0].Page_1[0].SSN[0]', type: 'text' },
+  ssn: { pdfFieldName: 'form1[0].Page_1[0].SSN[0]', type: 'text' , transform: (v: string) => v.replace(/\D/g, '')},
   vaFileNumber: { pdfFieldName: 'form1[0].Page_1[0].VAFILENUMBER[0]', type: 'text' },
   primaryPhone: { pdfFieldName: 'form1[0].Page_1[0].PrimaryPhone[0]', type: 'text' },
   secondaryPhone: { pdfFieldName: 'form1[0].Page_1[0].SecondaryPhone[0]', type: 'text' },
@@ -35,7 +35,7 @@ export const va225495Mapping: FieldMapping = {
 
   // Qualifying Individual (updated field IDs)
   qiFirstName: { pdfFieldName: 'form1[0].Page_1[0].NameofVeteran[0]', type: 'text' },
-  qiSSN: { pdfFieldName: 'form1[0].Page_1[0].SSN2[0]', type: 'text' },
+  qiSSN: { pdfFieldName: 'form1[0].Page_1[0].SSN2[0]', type: 'text' , transform: (v: string) => v.replace(/\D/g, '')},
   qiBranch: { pdfFieldName: 'form1[0].Page_1[0].BRANCHOFSERVICE[0]', type: 'text' },
   qiDOB: { pdfFieldName: 'form1[0].Page_1[0].DOBVet[0]', type: 'text', transform: formatDateString },
   qiDateOfDeath: { pdfFieldName: 'form1[0].Page_1[0].DateDeath[0]', type: 'text', transform: formatDateString },

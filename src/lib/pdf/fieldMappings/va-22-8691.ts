@@ -6,7 +6,7 @@ export const va228691Mapping: FieldMapping = {
   fullName: { pdfFieldName: 'form1[0].#subform[0].NameofApplicant[0]', type: 'text' },
   fullAddress: { pdfFieldName: 'form1[0].#subform[0].AddressofApplicant[0]', type: 'text' },
   vaFileNumber: { pdfFieldName: 'form1[0].#subform[0].VAFileNumber[0]', type: 'text' },
-  ssn: { pdfFieldName: 'form1[0].#subform[0].SSN[0]', type: 'text' },
+  ssn: { pdfFieldName: 'form1[0].#subform[0].SSN[0]', type: 'text' , transform: (v: string) => v.replace(/\D/g, '')},
   dob: { pdfFieldName: 'form1[0].#subform[0].DOB[0]', type: 'text', transform: formatDateString },
   phone: { pdfFieldName: 'form1[0].#subform[0].Telephone[0]', type: 'text' },
   email: { pdfFieldName: 'form1[0].#subform[0].Email[0]', type: 'text' },

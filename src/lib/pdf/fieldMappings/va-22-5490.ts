@@ -5,7 +5,7 @@ export const va225490Mapping: FieldMapping = {
   // Applicant – Page 1
   // fullName / fullAddress computed by computeAnswers in the form definition
   fullName: { pdfFieldName: 'form1[0].Page_1[0].NAME[0]', type: 'text' },
-  ssn: { pdfFieldName: 'form1[0].Page_1[0].SSN[0]', type: 'text' },
+  ssn: { pdfFieldName: 'form1[0].Page_1[0].SSN[0]', type: 'text' , transform: (v: string) => v.replace(/\D/g, '')},
   dob: { pdfFieldName: 'form1[0].Page_1[0].DOB[0]', type: 'text', transform: formatDateString },
   sex: [
     { pdfFieldName: 'form1[0].Page_1[0].MALE[0]', type: 'checkbox', transform: v => v === 'Male' ? 'true' : 'false' },
@@ -28,7 +28,7 @@ export const va225490Mapping: FieldMapping = {
 
   // Qualifying Individual (updated field IDs to match new definition)
   qiFirstName: { pdfFieldName: 'form1[0].Page_1[0].Name[1]', type: 'text' },
-  qiSSN: { pdfFieldName: 'form1[0].Page_1[0].SocialSecurityNumber[1]', type: 'text' },
+  qiSSN: { pdfFieldName: 'form1[0].Page_1[0].SocialSecurityNumber[1]', type: 'text' , transform: (v: string) => v.replace(/\D/g, '')},
   qiBranch: { pdfFieldName: 'form1[0].Page_1[0].BranchService[0]', type: 'text' },
   qiDOB: { pdfFieldName: 'form1[0].Page_1[0].DOB2[0]', type: 'text', transform: formatDateString },
   qiDateMIA: { pdfFieldName: 'form1[0].Page_1[0].DateListed[0]', type: 'text', transform: formatDateString },

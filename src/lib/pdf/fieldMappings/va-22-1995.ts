@@ -11,7 +11,7 @@ export const va221995Mapping: FieldMapping = {
   mobilePhoneNone: { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 0, checkCX: 43, checkCY: 493, checkSize: 6 },
   email: { pdfFieldName: 'form1[0].#subform[0].EnterApplicantsE-mailAddress[0]', type: 'text' },
   vaFileNumber: { pdfFieldName: 'form1[0].#subform[0].Enter_V_A_File_Number[0]', type: 'text' },
-  ssn: { pdfFieldName: 'form1[0].#subform[0].Enter_Applicants_Social_Security_Number[0]', type: 'text' },
+  ssn: { pdfFieldName: 'form1[0].#subform[0].Enter_Applicants_Social_Security_Number[0]', type: 'text' , transform: (v: string) => v.replace(/\D/g, '')},
 
   // Benefit chapter checkboxes (driven by benefitChapter radio)
   benefitChapter: [

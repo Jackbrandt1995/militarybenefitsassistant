@@ -5,7 +5,7 @@ export const va225281Mapping: FieldMapping = {
   // Applicant – firstName maps to combined name field
   firstName: { pdfFieldName: 'F[0].Page_1[0].NAMEOFAPPLICANT[0]', type: 'text' },
   address: { pdfFieldName: 'F[0].Page_1[0].MailingAddress[0]', type: 'text' },
-  ssn: { pdfFieldName: 'F[0].Page_1[0].SSN[0]', type: 'text' },
+  ssn: { pdfFieldName: 'F[0].Page_1[0].SSN[0]', type: 'text' , transform: (v: string) => v.replace(/\D/g, '')},
   vaFileNumber: { pdfFieldName: 'F[0].Page_1[0].VAFILENO\\.Ifapplicable[0]', type: 'text' },
   branch: { pdfFieldName: 'F[0].Page_1[0].BRANCHOFSERVICE[0]', type: 'text' },
   phone: { pdfFieldName: 'F[0].Page_1[0].PHONENUBMER[0]', type: 'text' },
