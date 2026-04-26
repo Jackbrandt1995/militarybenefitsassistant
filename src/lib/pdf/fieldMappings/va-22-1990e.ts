@@ -15,6 +15,23 @@ export const va221990eMapping: FieldMapping = {
   mobilePhoneNone: { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 0, checkCX: 43, checkCY: 493, checkSize: 6 },
   email: { pdfFieldName: 'F[0].Page_3[0].Email[0]', type: 'text' },
 
+  // Date of Birth — split into three separate comb fields
+  dobMonth: { pdfFieldName: 'F[0].Page_3[0].Date_Month[1]', type: 'text' },
+  dobDay:   { pdfFieldName: 'F[0].Page_3[0].Date_Day[1]',   type: 'text' },
+  dobYear:  { pdfFieldName: 'F[0].Page_3[0].Date_Year[1]',  type: 'text' },
+
+  // Sex — draw-check at RadioButtonList[0] kid positions (page 2 / Page_3[0], cy≈652)
+  sex: [
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Male'   ? 'true' : '', checkPage: 2, checkCX: 260.0, checkCY: 652.6, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Female' ? 'true' : '', checkPage: 2, checkCX: 310.6, checkCY: 652.6, checkSize: 6 },
+  ],
+
+  // HS diploma / GED — draw-check at YES[0] and NO[0] positions (page 2 / Page_3[0], cy≈378)
+  hsGrad: [
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 2, checkCX: 241.5, checkCY: 378.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 2, checkCX: 506.5, checkCY: 378.3, checkSize: 6 },
+  ],
+
   // Education Type checkboxes (driven by educationType radio)
   educationType: [
     { pdfFieldName: 'F[0].Page_3[0].COLLEGE_OR_OTHER_SCHOOL[0]', type: 'checkbox', transform: v => v === 'college' ? 'true' : 'false' },
@@ -30,6 +47,10 @@ export const va221990eMapping: FieldMapping = {
   educationObjective: { pdfFieldName: 'F[0].Page_3[0].Specify_Your_Educational_Or_Career_Objective_If_Known[0]', type: 'text' },
 
   // Direct Deposit
+  accountType: [
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Checking' ? 'true' : '', checkPage: 2, checkCX: 210.2, checkCY: 416.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Savings'  ? 'true' : '', checkPage: 2, checkCX: 273.0, checkCY: 416.0, checkSize: 6 },
+  ],
   routingNumber: { pdfFieldName: 'F[0].Page_3[0].Routing_Or_Transit_Number[0]', type: 'text' },
   accountNumber: { pdfFieldName: 'F[0].Page_3[0].Account_Number[0]', type: 'text' },
 

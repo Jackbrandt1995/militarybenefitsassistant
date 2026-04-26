@@ -155,6 +155,11 @@ export const va221990e: FormDefinition = {
       .map(v => String(v || '').trim()).filter(Boolean).join(' ');
     const smCityStateZip = [answers.smCity, smStateZip]
       .map(v => String(v || '').trim()).filter(Boolean).join(', ');
-    return { ...answers, fullName, cityStateZip, smFullName, smCityStateZip };
+    // Split date of birth (YYYY-MM-DD) into three separate comb fields
+    const dobParts = String(answers.dob || '').split('-');
+    const dobMonth = dobParts.length === 3 ? dobParts[1] : '';
+    const dobDay   = dobParts.length === 3 ? dobParts[2] : '';
+    const dobYear  = dobParts.length === 3 ? dobParts[0] : '';
+    return { ...answers, fullName, cityStateZip, smFullName, smCityStateZip, dobMonth, dobDay, dobYear };
   },
 };
