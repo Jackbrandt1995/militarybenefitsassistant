@@ -121,7 +121,7 @@ export const va221990eMapping: FieldMapping = {
 
   // Signature — 13pt gap between 16A label (y=72) and penalty text (y=85.5), left of date at cx=410
   signaturePad: [
-    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 3, imageX: 37, imageY: 72, imageWidth: 355, imageHeight: 13 },
+    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 3, imageX: 302, imageY: 72, imageWidth: 105, imageHeight: 13 },
   ],
   signatureDate: [
     { pdfFieldName: 'F[0].Page_4[0].Date_Signed[0]', type: 'text', transform: formatDateString },
