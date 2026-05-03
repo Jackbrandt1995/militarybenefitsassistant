@@ -119,9 +119,9 @@ export const va221990eMapping: FieldMapping = {
     { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Guardian'  ? 'true' : '', checkPage: 3, checkCX: 123.7, checkCY: 63.9, checkSize: 6 },
   ],
 
-  // Signature — 13pt gap between 16A label (y=72) and penalty text (y=85.5), left of date at cx=410
+  // Signature — aligned with Date_Signed field rect (y0=49.2, y1=66.5), starting right of Guardian label (x1=300.6)
   signaturePad: [
-    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 3, imageX: 302, imageY: 72, imageWidth: 105, imageHeight: 13 },
+    { pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY', type: 'image', imagePage: 3, imageX: 302, imageY: 49, imageWidth: 105, imageHeight: 17 },
   ],
   signatureDate: [
     { pdfFieldName: 'F[0].Page_4[0].Date_Signed[0]', type: 'text', transform: formatDateString },
