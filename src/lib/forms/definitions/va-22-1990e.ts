@@ -168,7 +168,7 @@ export const va221990e: FormDefinition = {
     {
       id: 'attachments',
       title: 'Attach Supporting Documents',
-      description: 'Upload any documents that support your application. PDF files will be merged directly into your downloaded form.',
+      description: 'No required document attachments for this form. The service member\'s transfer approval is verified by VA directly through DoD records — you do not need to submit proof of the transfer.\n\nOPTIONAL — Voided check or deposit slip to set up direct deposit.',
       fields: [],
     },
   ],

@@ -80,7 +80,7 @@ export const va225281: FormDefinition = {
     {
       id: 'attachments',
       title: 'Attach Supporting Documents',
-      description: 'Upload any supporting documentation. PDF files will be merged directly into your downloaded form.',
+      description: 'No file attachments are required. Note: if you have already separated from service, the form must be notarized by a Notary Public or certified by a VA official (with valid ID) before submission — notarization is handled on the form itself, not as an upload here.',
       fields: [],
     },
   ],

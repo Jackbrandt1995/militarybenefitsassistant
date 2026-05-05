@@ -157,7 +157,7 @@ export const va225490: FormDefinition = {
     {
       id: 'attachments',
       title: 'Attach Supporting Documents',
-      description: 'Upload any documents that support your application. PDF files will be merged directly into your downloaded form.',
+      description: 'REQUIRED — Proof of your relationship to the qualifying veteran: birth certificate, marriage certificate, or adoption papers.\n\nREQUIRED if claiming based on a living veteran\'s disability — VA rating decision letter showing permanent and total (P&T) service-connected disability.\n\nREQUIRED if the veteran or service member is deceased — death certificate and/or military line-of-duty determination.\n\nOPTIONAL — Veteran\'s DD-214 if not already on file with VA.',
       fields: [],
     },
   ],

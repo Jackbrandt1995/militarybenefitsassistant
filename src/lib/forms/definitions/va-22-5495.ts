@@ -131,7 +131,7 @@ export const va225495: FormDefinition = {
     {
       id: 'attachments',
       title: 'Attach Supporting Documents',
-      description: 'Upload any documents that support your change request. PDF files will be merged directly into your downloaded form.',
+      description: 'No required document attachments for this form.\n\nOPTIONAL — Voided check or deposit slip if you need to update your direct deposit information.',
       fields: [],
     },
   ],

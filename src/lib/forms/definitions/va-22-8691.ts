@@ -136,7 +136,7 @@ export const va228691: FormDefinition = {
     {
       id: 'attachments',
       title: 'Attach Supporting Documents',
-      description: 'Upload any documents that support your application. PDF files will be merged directly into your downloaded form.',
+      description: 'No required document attachments for this form.\n\nOPTIONAL — If needed, attach a separate sheet with additional work history (Item 12) or qualifications details (Item 14) that did not fit on the form.',
       fields: [],
     },
   ],

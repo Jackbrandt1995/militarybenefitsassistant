@@ -160,7 +160,7 @@ export const va221995: FormDefinition = {
     {
       id: 'attachments',
       title: 'Attach Supporting Documents',
-      description: 'Upload any documents that support your change request. PDF files will be merged directly into your downloaded form.',
+      description: 'REQUIRED if you have new periods of active duty service not previously reported to VA — DD-214 (Member 4 copy) for each new period, plus military orders for any involuntary call-up periods.\n\nOPTIONAL — Voided check or deposit slip if you need to update your direct deposit information.',
       fields: [],
     },
   ],

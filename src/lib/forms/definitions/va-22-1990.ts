@@ -651,7 +651,7 @@ HELPFUL (submit if available):
     {
       id: 'attachments',
       title: 'Attach Supporting Documents',
-      description: 'Upload any documents that support your application. PDF files will be merged directly into your downloaded form. All files are also saved to your submission record.',
+      description: 'REQUIRED (if already discharged) — DD-214, Member 4 copy, for each period of active duty service. Attach one copy per service period.\n\nREQUIRED for Chapter 1606 (MGIB Selected Reserve) — DD Form 2384 (Notice of Basic Eligibility). Request a duplicate from your unit if yours is lost.\n\nREQUIRED if claiming a kicker supplement — your kicker contract showing the dollar amount and effective date.\n\nOPTIONAL — Voided check or deposit slip to set up direct deposit.',
       fields: [],
     },
   ],

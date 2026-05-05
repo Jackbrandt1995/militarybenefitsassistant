@@ -96,7 +96,7 @@ export const va220810: FormDefinition = {
     {
       id: 'attachments',
       title: 'Attach Supporting Documents',
-      description: 'Upload your exam receipt and any other supporting documentation. PDF files will be merged directly into your downloaded form.',
+      description: 'REQUIRED — Copy of your exam results.\n\nREQUIRED — Copy of your exam receipt showing proof of payment.\n\nVA cannot process reimbursement without both documents. Submit one form per exam.',
       fields: [],
     },
   ],

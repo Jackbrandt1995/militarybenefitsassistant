@@ -73,7 +73,7 @@ export const va221999c: FormDefinition = {
     {
       id: 'attachments',
       title: 'Attach Supporting Documents',
-      description: 'Upload your enrollment agreement or other supporting documentation. PDF files will be merged directly into your downloaded form.',
+      description: 'No file attachments are needed here. After signing the downloaded form (on or after the 7th calendar day from your enrollment agreement date), return Copy 1 and Copy 2 to your school. Your school will submit Copy 1 together with VA Form 22-1999 (Enrollment Certification) directly to VA.',
       fields: [],
     },
   ],
