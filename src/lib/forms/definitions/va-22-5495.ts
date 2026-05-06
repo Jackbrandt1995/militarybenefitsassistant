@@ -131,7 +131,10 @@ export const va225495: FormDefinition = {
     {
       id: 'attachments',
       title: 'Attach Supporting Documents',
-      description: 'No required document attachments for this form.\n\nOPTIONAL — Voided check or deposit slip if you need to update your direct deposit information.',
+      description: 'No required attachments for this form.',
+      optionalAttachments: [
+        { label: 'Voided check or deposit slip', helpText: 'To update direct deposit information.' },
+      ],
       fields: [],
     },
   ],

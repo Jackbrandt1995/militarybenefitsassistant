@@ -106,7 +106,11 @@ export const va220803: FormDefinition = {
     {
       id: 'attachments',
       title: 'Attach Supporting Documents',
-      description: 'REQUIRED — Copy of your test results. If you do not have test results but already hold the license or certification, attach a copy of the license or certification instead.\n\nREQUIRED — Receipt showing proof of payment of the test fee.\n\nVA cannot process reimbursement without both documents.',
+      description: 'VA cannot process reimbursement without both documents below.',
+      requiredAttachments: [
+        { label: 'Copy of your test results', helpText: 'If you do not have test results but already hold the license or certification, attach a copy of the license or certification instead.' },
+        { label: 'Receipt showing proof of payment of the test fee' },
+      ],
       fields: [],
     },
   ],

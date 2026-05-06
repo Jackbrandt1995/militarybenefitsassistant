@@ -15,11 +15,24 @@ export interface FieldDef {
   sensitive?: boolean; // show/hide toggle for bank account numbers, etc.
 }
 
+export interface AttachmentSpec {
+  /** Short label shown in the checklist, e.g. "DD-214, Member 4 Copy" */
+  label: string;
+  /** Longer note shown below the label, e.g. "Request a duplicate from your unit if lost." */
+  helpText?: string;
+  /** Condition shown as a parenthetical, e.g. "Chapter 1606 only" */
+  condition?: string;
+}
+
 export interface FormStepDef {
   id: string;
   title: string;
   description?: string;
   fields: FieldDef[];
+  /** For the 'attachments' step — items the user must upload */
+  requiredAttachments?: AttachmentSpec[];
+  /** For the 'attachments' step — items the user may optionally upload */
+  optionalAttachments?: AttachmentSpec[];
 }
 
 export type FormCategory = 'application' | 'change' | 'reimbursement' | 'dependent' | 'other';

@@ -136,7 +136,11 @@ export const va228691: FormDefinition = {
     {
       id: 'attachments',
       title: 'Attach Supporting Documents',
-      description: 'No required document attachments for this form.\n\nOPTIONAL — If needed, attach a separate sheet with additional work history (Item 12) or qualifications details (Item 14) that did not fit on the form.',
+      description: 'No required attachments for this form.',
+      optionalAttachments: [
+        { label: 'Additional work history details', helpText: 'If more space was needed for Item 12 on the form.' },
+        { label: 'Additional qualifications details', helpText: 'If more space was needed for Item 14 on the form.' },
+      ],
       fields: [],
     },
   ],

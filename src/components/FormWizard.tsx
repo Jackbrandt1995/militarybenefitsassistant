@@ -237,46 +237,70 @@ export default function FormWizard({ form }: FormWizardProps) {
               <div className="space-y-6">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900">{stepDef.title}</h2>
-                  {stepDef.description && (
+                  {stepDef.description && (stepDef.requiredAttachments?.length || stepDef.optionalAttachments?.length) && (
                     <p className="mt-1 text-sm text-gray-600">{stepDef.description}</p>
                   )}
                 </div>
 
-                {/* Required docs checklist */}
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-2">
-                  <p className="text-sm font-semibold text-amber-900">Required documents (attach below)</p>
-                  <ul className="text-sm text-amber-800 space-y-1 list-disc list-inside">
-                    <li>DD Form 214 – Certificate of Release or Discharge from Active Duty (one per service period)</li>
-                    <li>Voided check or bank letter – for direct deposit verification</li>
-                  </ul>
-                </div>
+                {/* Required attachments */}
+                {stepDef.requiredAttachments && stepDef.requiredAttachments.length > 0 && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-3">
+                    <p className="text-sm font-semibold text-amber-900 flex items-center gap-1.5">
+                      <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      Required documents — upload below before continuing
+                    </p>
+                    <ul className="space-y-2">
+                      {stepDef.requiredAttachments.map((att, i) => (
+                        <li key={i} className="text-sm text-amber-900">
+                          <span className="font-medium">{att.label}</span>
+                          {att.condition && (
+                            <span className="text-amber-700 ml-1">({att.condition})</span>
+                          )}
+                          {att.helpText && (
+                            <p className="text-amber-700 mt-0.5">{att.helpText}</p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
-                {/* Optional docs checklist */}
-                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-2">
-                  <p className="text-sm font-semibold text-gray-700">Optional / recommended documents</p>
-                  <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
-                    <li>Notice of Basic Eligibility (NOBE) letter – required for Chapter 1606</li>
-                    <li>ROTC scholarship contract or service academy commissioning document – if applicable</li>
-                    <li>Official college transcripts – if you previously attended college</li>
-                    <li>Marriage certificate or divorce decree – if claiming dependents</li>
-                    <li>Birth certificates of dependent children – if applicable</li>
-                    <li>Any prior VA conditional approval letters</li>
-                  </ul>
-                </div>
+                {/* Optional attachments */}
+                {stepDef.optionalAttachments && stepDef.optionalAttachments.length > 0 && (
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
+                    <p className="text-sm font-semibold text-gray-700">Optional documents</p>
+                    <ul className="space-y-2">
+                      {stepDef.optionalAttachments.map((att, i) => (
+                        <li key={i} className="text-sm text-gray-700">
+                          <span className="font-medium">{att.label}</span>
+                          {att.condition && (
+                            <span className="text-gray-500 ml-1">({att.condition})</span>
+                          )}
+                          {att.helpText && (
+                            <p className="text-gray-500 mt-0.5">{att.helpText}</p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* No-attachment notice (forms where nothing is needed) */}
+                {(!stepDef.requiredAttachments || stepDef.requiredAttachments.length === 0) &&
+                 (!stepDef.optionalAttachments || stepDef.optionalAttachments.length === 0) &&
+                  stepDef.description && (
+                  <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                    <p className="text-sm text-blue-800 whitespace-pre-line">{stepDef.description}</p>
+                  </div>
+                )}
 
                 {/* File uploader */}
                 <div>
-                  <p className="text-sm font-medium text-gray-700 mb-3">
-                    Upload files <span className="text-gray-400 font-normal">(PDF files will be merged into your downloaded form)</span>
-                  </p>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Upload files</p>
                   <DocumentUploader onFilesSelected={setAttachedFiles} />
                 </div>
-
-                {attachedFiles.length > 0 && (
-                  <p className="text-sm text-green-700 font-medium">
-                    ✓ {attachedFiles.length} file{attachedFiles.length > 1 ? 's' : ''} ready to attach
-                  </p>
-                )}
               </div>
             ) : (
               /* ── Regular step ───────────────────────────────────────────── */

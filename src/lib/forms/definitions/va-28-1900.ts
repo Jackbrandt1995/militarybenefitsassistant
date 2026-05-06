@@ -105,7 +105,10 @@ export const va281900: FormDefinition = {
     {
       id: 'attachments',
       title: 'Attach Supporting Documents',
-      description: 'REQUIRED if not already on file with VA — DD-214 (Certificate of Release or Discharge from Active Duty).\n\nREQUIRED if not already on file with VA — VA service-connected disability rating decision letter. You must have at least a 10% compensable service-connected rating to be eligible for VR&E.',
+      requiredAttachments: [
+        { label: 'DD-214 – Certificate of Release or Discharge from Active Duty', condition: 'If not already on file with VA' },
+        { label: 'VA service-connected disability rating decision letter', condition: 'If not already on file with VA', helpText: 'Must show at least a 10% compensable service-connected rating to be eligible.' },
+      ],
       fields: [],
     },
   ],

@@ -127,7 +127,7 @@ export const va221990t: FormDefinition = {
     {
       id: 'attachments',
       title: 'Attach Supporting Documents',
-      description: 'No file attachments are needed before downloading. After downloading, the form must be signed by:\n\n1. Your tutor (Items 14A–14B)\n2. Your school\'s VA certifying official (Items 15–17B)\n3. Your course instructor (Item 18) — required only for Post-9/11 GI Bill (Chapter 33) recipients\n\nSubmit the fully signed form to your VA Regional Processing Office.',
+      description: 'No file attachments are needed before downloading. After downloading, the form must be signed by your tutor (Items 14A–14B), your school\'s VA certifying official (Items 15–17B), and your course instructor (Item 18, Post-9/11 GI Bill only). Submit the fully signed form to your VA Regional Processing Office.',
       fields: [],
     },
   ],

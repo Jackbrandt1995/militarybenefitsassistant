@@ -160,7 +160,13 @@ export const va221995: FormDefinition = {
     {
       id: 'attachments',
       title: 'Attach Supporting Documents',
-      description: 'REQUIRED if you have new periods of active duty service not previously reported to VA — DD-214 (Member 4 copy) for each new period, plus military orders for any involuntary call-up periods.\n\nOPTIONAL — Voided check or deposit slip if you need to update your direct deposit information.',
+      requiredAttachments: [
+        { label: 'DD-214 (Member 4 Copy) for each new service period', condition: 'Required only if you have periods of active duty not previously reported to VA' },
+        { label: 'Military orders for any involuntary call-up periods', condition: 'Required only if applicable' },
+      ],
+      optionalAttachments: [
+        { label: 'Voided check or deposit slip', helpText: 'To update direct deposit information.' },
+      ],
       fields: [],
     },
   ],

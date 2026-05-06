@@ -651,7 +651,14 @@ HELPFUL (submit if available):
     {
       id: 'attachments',
       title: 'Attach Supporting Documents',
-      description: 'REQUIRED (if already discharged) — DD-214, Member 4 copy, for each period of active duty service. Attach one copy per service period.\n\nREQUIRED for Chapter 1606 (MGIB Selected Reserve) — DD Form 2384 (Notice of Basic Eligibility). Request a duplicate from your unit if yours is lost.\n\nREQUIRED if claiming a kicker supplement — your kicker contract showing the dollar amount and effective date.\n\nOPTIONAL — Voided check or deposit slip to set up direct deposit.',
+      requiredAttachments: [
+        { label: 'DD-214, Member 4 Copy — one per period of active duty service', condition: 'Required if you have already been discharged' },
+        { label: 'DD Form 2384 – Notice of Basic Eligibility (NOBE)', condition: 'Chapter 1606 / MGIB Selected Reserve only', helpText: 'Request a duplicate from your unit if yours is lost.' },
+        { label: 'Kicker contract showing dollar amount and effective date', condition: 'Required only if you are claiming a kicker supplement' },
+      ],
+      optionalAttachments: [
+        { label: 'Voided check or deposit slip', helpText: 'To enroll in direct deposit.' },
+      ],
       fields: [],
     },
   ],
