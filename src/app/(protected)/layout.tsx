@@ -1,18 +1,32 @@
 'use client';
 
 import { useAuth } from '@/components/AuthProvider';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return;
+
+    // Not logged in → go to login
+    if (!user) {
       router.push('/login');
+      return;
     }
-  }, [user, loading, router]);
+
+    // Already on the acceptance page — don't redirect in a loop
+    if (pathname === '/terms/accept') return;
+
+    // New user hasn't accepted terms yet → gate them
+    const termsAccepted = user.user_metadata?.terms_accepted_at;
+    if (!termsAccepted) {
+      router.push('/terms/accept');
+    }
+  }, [user, loading, router, pathname]);
 
   if (loading) {
     return (
@@ -23,6 +37,11 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
   }
 
   if (!user) return null;
+
+  // Render children while the terms redirect (if any) is processing,
+  // but suppress content on protected pages until accepted.
+  const termsAccepted = user.user_metadata?.terms_accepted_at;
+  if (!termsAccepted && pathname !== '/terms/accept') return null;
 
   return <>{children}</>;
 }

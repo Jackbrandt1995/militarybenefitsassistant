@@ -118,6 +118,11 @@ export default function SignupPage() {
           <Button type="submit" loading={loading} className="w-full">
             Create Account
           </Button>
+
+          <p className="text-xs text-gray-500 text-center pt-1">
+            By creating an account you agree to our{' '}
+            <Link href="/terms" className="text-blue-700 hover:underline">Terms of Service &amp; Privacy Notice</Link>.
+          </p>
         </form>
 
         <p className="text-center text-sm text-gray-600 mt-4">
