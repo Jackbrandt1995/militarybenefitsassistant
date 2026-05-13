@@ -46,16 +46,16 @@ export async function saveFormAnswersToProfile(
       // Skip sensitive fields — they must be written through encrypted API routes
       if (field.sensitive === true) continue;
 
-      const value = answers[field.id];
-      // Don't persist empty / untouched values
-      if (value === undefined || value === null || value === '') continue;
+      const path = field.profilePath;
 
       // Skip any column whose name ends in _encrypted — these require server-side
       // encryption and must be saved through /api/profile or /api/direct-deposit.
       const colName = path.split('.').pop() ?? '';
       if (colName.endsWith('_encrypted')) continue;
 
-      const path = field.profilePath;
+      const value = answers[field.id];
+      // Don't persist empty / untouched values
+      if (value === undefined || value === null || value === '') continue;
 
       if (path.startsWith('profile.')) {
         profileUpdates[path.slice('profile.'.length)] = value;
