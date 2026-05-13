@@ -16,8 +16,10 @@
 import { createClient } from '@/lib/supabase/client';
 import type { FormDefinition } from '@/lib/forms/types';
 
-// Fields that should NOT be written back (document/signature metadata, UI-only)
-const SKIP_FIELD_TYPES = new Set(['document', 'signature']);
+// Fields that should NOT be written back.
+// 'ssn' and 'sensitive' fields must go through the encrypted API routes — never
+// written directly via the Supabase client, which would store them as plaintext.
+const SKIP_FIELD_TYPES = new Set(['document', 'signature', 'ssn']);
 
 export async function saveFormAnswersToProfile(
   userId: string,
@@ -41,9 +43,17 @@ export async function saveFormAnswersToProfile(
       if (!field.profilePath) continue;
       if (SKIP_FIELD_TYPES.has(field.type)) continue;
 
+      // Skip sensitive fields — they must be written through encrypted API routes
+      if (field.sensitive === true) continue;
+
       const value = answers[field.id];
       // Don't persist empty / untouched values
       if (value === undefined || value === null || value === '') continue;
+
+      // Skip any column whose name ends in _encrypted — these require server-side
+      // encryption and must be saved through /api/profile or /api/direct-deposit.
+      const colName = path.split('.').pop() ?? '';
+      if (colName.endsWith('_encrypted')) continue;
 
       const path = field.profilePath;
 

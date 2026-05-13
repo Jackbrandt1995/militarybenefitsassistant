@@ -63,6 +63,23 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
 
         setPdfBytes(bytes);
 
+        // Build a scrubbed copy of answers — strip SSN and sensitive banking fields
+        // so they are never stored in plaintext in form_submissions.answers_json.
+        const sensitiveFieldIds = new Set<string>();
+        for (const step of form!.steps) {
+          for (const field of step.fields) {
+            if (field.type === 'ssn' || field.sensitive === true) {
+              sensitiveFieldIds.add(field.id);
+            }
+          }
+        }
+        // Also strip derived keys that computeAnswers may produce from SSN fields
+        // (e.g. dobMonth/Day/Year are fine; ssn digits are not)
+        const safeAnswers: Record<string, string | boolean> = {};
+        for (const [k, v] of Object.entries(answers)) {
+          if (!sensitiveFieldIds.has(k)) safeAnswers[k] = v as string | boolean;
+        }
+
         // Save submission record
         let submId = null;
         if (user) {
@@ -71,7 +88,7 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
             user_id: user.id,
             form_id: formId,
             form_name: form!.title,
-            answers_json: answers,
+            answers_json: safeAnswers,
           }).select('id').single();
 
           if (error) throw error;

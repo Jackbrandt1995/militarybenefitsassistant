@@ -114,8 +114,8 @@ export default function AcceptTermsPage() {
             <p>
               You may access, update, or delete your data at any time. To request full account deletion, email
               us at{' '}
-              <a href="mailto:support@militarybenefitsassistant.com" className="text-blue-600 hover:underline">
-                support@militarybenefitsassistant.com
+              <a href="mailto:info@militarybenefitsassistant.com" className="text-blue-600 hover:underline">
+                info@militarybenefitsassistant.com
               </a>. We will permanently delete your data within 30 days.
             </p>
 

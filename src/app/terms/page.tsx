@@ -135,7 +135,7 @@ export default function TermsPage() {
               <li><strong>Correct</strong> — update any field in your profile at any time</li>
               <li><strong>Delete</strong> — request deletion of your account and all associated data by
                 contacting us (see below). We will permanently delete your data within 30 days.</li>
-              <li><strong>Export</strong> — request a copy of your stored data in a machine-readable format</li>
+              <li><strong>Export</strong> — contact us to request a copy of your stored data</li>
             </ul>
           </Section>
 
@@ -143,8 +143,8 @@ export default function TermsPage() {
           <Section title="Changes to These Terms">
             <p>
               We may update these Terms from time to time. When we do, we will update the effective date at the
-              top of this page and notify you the next time you log in. Continued use of the Service after
-              updated Terms are presented constitutes acceptance of the new Terms.
+              top of this page. Continued use of the Service after updated Terms are posted constitutes
+              acceptance of the new Terms.
             </p>
           </Section>
 
@@ -153,9 +153,9 @@ export default function TermsPage() {
             <p>
               If you have questions about these Terms, your data, or would like to request deletion of your
               account, please contact us at:{' '}
-              <a href="mailto:support@militarybenefitsassistant.com"
+              <a href="mailto:info@militarybenefitsassistant.com"
                 className="text-blue-700 hover:underline font-medium">
-                support@militarybenefitsassistant.com
+                info@militarybenefitsassistant.com
               </a>
             </p>
           </Section>
