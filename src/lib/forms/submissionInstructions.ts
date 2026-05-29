@@ -222,10 +222,10 @@ export const SUBMISSION_GUIDES: Record<string, SubmissionGuide> = {
       'Allow 30 days after VA receives your application. A Vocational Rehabilitation Counselor (VRC) will contact you to schedule an initial orientation appointment.',
     moreInfo:
       'VR&E applications go to your nearest VA Regional Office — not an education RPO.\n\n' +
-      'To find your nearest VA Regional Office:\n' +
-      '  • Visit va.gov/find-locations and select "VA benefits office"\n' +
-      '  • Or call VA at 1-800-827-1000\n' +
-      '  • Or visit in person — no appointment needed to drop off paperwork',
+      'To find the mailing address for your nearest VA Regional Office:\n' +
+      '  • Call VA at 1-800-827-1000 and ask for your Regional Office mailing address\n' +
+      '  • Or visit your nearest VA Regional Office in person — no appointment needed to drop off paperwork\n' +
+      '  • VA Regional Offices are located in most major cities; check your local government pages or call first to confirm hours',
   },
 };
 

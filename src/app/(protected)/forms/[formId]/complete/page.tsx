@@ -364,14 +364,6 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
                           Find your nearest VA Regional Office
                         </p>
                         <p className="text-sm text-blue-800 whitespace-pre-line">{guide.moreInfo}</p>
-                        <a
-                          href="https://www.va.gov/find-locations/?facilityType=benefits"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-block mt-2 text-sm font-medium text-blue-700 underline hover:text-blue-900"
-                        >
-                          Open VA Facility Finder →
-                        </a>
                       </div>
                     )}
 
