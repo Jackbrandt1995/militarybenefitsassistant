@@ -2,7 +2,7 @@ import type { FormDefinition } from '../types';
 
 export const va221990t: FormDefinition = {
   id: 'va-22-1990t',
-  version: 2,
+  version: 3,
   formNumber: 'VA 22-1990t',
   title: 'Application for Individualized Tutorial Assistance',
   description: 'Apply for VA tutorial assistance benefits to cover the cost of individualized tutoring.',
@@ -98,6 +98,12 @@ export const va221990t: FormDefinition = {
       ],
     },
     {
+      id: 'requiredDocs',
+      title: 'Document Instructions',
+      description: 'No file attachments are needed before downloading. After downloading, the form must be signed by your tutor (Items 14A–14B), your school\'s VA certifying official (Items 15–17B), and your course instructor (Item 18, Post-9/11 GI Bill only). Submit the fully signed form to your VA Regional Processing Office.',
+      fields: [],
+    },
+    {
       id: 'signature',
       title: 'Certification & Signature',
       description: 'CERTIFICATION: I certify that all statements on this form are true and correct to the best of my knowledge and belief. WARNING: Title 38, United States Code, allows VA to request certain information to determine eligibility for benefits. Respondents are not required to respond unless it displays a valid OMB Control Number. Title 38 USC 1001 provides severe penalties for intentional misrepresentation.\n\nPRIVACY ACT NOTICE: The VA will not disclose information collected on this form to any source other than what has been authorized under the Privacy Act of 1974 or Title 38, Code of Federal Regulations 1.576 for routine uses (i.e., civil or criminal law enforcement, congressional communications, epidemiological or research studies, the collection of money owed to the United States, litigation in which the United States is a party or has an interest, the administration of VA programs and delivery of VA benefits, verification of identity and status, and personnel administration) as identified in the VA system of records. Your obligation to respond is required to obtain or retain education benefits. Providing your SSN is mandatory under Title 38 U.S.C. 5101(c)(1).',
@@ -123,12 +129,6 @@ export const va221990t: FormDefinition = {
           required: true,
         },
       ],
-    },
-    {
-      id: 'attachments',
-      title: 'Attach Supporting Documents',
-      description: 'No file attachments are needed before downloading. After downloading, the form must be signed by your tutor (Items 14A–14B), your school\'s VA certifying official (Items 15–17B), and your course instructor (Item 18, Post-9/11 GI Bill only). Submit the fully signed form to your VA Regional Processing Office.',
-      fields: [],
     },
   ],
   computeAnswers: (answers) => {

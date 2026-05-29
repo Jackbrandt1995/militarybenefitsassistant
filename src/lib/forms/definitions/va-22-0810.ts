@@ -3,7 +3,7 @@ import { stateOptions } from '@/lib/validation';
 
 export const va220810: FormDefinition = {
   id: 'va-22-0810',
-  version: 2,
+  version: 3,
   formNumber: 'VA 22-0810',
   title: 'Application for Reimbursement of National Exam Fee',
   description: 'Apply for reimbursement of national admission or credit-by-exam test fees (SAT, CLEP, GRE, AP, DSST, etc.).',
@@ -67,6 +67,16 @@ export const va220810: FormDefinition = {
       ],
     },
     {
+      id: 'requiredDocs',
+      title: 'Required Documents — Upload Now',
+      description: 'VA cannot process your reimbursement without both documents below. Submit one form per exam.',
+      requiredAttachments: [
+        { label: 'Copy of your exam results' },
+        { label: 'Copy of your exam receipt showing proof of payment' },
+      ],
+      fields: [],
+    },
+    {
       id: 'signature',
       title: 'Certification & Signature',
       description: 'CERTIFICATION: I certify that all statements on this form are true and correct to the best of my knowledge and belief. WARNING: Title 38, United States Code, allows VA to request certain information to determine eligibility for benefits. Respondents are not required to respond unless it displays a valid OMB Control Number. Title 38 USC 1001 provides severe penalties for intentional misrepresentation.\n\nPRIVACY ACT NOTICE: The VA will not disclose information collected on this form to any source other than what has been authorized under the Privacy Act of 1974 or Title 38, Code of Federal Regulations 1.576 for routine uses (i.e., civil or criminal law enforcement, congressional communications, epidemiological or research studies, the collection of money owed to the United States, litigation in which the United States is a party or has an interest, the administration of VA programs and delivery of VA benefits, verification of identity and status, and personnel administration) as identified in the VA system of records. Your obligation to respond is required to obtain or retain education benefits. Providing your SSN is mandatory under Title 38 U.S.C. 5101(c)(1).',
@@ -92,16 +102,6 @@ export const va220810: FormDefinition = {
           required: true,
         },
       ],
-    },
-    {
-      id: 'attachments',
-      title: 'Attach Supporting Documents',
-      description: 'VA cannot process reimbursement without both documents below. Submit one form per exam.',
-      requiredAttachments: [
-        { label: 'Copy of your exam results' },
-        { label: 'Copy of your exam receipt showing proof of payment' },
-      ],
-      fields: [],
     },
   ],
   computeAnswers: (answers) => {

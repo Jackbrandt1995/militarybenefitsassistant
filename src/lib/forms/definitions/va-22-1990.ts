@@ -3,7 +3,7 @@ import { branchOptions, stateOptions } from '@/lib/validation';
 
 export const va221990: FormDefinition = {
   id: 'va-22-1990',
-  version: 2,
+  version: 3,
   formNumber: 'VA 22-1990',
   title: 'Application for VA Education Benefits',
   description: 'Apply for VA education benefits under the GI Bill, MGIB, VEAP, or other programs. This is the primary application form for veterans seeking education benefits.',
@@ -588,32 +588,26 @@ export const va221990: FormDefinition = {
       ],
     },
 
-    // ── STEP 15: Supporting Documents ─────────────────────────────────────
+    // ── STEP 15: Required Documents ───────────────────────────────────────
     {
-      id: 'documents',
-      title: 'Supporting Documents',
-      description: 'Gather the following documents to submit with your application.',
-      fields: [
-        {
-          id: 'documentsInfo',
-          label: 'Required & Recommended Documents',
-          type: 'document',
-          helpText: `REQUIRED (attach to your application):
-• DD Form 214 – Certificate of Release or Discharge from Active Duty (for ALL periods of service)
-• Voided blank check or bank letter – for direct deposit setup
-
-RECOMMENDED (speeds up processing):
-• Notice of Basic Eligibility (NOBE) letter – for Chapter 1606 (Selected Reserve)
-• Any ROTC scholarship contracts – if applicable
-• Any conditional approval letters from VA – if you received one before
-
-HELPFUL (submit if available):
-• Official college transcripts – if you previously attended college
-• Marriage certificate – if married
-• Birth certificates of dependent children – if applicable
-• Divorce decree – if applicable`
-        },
+      id: 'requiredDocs',
+      title: 'Required Documents — Upload Now',
+      description: 'Upload each required document before signing. Your application may be delayed without these.',
+      requiredAttachments: [
+        { label: 'DD-214, Member 4 Copy — one per period of active duty service', condition: 'Required if you have already been discharged' },
+        { label: 'DD Form 2384 – Notice of Basic Eligibility (NOBE)', condition: 'Chapter 1606 / MGIB Selected Reserve only', helpText: 'Request a duplicate from your unit if yours is lost.' },
+        { label: 'Kicker contract showing dollar amount and effective date', condition: 'Required only if you are claiming a kicker supplement' },
       ],
+      fields: [],
+    },
+    {
+      id: 'optionalDocs',
+      title: 'Optional Documents',
+      description: 'These documents are not required but can speed up processing.',
+      optionalAttachments: [
+        { label: 'Voided check or deposit slip', helpText: 'To enroll in direct deposit.' },
+      ],
+      fields: [],
     },
 
     // ── STEP 16: Certification & Signature ────────────────────────────────
@@ -643,23 +637,6 @@ HELPFUL (submit if available):
           required: true,
         },
       ],
-    },
-
-    // ── STEP 17: Attach Supporting Documents ──────────────────────────────
-    // Fields array is intentionally empty — FormWizard renders DocumentUploader
-    // directly for steps with id === 'attachments'.
-    {
-      id: 'attachments',
-      title: 'Attach Supporting Documents',
-      requiredAttachments: [
-        { label: 'DD-214, Member 4 Copy — one per period of active duty service', condition: 'Required if you have already been discharged' },
-        { label: 'DD Form 2384 – Notice of Basic Eligibility (NOBE)', condition: 'Chapter 1606 / MGIB Selected Reserve only', helpText: 'Request a duplicate from your unit if yours is lost.' },
-        { label: 'Kicker contract showing dollar amount and effective date', condition: 'Required only if you are claiming a kicker supplement' },
-      ],
-      optionalAttachments: [
-        { label: 'Voided check or deposit slip', helpText: 'To enroll in direct deposit.' },
-      ],
-      fields: [],
     },
   ],
 };

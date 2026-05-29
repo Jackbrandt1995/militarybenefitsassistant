@@ -3,7 +3,7 @@ import { branchOptions, stateOptions } from '@/lib/validation';
 
 export const va225495: FormDefinition = {
   id: 'va-22-5495',
-  version: 2,
+  version: 3,
   formNumber: 'VA 22-5495',
   title: "Dependents' Request for Change of Program or Place of Training",
   description: 'Request a change of school or program while using DEA (Chapter 35) or Fry Scholarship (Chapter 33) benefits.',
@@ -102,6 +102,15 @@ export const va225495: FormDefinition = {
       ],
     },
     {
+      id: 'optionalDocs',
+      title: 'Optional Documents',
+      description: 'No required attachments for this form. You may upload optional supporting documents if you have them.',
+      optionalAttachments: [
+        { label: 'Voided check or deposit slip', helpText: 'To update direct deposit information.' },
+      ],
+      fields: [],
+    },
+    {
       id: 'signature',
       title: 'Certification & Signature',
       description: 'CERTIFICATION: I certify that all statements on this form are true and correct to the best of my knowledge and belief. WARNING: Title 38, United States Code, allows VA to request certain information to determine eligibility for benefits. Respondents are not required to respond unless it displays a valid OMB Control Number. Title 38 USC 1001 provides severe penalties for intentional misrepresentation.\n\nPRIVACY ACT NOTICE: The VA will not disclose information collected on this form to any source other than what has been authorized under the Privacy Act of 1974 or Title 38, Code of Federal Regulations 1.576 for routine uses (i.e., civil or criminal law enforcement, congressional communications, epidemiological or research studies, the collection of money owed to the United States, litigation in which the United States is a party or has an interest, the administration of VA programs and delivery of VA benefits, verification of identity and status, and personnel administration) as identified in the VA system of records. Your obligation to respond is required to obtain or retain education benefits. Providing your SSN is mandatory under Title 38 U.S.C. 5101(c)(1).',
@@ -127,15 +136,6 @@ export const va225495: FormDefinition = {
           required: true,
         },
       ],
-    },
-    {
-      id: 'attachments',
-      title: 'Attach Supporting Documents',
-      description: 'No required attachments for this form.',
-      optionalAttachments: [
-        { label: 'Voided check or deposit slip', helpText: 'To update direct deposit information.' },
-      ],
-      fields: [],
     },
   ],
   computeAnswers: (answers) => {

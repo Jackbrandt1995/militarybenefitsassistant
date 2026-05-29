@@ -3,7 +3,7 @@ import { stateOptions } from '@/lib/validation';
 
 export const va281900: FormDefinition = {
   id: 'va-28-1900',
-  version: 2,
+  version: 3,
   formNumber: 'VA 28-1900',
   title: 'Disabled Veterans Application for Vocational Rehabilitation & Employment (VR&E)',
   description: 'Apply for Veteran Readiness and Employment (Chapter 31) services if you have a service-connected disability.',
@@ -76,6 +76,16 @@ export const va281900: FormDefinition = {
       ],
     },
     {
+      id: 'requiredDocs',
+      title: 'Required Documents — Upload Now',
+      description: 'Upload the required documents before signing. VA needs these to verify your eligibility for VR&E benefits.',
+      requiredAttachments: [
+        { label: 'DD-214 – Certificate of Release or Discharge from Active Duty', condition: 'If not already on file with VA' },
+        { label: 'VA service-connected disability rating decision letter', condition: 'If not already on file with VA', helpText: 'Must show at least a 10% compensable service-connected rating to be eligible.' },
+      ],
+      fields: [],
+    },
+    {
       id: 'signature',
       title: 'Certification & Signature',
       description: 'CERTIFICATION: I certify that all statements on this form are true and correct to the best of my knowledge and belief. WARNING: Title 38, United States Code, allows VA to request certain information to determine eligibility for benefits. Respondents are not required to respond unless it displays a valid OMB Control Number. Title 38 USC 1001 provides severe penalties for intentional misrepresentation.\n\nPRIVACY ACT NOTICE: The VA will not disclose information collected on this form to any source other than what has been authorized under the Privacy Act of 1974 or Title 38, Code of Federal Regulations 1.576 for routine uses (i.e., civil or criminal law enforcement, congressional communications, epidemiological or research studies, the collection of money owed to the United States, litigation in which the United States is a party or has an interest, the administration of VA programs and delivery of VA benefits, verification of identity and status, and personnel administration) as identified in the VA system of records. Your obligation to respond is required in order to apply for Vocational Rehabilitation and Employment benefits. Providing your SSN is mandatory under Title 38 U.S.C. 5101(c)(1).',
@@ -101,15 +111,6 @@ export const va281900: FormDefinition = {
           required: true,
         },
       ],
-    },
-    {
-      id: 'attachments',
-      title: 'Attach Supporting Documents',
-      requiredAttachments: [
-        { label: 'DD-214 – Certificate of Release or Discharge from Active Duty', condition: 'If not already on file with VA' },
-        { label: 'VA service-connected disability rating decision letter', condition: 'If not already on file with VA', helpText: 'Must show at least a 10% compensable service-connected rating to be eligible.' },
-      ],
-      fields: [],
     },
   ],
 };

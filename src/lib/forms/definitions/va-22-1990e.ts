@@ -3,7 +3,7 @@ import { stateOptions } from '@/lib/validation';
 
 export const va221990e: FormDefinition = {
   id: 'va-22-1990e',
-  version: 3,
+  version: 4,
   formNumber: 'VA 22-1990e',
   title: 'Application for Family Members to Use Transferred Benefits',
   description: 'Apply for transferred Post-9/11 GI Bill benefits as a spouse or child of a service member who has transferred their benefits.',
@@ -128,6 +128,15 @@ export const va221990e: FormDefinition = {
       ],
     },
     {
+      id: 'optionalDocs',
+      title: 'Optional Documents',
+      description: 'No required attachments. The service member\'s transfer approval is verified by VA directly through DoD records — you do not need to submit proof of the transfer.',
+      optionalAttachments: [
+        { label: 'Voided check or deposit slip', helpText: 'To set up direct deposit.' },
+      ],
+      fields: [],
+    },
+    {
       id: 'signature',
       title: 'Certification & Signature',
       description: 'CERTIFICATION: I certify that all statements on this form are true and correct to the best of my knowledge and belief. WARNING: Title 38, United States Code, allows VA to request certain information to determine eligibility for benefits. Respondents are not required to respond unless it displays a valid OMB Control Number. Title 38 USC 1001 provides severe penalties for intentional misrepresentation.\n\nPRIVACY ACT NOTICE: The VA will not disclose information collected on this form to any source other than what has been authorized under the Privacy Act of 1974 or Title 38, Code of Federal Regulations 1.576 for routine uses (i.e., civil or criminal law enforcement, congressional communications, epidemiological or research studies, the collection of money owed to the United States, litigation in which the United States is a party or has an interest, the administration of VA programs and delivery of VA benefits, verification of identity and status, and personnel administration) as identified in the VA system of records. Your obligation to respond is required to obtain or retain education benefits. Providing your SSN is mandatory under Title 38 U.S.C. 5101(c)(1).',
@@ -164,15 +173,6 @@ export const va221990e: FormDefinition = {
           required: true,
         },
       ],
-    },
-    {
-      id: 'attachments',
-      title: 'Attach Supporting Documents',
-      description: 'No required attachments. The service member\'s transfer approval is verified by VA directly through DoD records — you do not need to submit proof of the transfer.',
-      optionalAttachments: [
-        { label: 'Voided check or deposit slip', helpText: 'To set up direct deposit.' },
-      ],
-      fields: [],
     },
   ],
   computeAnswers: (answers) => {

@@ -232,34 +232,34 @@ export default function FormWizard({ form }: FormWizardProps) {
           {/* Step card */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
 
-            {stepDef.id === 'attachments' ? (
-              /* ── Document attachment step ───────────────────────────────── */
+            {['attachments', 'requiredDocs', 'optionalDocs'].includes(stepDef.id) ? (
+              /* ── Document upload steps ──────────────────────────────────── */
               <div className="space-y-6">
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900">{stepDef.title}</h2>
-                  {stepDef.description && (stepDef.requiredAttachments?.length || stepDef.optionalAttachments?.length) && (
+                  {stepDef.description && (
                     <p className="mt-1 text-sm text-gray-600">{stepDef.description}</p>
                   )}
                 </div>
 
-                {/* Required attachments */}
-                {stepDef.requiredAttachments && stepDef.requiredAttachments.length > 0 && (
+                {/* Required attachments — shown on requiredDocs step */}
+                {stepDef.id === 'requiredDocs' && stepDef.requiredAttachments && stepDef.requiredAttachments.length > 0 && (
                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-3">
                     <p className="text-sm font-semibold text-amber-900 flex items-center gap-1.5">
                       <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                       </svg>
-                      Required documents — upload below before continuing
+                      Upload each document listed below — these are required
                     </p>
-                    <ul className="space-y-2">
+                    <ul className="space-y-3">
                       {stepDef.requiredAttachments.map((att, i) => (
                         <li key={i} className="text-sm text-amber-900">
-                          <span className="font-medium">{att.label}</span>
+                          <p className="font-semibold">↑ Upload: {att.label}</p>
                           {att.condition && (
-                            <span className="text-amber-700 ml-1">({att.condition})</span>
+                            <p className="text-amber-700 mt-0.5 text-xs">Applies when: {att.condition}</p>
                           )}
                           {att.helpText && (
-                            <p className="text-amber-700 mt-0.5">{att.helpText}</p>
+                            <p className="text-amber-700 mt-0.5 text-xs">{att.helpText}</p>
                           )}
                         </li>
                       ))}
@@ -267,39 +267,90 @@ export default function FormWizard({ form }: FormWizardProps) {
                   </div>
                 )}
 
-                {/* Optional attachments */}
-                {stepDef.optionalAttachments && stepDef.optionalAttachments.length > 0 && (
+                {/* Optional attachments — shown on optionalDocs step */}
+                {stepDef.id === 'optionalDocs' && stepDef.optionalAttachments && stepDef.optionalAttachments.length > 0 && (
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
+                    <p className="text-sm font-semibold text-gray-700">These documents are optional — upload if you have them</p>
+                    <ul className="space-y-3">
+                      {stepDef.optionalAttachments.map((att, i) => (
+                        <li key={i} className="text-sm text-gray-700">
+                          <p className="font-medium">↑ Upload (optional): {att.label}</p>
+                          {att.condition && (
+                            <p className="text-gray-500 mt-0.5 text-xs">Applies when: {att.condition}</p>
+                          )}
+                          {att.helpText && (
+                            <p className="text-gray-500 mt-0.5 text-xs">{att.helpText}</p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Legacy attachments step — show both lists */}
+                {stepDef.id === 'attachments' && stepDef.requiredAttachments && stepDef.requiredAttachments.length > 0 && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-3">
+                    <p className="text-sm font-semibold text-amber-900">Required documents — upload below</p>
+                    <ul className="space-y-2">
+                      {stepDef.requiredAttachments.map((att, i) => (
+                        <li key={i} className="text-sm text-amber-900">
+                          <span className="font-medium">{att.label}</span>
+                          {att.condition && <span className="text-amber-700 ml-1">({att.condition})</span>}
+                          {att.helpText && <p className="text-amber-700 mt-0.5">{att.helpText}</p>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {stepDef.id === 'attachments' && stepDef.optionalAttachments && stepDef.optionalAttachments.length > 0 && (
                   <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
                     <p className="text-sm font-semibold text-gray-700">Optional documents</p>
                     <ul className="space-y-2">
                       {stepDef.optionalAttachments.map((att, i) => (
                         <li key={i} className="text-sm text-gray-700">
                           <span className="font-medium">{att.label}</span>
-                          {att.condition && (
-                            <span className="text-gray-500 ml-1">({att.condition})</span>
-                          )}
-                          {att.helpText && (
-                            <p className="text-gray-500 mt-0.5">{att.helpText}</p>
-                          )}
+                          {att.condition && <span className="text-gray-500 ml-1">({att.condition})</span>}
+                          {att.helpText && <p className="text-gray-500 mt-0.5">{att.helpText}</p>}
                         </li>
                       ))}
                     </ul>
                   </div>
                 )}
 
-                {/* No-attachment notice (forms where nothing is needed) */}
-                {(!stepDef.requiredAttachments || stepDef.requiredAttachments.length === 0) &&
-                 (!stepDef.optionalAttachments || stepDef.optionalAttachments.length === 0) &&
-                  stepDef.description && (
-                  <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-                    <p className="text-sm text-blue-800 whitespace-pre-line">{stepDef.description}</p>
-                  </div>
-                )}
-
-                {/* File uploader */}
+                {/* File uploader — additive across both upload steps */}
                 <div>
-                  <p className="text-sm font-semibold text-gray-700 mb-2">Upload files</p>
-                  <DocumentUploader onFilesSelected={setAttachedFiles} />
+                  <p className="text-sm font-semibold text-gray-700 mb-2">
+                    {attachedFiles.length > 0
+                      ? `${attachedFiles.length} file${attachedFiles.length !== 1 ? 's' : ''} uploaded — add more or continue`
+                      : 'Upload files'}
+                  </p>
+                  {attachedFiles.length > 0 && (
+                    <ul className="mb-3 space-y-1">
+                      {attachedFiles.map((f, i) => (
+                        <li key={i} className="flex items-center gap-2 text-sm text-green-700 bg-green-50 rounded px-3 py-1.5">
+                          <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                          {f.name}
+                          <button
+                            onClick={() => setAttachedFiles(prev => prev.filter((_, idx) => idx !== i))}
+                            className="ml-auto text-red-400 hover:text-red-600 text-xs"
+                          >
+                            Remove
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <DocumentUploader
+                    onFilesSelected={newFiles =>
+                      setAttachedFiles(prev => {
+                        const map = new Map(prev.map(f => [f.name, f]));
+                        newFiles.forEach(f => map.set(f.name, f));
+                        return Array.from(map.values());
+                      })
+                    }
+                  />
                 </div>
               </div>
             ) : (

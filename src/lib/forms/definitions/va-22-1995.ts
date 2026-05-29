@@ -3,7 +3,7 @@ import { branchOptions, dischargeOptions, stateOptions } from '@/lib/validation'
 
 export const va221995: FormDefinition = {
   id: 'va-22-1995',
-  version: 2,
+  version: 3,
   formNumber: 'VA 22-1995',
   title: 'Request for Change of Program or Place of Training',
   description: 'Request to change your education program or school while using VA education benefits.',
@@ -131,6 +131,25 @@ export const va221995: FormDefinition = {
       ],
     },
     {
+      id: 'requiredDocs',
+      title: 'Required Documents — Upload Now',
+      description: 'Upload any required documents before signing.',
+      requiredAttachments: [
+        { label: 'DD-214 (Member 4 Copy) for each new service period', condition: 'Required only if you have periods of active duty not previously reported to VA' },
+        { label: 'Military orders for any involuntary call-up periods', condition: 'Required only if applicable' },
+      ],
+      fields: [],
+    },
+    {
+      id: 'optionalDocs',
+      title: 'Optional Documents',
+      description: 'These documents are not required but can help with processing.',
+      optionalAttachments: [
+        { label: 'Voided check or deposit slip', helpText: 'To update direct deposit information.' },
+      ],
+      fields: [],
+    },
+    {
       id: 'signature',
       title: 'Certification & Signature',
       description: 'CERTIFICATION: I certify that all statements on this form are true and correct to the best of my knowledge and belief. WARNING: Title 38, United States Code, allows VA to request certain information to determine eligibility for benefits. Respondents are not required to respond unless it displays a valid OMB Control Number. Title 38 USC 1001 provides severe penalties for intentional misrepresentation.\n\nPRIVACY ACT NOTICE: The VA will not disclose information collected on this form to any source other than what has been authorized under the Privacy Act of 1974 or Title 38, Code of Federal Regulations 1.576 for routine uses (i.e., civil or criminal law enforcement, congressional communications, epidemiological or research studies, the collection of money owed to the United States, litigation in which the United States is a party or has an interest, the administration of VA programs and delivery of VA benefits, verification of identity and status, and personnel administration) as identified in the VA system of records. Your obligation to respond is required to obtain or retain education benefits. Providing your SSN is mandatory under Title 38 U.S.C. 5101(c)(1).',
@@ -156,18 +175,6 @@ export const va221995: FormDefinition = {
           required: true,
         },
       ],
-    },
-    {
-      id: 'attachments',
-      title: 'Attach Supporting Documents',
-      requiredAttachments: [
-        { label: 'DD-214 (Member 4 Copy) for each new service period', condition: 'Required only if you have periods of active duty not previously reported to VA' },
-        { label: 'Military orders for any involuntary call-up periods', condition: 'Required only if applicable' },
-      ],
-      optionalAttachments: [
-        { label: 'Voided check or deposit slip', helpText: 'To update direct deposit information.' },
-      ],
-      fields: [],
     },
   ],
   computeAnswers: (answers) => {
