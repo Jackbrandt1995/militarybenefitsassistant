@@ -27,6 +27,11 @@ export default function Navbar() {
                 <Link href="/dashboard" className="hover:text-blue-300 transition-colors">Dashboard</Link>
                 <Link href="/profile" className="hover:text-blue-300 transition-colors">Profile</Link>
                 <Link href="/history" className="hover:text-blue-300 transition-colors">History</Link>
+                {user.user_metadata?.is_admin && (
+                  <Link href="/admin" className="hover:text-amber-300 transition-colors font-medium">
+                    Admin
+                  </Link>
+                )}
                 <button onClick={signOut} className="text-gray-300 hover:text-white transition-colors">
                   Sign Out
                 </button>
@@ -55,6 +60,9 @@ export default function Navbar() {
                 <Link href="/dashboard" className="block py-2 hover:text-blue-300" onClick={() => setMenuOpen(false)}>Dashboard</Link>
                 <Link href="/profile" className="block py-2 hover:text-blue-300" onClick={() => setMenuOpen(false)}>Profile</Link>
                 <Link href="/history" className="block py-2 hover:text-blue-300" onClick={() => setMenuOpen(false)}>History</Link>
+                {user.user_metadata?.is_admin && (
+                  <Link href="/admin" className="block py-2 hover:text-amber-300 font-medium" onClick={() => setMenuOpen(false)}>Admin</Link>
+                )}
                 <button onClick={signOut} className="block py-2 text-gray-300 hover:text-white">Sign Out</button>
               </>
             ) : !loading ? (
