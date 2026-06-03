@@ -119,6 +119,7 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
               form_id: formId,
               form_name: form!.title,
               answers_json: safeAnswers,
+              submission_status: 'downloaded',
             })
             .select('id')
             .single();
