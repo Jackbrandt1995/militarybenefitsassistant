@@ -181,16 +181,13 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
         .upload(pdfPath, new Blob([pdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' }));
       if (uploadErr) throw uploadErr;
 
-      // Record authorization on the submission
-      const { error: updateErr } = await supabase
-        .from('form_submissions')
-        .update({
-          agent_filing_requested: true,
-          agent_auth_signature: agentSig,
-          pdf_storage_path: pdfPath,
-          submission_status: 'agent_pending',
-        })
-        .eq('id', submissionId);
+      // Record authorization via RPC — bypasses PostgREST schema cache entirely
+      const { error: updateErr } = await supabase.rpc('record_agent_filing', {
+        p_submission_id: submissionId,
+        p_user_id: user.id,
+        p_agent_auth_signature: agentSig,
+        p_pdf_storage_path: pdfPath,
+      });
       if (updateErr) throw updateErr;
 
       setAgentAuthorized(true);
