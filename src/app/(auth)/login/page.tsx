@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Shield } from 'lucide-react';
+import Image from 'next/image';
 import Button from '@/components/ui/Button';
 
 export default function LoginPage() {
@@ -34,7 +34,7 @@ export default function LoginPage() {
     <div className="min-h-[80vh] flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Shield className="h-12 w-12 text-blue-700 mx-auto mb-4" />
+          <Image src="/seal.png" alt="Military Benefits Assistant" width={64} height={64} className="mx-auto mb-4 rounded-full" />
           <h1 className="text-2xl font-bold text-gray-900">Welcome Back</h1>
           <p className="text-gray-600 mt-1">Sign in to your account</p>
         </div>
