@@ -13,6 +13,7 @@ import {
   getRpoForState,
   US_STATES,
   type SubmissionGuide,
+  type RPO,
 } from '@/lib/forms/submissionInstructions';
 import SignaturePad from '@/components/SignaturePad';
 import Button from '@/components/ui/Button';
@@ -24,9 +25,6 @@ import {
   AlertCircle,
   Mail,
   ClipboardList,
-  MapPin,
-  ChevronDown,
-  ChevronUp,
 } from 'lucide-react';
 
 export default function CompletePage({ params }: { params: Promise<{ formId: string }> }) {
@@ -51,9 +49,6 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
   const [agentAuthorized, setAgentAuthorized] = useState(false);
   const [isAuthorizingAgent, setIsAuthorizingAgent] = useState(false);
   const [agentError, setAgentError] = useState('');
-
-  // Self-submit details expansion
-  const [showWhatToInclude, setShowWhatToInclude] = useState(true);
 
   const guide: SubmissionGuide | undefined = SUBMISSION_GUIDES[formId];
 
@@ -283,72 +278,119 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
                   </button>
                 </div>
 
-                {/* ── Self-submit details ───────────────────────────────────── */}
-                {submissionMode === 'self' && guide && (
-                  <div className="mt-2 space-y-4 border-t border-gray-100 pt-4">
+                {/* ── Self-submit: step-by-step guide ──────────────────────── */}
+                {submissionMode === 'self' && (
+                  <div className="mt-2 border-t border-gray-100 pt-5 space-y-0">
 
-                    {/* Through-school forms */}
-                    {guide.officeType === 'through-school' && (
-                      <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 space-y-2">
-                        <p className="font-semibold text-amber-900 flex items-center gap-2">
-                          <MapPin className="w-4 h-4 shrink-0" />
-                          Do not mail this form directly to VA
-                        </p>
-                        <p className="text-sm text-amber-800 whitespace-pre-line">{guide.schoolNote}</p>
+                    {/* ── THROUGH-SCHOOL FORMS (e.g. 22-1999c) ──────────────── */}
+                    {guide?.officeType === 'through-school' && (
+                      <div className="space-y-3">
+                        <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
+                          <p className="font-semibold text-amber-900 text-sm">
+                            ⚠ Do not mail this form directly to VA — it goes through your school.
+                          </p>
+                        </div>
+                        {[
+                          {
+                            n: 1, title: 'Print your form',
+                            body: `Download the PDF above and print all pages on standard 8.5″ × 11″ white paper. Do not staple — use a binder clip or paper clip.`,
+                          },
+                          {
+                            n: 2, title: 'Check the date requirement',
+                            body: `You may only sign and submit this form on or after the 7th calendar day from your enrollment agreement date. If you haven't reached that date yet, wait before proceeding.`,
+                          },
+                          {
+                            n: 3, title: 'Make a photocopy for your records',
+                            body: `Before handing anything over, photocopy every page. Label the copies "MY COPY — DO NOT SUBMIT" and keep them somewhere safe.`,
+                          },
+                          {
+                            n: 4, title: 'Deliver to your school\'s VA Certifying Official',
+                            body: guide?.schoolNote ?? '',
+                          },
+                        ].map(step => (
+                          <StepCard key={step.n} number={step.n} title={step.title} body={step.body} />
+                        ))}
+                        {guide?.timeline && (
+                          <p className="text-xs text-slate-500 italic pt-1">⏱ {guide.timeline}</p>
+                        )}
                       </div>
                     )}
 
-                    {/* RPO forms — state selector + address */}
-                    {(guide.officeType === 'rpo' || guide.officeType === 'rpo-with-school') && (
-                      <div className="space-y-4">
-                        {/* State selector */}
-                        <div>
-                          <label className="block text-sm font-semibold text-slate-700 mb-1">
-                            Select your state to find the correct VA Regional Processing Office
-                          </label>
-                          <select
-                            value={userState}
-                            onChange={e => setUserState(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          >
-                            <option value="">— Select your state —</option>
-                            {US_STATES.map(s => (
-                              <option key={s.abbr} value={s.abbr}>{s.name}</option>
-                            ))}
-                            <option value="__FOREIGN__">Foreign school / outside US</option>
-                          </select>
-                        </div>
+                    {/* ── FORMS REQUIRING EXTRA SIGNATURES BEFORE MAILING (e.g. 22-1990t) ── */}
+                    {guide?.officeType === 'rpo' && guide?.schoolNote && (
+                      <div className="space-y-3">
+                        <StepCard number={1} title="Print your form"
+                          body={`Download the PDF above and print all pages on standard 8.5″ × 11″ white paper. Do not staple.`} />
+                        <StepCard number={2} title="Collect required signatures — in this exact order"
+                          body={guide.schoolNote} />
+                        <StepCard number={3} title="Gather your supporting documents"
+                          body="Assemble the documents listed below before sealing your envelope."
+                          list={guide.whatToInclude} />
+                        <StepCard number={4} title="Make photocopies of everything"
+                          body={`Photocopy every page — your signed form plus all supporting documents. Label the set "MY COPIES — DO NOT SUBMIT" and store them somewhere safe. If VA loses your package, these are your only backup.`} />
+                        <MailingSteps
+                          stepOffset={5}
+                          formNumber={form!.formNumber}
+                          officeType="rpo"
+                          userState={userState}
+                          setUserState={setUserState}
+                          rpo={rpo}
+                          timeline={guide.timeline}
+                          moreInfo={guide.moreInfo}
+                        />
+                      </div>
+                    )}
 
-                        {/* RPO address card */}
-                        {userState && (
-                          <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
-                            {userState === '__FOREIGN__' ? (
-                              <>
-                                <p className="font-semibold text-blue-900">Central Regional Processing Office</p>
-                                <p className="text-sm text-blue-800 mt-1 whitespace-pre-line">
-                                  {'9700 Page Ave.\nSt. Louis, MO 63132'}
-                                </p>
-                                <p className="text-sm text-blue-700 mt-1">Fax: (314) 253-4095</p>
-                                <p className="text-xs text-blue-600 mt-2">Handles all foreign school applications</p>
-                              </>
-                            ) : rpo ? (
-                              <>
-                                <p className="font-semibold text-blue-900">{rpo.name}</p>
-                                <p className="text-sm text-blue-800 mt-1 whitespace-pre-line">{rpo.address}</p>
-                                <p className="text-sm text-blue-700 mt-1">Fax: {rpo.fax}</p>
-                                <p className="text-xs text-blue-600 mt-2">
-                                  Serves: {rpo.states.join(', ')}{rpo.foreignSchools ? ', and all foreign schools' : ''}
-                                </p>
-                              </>
-                            ) : (
-                              <p className="text-sm text-blue-800">State not recognized — call VA at 1-888-GI-BILL-1 for your correct office.</p>
-                            )}
+                    {/* ── STANDARD RPO MAIL FORMS ────────────────────────────── */}
+                    {(guide?.officeType === 'rpo' && !guide?.schoolNote) && (
+                      <div className="space-y-3">
+                        <StepCard number={1} title="Print your form"
+                          body={`Download the PDF above and print all pages on standard 8.5″ × 11″ white paper. Do not staple — use a binder clip or paper clip.`} />
+                        <StepCard number={2} title="Gather your supporting documents"
+                          body="Collect each of the documents listed below before you seal the envelope."
+                          list={guide.whatToInclude} />
+                        {guide.moreInfo && (
+                          <div className="rounded-lg bg-slate-50 border border-slate-200 p-4">
+                            <p className="text-sm text-slate-700 whitespace-pre-line">{guide.moreInfo}</p>
                           </div>
                         )}
+                        <StepCard number={3} title="Make photocopies of everything"
+                          body={`Before you seal anything, photocopy every page — your signed form plus every supporting document. Label the set "MY COPIES — DO NOT SUBMIT" and store them somewhere safe. If VA loses your package, these are your only backup.`} />
+                        <MailingSteps
+                          stepOffset={4}
+                          formNumber={form!.formNumber}
+                          officeType="rpo"
+                          userState={userState}
+                          setUserState={setUserState}
+                          rpo={rpo}
+                          timeline={guide.timeline}
+                          moreInfo={undefined}
+                        />
+                      </div>
+                    )}
 
-                        {/* School note for rpo-with-school */}
-                        {guide.officeType === 'rpo-with-school' && guide.schoolNote && (
-                          <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
+                    {/* ── RPO + SCHOOL NOTIFICATION (e.g. 22-1995, 22-5495) ─── */}
+                    {guide?.officeType === 'rpo-with-school' && (
+                      <div className="space-y-3">
+                        <StepCard number={1} title="Print your form"
+                          body={`Download the PDF above and print all pages on standard 8.5″ × 11″ white paper. Do not staple.`} />
+                        <StepCard number={2} title="Gather your supporting documents"
+                          body="Collect each of the documents listed below before you seal the envelope."
+                          list={guide.whatToInclude} />
+                        <StepCard number={3} title="Make photocopies of everything"
+                          body={`Photocopy every page — form and all attachments. Label the set "MY COPIES — DO NOT SUBMIT" and keep them safe.`} />
+                        <MailingSteps
+                          stepOffset={4}
+                          formNumber={form!.formNumber}
+                          officeType="rpo"
+                          userState={userState}
+                          setUserState={setUserState}
+                          rpo={rpo}
+                          timeline={guide.timeline}
+                          moreInfo={undefined}
+                        />
+                        {guide.schoolNote && (
+                          <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 mt-2">
                             <p className="font-semibold text-amber-900 text-sm mb-1">Also notify your school</p>
                             <p className="text-sm text-amber-800">{guide.schoolNote}</p>
                           </div>
@@ -356,85 +398,46 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
                       </div>
                     )}
 
-                    {/* VR&E — nearest Regional Office */}
-                    {guide.officeType === 'regional-office' && (
-                      <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 space-y-2">
-                        <p className="font-semibold text-blue-900 flex items-center gap-2">
-                          <MapPin className="w-4 h-4 shrink-0" />
-                          Find your nearest VA Regional Office
-                        </p>
-                        <p className="text-sm text-blue-800 whitespace-pre-line">{guide.moreInfo}</p>
+                    {/* ── VR&E REGIONAL OFFICE (28-1900) ────────────────────── */}
+                    {guide?.officeType === 'regional-office' && (
+                      <div className="space-y-3">
+                        <StepCard number={1} title="Print your form"
+                          body={`Download the PDF above and print all pages on standard 8.5″ × 11″ white paper. Do not staple.`} />
+                        <StepCard number={2} title="Gather your supporting documents"
+                          body="Collect each of the documents listed below before you seal the envelope."
+                          list={guide.whatToInclude} />
+                        <StepCard number={3} title="Make photocopies of everything"
+                          body={`Photocopy every page — form and all attachments. Label the set "MY COPIES — DO NOT SUBMIT" and keep them safe. These are your only backup if VA loses the package.`} />
+                        <MailingSteps
+                          stepOffset={4}
+                          formNumber={form!.formNumber}
+                          officeType="regional-office"
+                          userState={userState}
+                          setUserState={setUserState}
+                          rpo={null}
+                          timeline={guide.timeline}
+                          moreInfo={guide.moreInfo}
+                        />
                       </div>
                     )}
 
-                    {/* What to include — collapsible */}
-                    <div className="rounded-lg border border-gray-200 overflow-hidden">
-                      <button
-                        onClick={() => setShowWhatToInclude(v => !v)}
-                        className="w-full flex justify-between items-center px-4 py-3 bg-gray-50 text-sm font-semibold text-gray-700 hover:bg-gray-100"
-                      >
-                        What to include in your mailing package
-                        {showWhatToInclude ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                      </button>
-                      {showWhatToInclude && (
-                        <ul className="px-4 py-3 space-y-2">
-                          {guide.whatToInclude.map((item, i) => (
-                            <li key={i} className="flex gap-2 text-sm text-slate-700">
-                              <span className="shrink-0 text-blue-500 font-bold">✓</span>
-                              {item}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-
-                    {/* School note (RPO forms with school involved) */}
-                    {guide.officeType === 'rpo' && guide.schoolNote && (
-                      <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
-                        <p className="font-semibold text-amber-900 text-sm mb-2">
-                          ⚠ Additional steps required at your school
-                        </p>
-                        <p className="text-sm text-amber-800 whitespace-pre-line">{guide.schoolNote}</p>
+                    {/* ── FALLBACK (no guide) ────────────────────────────────── */}
+                    {!guide && (
+                      <div className="space-y-3">
+                        <StepCard number={1} title="Print your form"
+                          body="Download the PDF above and print all pages on standard 8.5″ × 11″ white paper." />
+                        <MailingSteps
+                          stepOffset={2}
+                          formNumber={form!.formNumber}
+                          officeType="rpo"
+                          userState={userState}
+                          setUserState={setUserState}
+                          rpo={rpo}
+                          timeline={undefined}
+                          moreInfo={undefined}
+                        />
                       </div>
                     )}
-
-                    {/* General more-info note */}
-                    {guide.moreInfo && guide.officeType !== 'regional-office' && (
-                      <div className="rounded-lg bg-slate-50 border border-slate-200 p-4">
-                        <p className="text-sm text-slate-700 whitespace-pre-line">{guide.moreInfo}</p>
-                      </div>
-                    )}
-
-                    {/* Timeline */}
-                    {guide.timeline && (
-                      <p className="text-xs text-slate-500 italic">⏱ {guide.timeline}</p>
-                    )}
-
-                    {/* Mailing tips */}
-                    <div className="rounded-lg bg-green-50 border border-green-200 p-4 space-y-1">
-                      <p className="text-sm font-semibold text-green-900">Tips for mailing</p>
-                      <ul className="space-y-1">
-                        {[
-                          'Make copies of everything before sealing the envelope.',
-                          'Use USPS Certified Mail with Return Receipt so you have proof of delivery.',
-                          'Keep your tracking number and delivery confirmation in a safe place.',
-                        ].map((tip, i) => (
-                          <li key={i} className="text-sm text-green-800 flex gap-2">
-                            <span className="shrink-0">•</span>{tip}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                )}
-
-                {/* No guide available */}
-                {submissionMode === 'self' && !guide && (
-                  <div className="mt-2 rounded-lg bg-blue-50 border border-blue-200 p-4">
-                    <p className="text-sm text-blue-800">
-                      Mail your completed form to your nearest VA Regional Processing Office.
-                      Call <strong>1-888-GI-BILL-1</strong> (1-888-442-4551) for assistance finding the correct office.
-                    </p>
                   </div>
                 )}
 
@@ -536,3 +539,209 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
     </div>
   );
 }
+
+// ── Helper components ──────────────────────────────────────────────────────────
+
+function StepCard({
+  number,
+  title,
+  body,
+  list,
+}: {
+  number: number;
+  title: string;
+  body: string;
+  list?: string[];
+}) {
+  return (
+    <div className="flex gap-4">
+      {/* Step badge + vertical line */}
+      <div className="flex flex-col items-center shrink-0">
+        <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold shrink-0">
+          {number}
+        </div>
+        <div className="w-px flex-1 bg-blue-200 mt-1" />
+      </div>
+      {/* Content */}
+      <div className="pb-5 flex-1 min-w-0">
+        <p className="font-semibold text-slate-800 mb-1">{title}</p>
+        {body && <p className="text-sm text-slate-600 whitespace-pre-line leading-relaxed">{body}</p>}
+        {list && list.length > 0 && (
+          <ul className="mt-2 space-y-1.5">
+            {list.map((item, i) => (
+              <li key={i} className="flex gap-2 text-sm text-slate-700">
+                <span className="shrink-0 text-blue-500 font-bold mt-0.5">✓</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MailingSteps({
+  stepOffset,
+  formNumber,
+  officeType,
+  userState,
+  setUserState,
+  rpo,
+  timeline,
+  moreInfo,
+}: {
+  stepOffset: number;
+  formNumber: string;
+  officeType: string;
+  userState: string;
+  setUserState: (s: string) => void;
+  rpo: RPO | null;
+  timeline?: string;
+  moreInfo?: string;
+}) {
+  const isRegionalOffice = officeType === 'regional-office';
+
+  // Determine mailing address text
+  let addressBlock = '';
+  let officeName = '';
+  if (isRegionalOffice) {
+    officeName = 'Your Nearest VA Regional Office';
+    addressBlock = 'Call 1-800-827-1000 to get the mailing address for your nearest VA Regional Office, or visit in person — no appointment needed.';
+  } else if (userState === '__FOREIGN__') {
+    officeName = 'Central Regional Processing Office';
+    addressBlock = '9700 Page Ave.\nSt. Louis, MO 63132';
+  } else if (rpo) {
+    officeName = rpo.name;
+    addressBlock = rpo.address;
+  }
+
+  const s = stepOffset;
+
+  return (
+    <>
+      {/* Step: Address the envelope */}
+      <div className="flex gap-4">
+        <div className="flex flex-col items-center shrink-0">
+          <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold shrink-0">
+            {s}
+          </div>
+          <div className="w-px flex-1 bg-blue-200 mt-1" />
+        </div>
+        <div className="pb-5 flex-1 min-w-0">
+          <p className="font-semibold text-slate-800 mb-1">Address your envelope</p>
+          <p className="text-sm text-slate-600 mb-3">
+            Use a <strong>9″ × 12″ manila or kraft envelope</strong> — large enough so your documents lie flat without folding.
+            Write <strong>"VA FORM {formNumber} ENCLOSED"</strong> in the lower-left corner of the envelope front.
+            Put your own return address in the upper-left corner.
+          </p>
+
+          {/* Address sub-section */}
+          {!isRegionalOffice && (
+            <>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+                Select your state to get the correct mailing address
+              </label>
+              <select
+                value={userState}
+                onChange={e => setUserState(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">— Select your state —</option>
+                {US_STATES.map(st => (
+                  <option key={st.abbr} value={st.abbr}>{st.name}</option>
+                ))}
+                <option value="__FOREIGN__">Foreign school / outside US</option>
+              </select>
+            </>
+          )}
+
+          {(userState || isRegionalOffice) && (
+            <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
+              <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">Write this address on the envelope</p>
+              <p className="font-semibold text-blue-900 text-sm">{officeName}</p>
+              {addressBlock && (
+                <p className="text-sm text-blue-800 mt-1 whitespace-pre-line font-mono leading-relaxed">{addressBlock}</p>
+              )}
+              {!isRegionalOffice && rpo && (
+                <p className="text-xs text-blue-600 mt-2">Serves: {rpo.states.join(', ')}{rpo.foreignSchools ? ', and all foreign schools' : ''}</p>
+              )}
+              {!isRegionalOffice && userState === '__FOREIGN__' && (
+                <p className="text-xs text-blue-600 mt-2">Handles all foreign school applications</p>
+              )}
+            </div>
+          )}
+
+          {moreInfo && (
+            <p className="text-sm text-slate-600 mt-3 whitespace-pre-line">{moreInfo}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Step: Go to the Post Office */}
+      <div className="flex gap-4">
+        <div className="flex flex-col items-center shrink-0">
+          <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold shrink-0">
+            {s + 1}
+          </div>
+          <div className="w-px flex-1 bg-blue-200 mt-1" />
+        </div>
+        <div className="pb-5 flex-1 min-w-0">
+          <p className="font-semibold text-slate-800 mb-1">Go to the Post Office — bring your sealed envelope to the counter</p>
+          <p className="text-sm text-slate-600 mb-3">
+            <strong>Do not use a drop box or street mailbox.</strong> You must go inside to the counter so the clerk can
+            process Certified Mail and give you a receipt.
+          </p>
+          <p className="text-sm text-slate-700 font-medium mb-2">Tell the clerk exactly this:</p>
+          <div className="rounded-lg bg-slate-800 text-white px-4 py-3 text-sm font-mono mb-3">
+            "I need to send this Certified Mail with Return Receipt Requested."
+          </div>
+          <p className="text-sm font-semibold text-slate-700 mb-2">What that means:</p>
+          <ul className="space-y-2 mb-3">
+            {[
+              { term: 'Certified Mail', def: 'VA must sign for the envelope upon delivery. This creates an official record that your form was received. VA cannot claim they never got it.' },
+              { term: 'Return Receipt Requested', def: 'A small green postcard (PS Form 3811) is attached to your envelope. VA signs it when they receive your mail and the Post Office returns it to you. This green card is your legal proof of delivery — keep it permanently.' },
+              { term: 'Cost', def: 'Approximately $8–12 total depending on weight. Worth every penny as proof of government delivery.' },
+            ].map((item, i) => (
+              <li key={i} className="text-sm text-slate-600 flex gap-2">
+                <span className="shrink-0 font-semibold text-slate-800">{item.term}:</span>
+                {item.def}
+              </li>
+            ))}
+          </ul>
+          <p className="text-sm text-slate-600">
+            The clerk will weigh your envelope, calculate postage, attach a Certified Mail barcode label, and hand you a receipt with your tracking number.
+          </p>
+        </div>
+      </div>
+
+      {/* Step: Save your tracking info */}
+      <div className="flex gap-4">
+        <div className="flex flex-col items-center shrink-0">
+          <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold shrink-0">
+            {s + 2}
+          </div>
+          <div className="w-px flex-1 bg-blue-200 mt-1" />
+        </div>
+        <div className="pb-5 flex-1 min-w-0">
+          <p className="font-semibold text-slate-800 mb-1">Save your tracking number and Post Office receipt</p>
+          <ul className="space-y-2">
+            {[
+              'Write your USPS tracking number somewhere you won\'t lose it — take a photo of your receipt.',
+              'Your green Return Receipt card will arrive in your mailbox 1–2 weeks after VA signs for your package. Do not throw it away — it is permanent proof of delivery.',
+              'Keep your copies, receipt, and green card together in one folder.',
+              timeline ? `Expected processing time: ${timeline}` : 'VA typically notifies you by mail once your form has been processed.',
+              'If you haven\'t heard from VA after 60 days, call 1-888-GI-BILL-1 (education forms) or 1-800-827-1000 (VR&E) and provide your form number, mailing date, and tracking number.',
+            ].map((item, i) => (
+              <li key={i} className="text-sm text-slate-600 flex gap-2">
+                <span className="shrink-0 text-blue-500 font-bold mt-0.5">•</span>
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </>
+  );
+}
+
