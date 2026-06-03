@@ -13,6 +13,8 @@ import {
   Loader,
   Inbox,
   ArrowRight,
+  Package,
+  ExternalLink,
 } from 'lucide-react';
 
 interface Submission {
@@ -22,6 +24,7 @@ interface Submission {
   generated_at: string;
   submission_status: string | null;
   agent_filing_requested: boolean | null;
+  tracking_number: string | null;
 }
 
 interface InProgressForm {
@@ -115,7 +118,7 @@ export default function HistoryPage() {
     const supabase = createClient();
     supabase
       .from('form_submissions')
-      .select('id, form_id, form_name, generated_at, submission_status, agent_filing_requested')
+      .select('id, form_id, form_name, generated_at, submission_status, agent_filing_requested, tracking_number')
       .eq('user_id', user.id)
       .order('generated_at', { ascending: false })
       .then(({ data }) => {
@@ -224,6 +227,18 @@ export default function HistoryPage() {
                     <p className="font-medium text-slate-900 text-sm leading-tight">{sub.form_name}</p>
                     <p className="text-xs text-slate-400 font-mono uppercase mt-0.5">{sub.form_id}</p>
                     <p className="text-xs text-slate-400 mt-1">{date} at {time}</p>
+                    {sub.tracking_number && (
+                      <a
+                        href={`https://tools.usps.com/go/TrackConfirmAction?tLabels=${sub.tracking_number}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-full hover:bg-indigo-100 transition-colors"
+                      >
+                        <Package className="w-3 h-3" />
+                        Track: {sub.tracking_number}
+                        <ExternalLink className="w-3 h-3 opacity-70" />
+                      </a>
+                    )}
                   </div>
 
                   <div className="shrink-0">

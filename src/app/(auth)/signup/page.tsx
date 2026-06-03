@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
-import { Shield } from 'lucide-react';
+import Image from 'next/image';
 import Button from '@/components/ui/Button';
 
 export default function SignupPage() {
@@ -48,7 +48,7 @@ export default function SignupPage() {
     return (
       <div className="min-h-[80vh] flex items-center justify-center px-4">
         <div className="w-full max-w-md text-center">
-          <Shield className="h-12 w-12 text-green-600 mx-auto mb-4" />
+          <Image src="/seal.png" alt="Military Benefits Assistant" width={64} height={64} className="mx-auto mb-4 rounded-full" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Check Your Email</h1>
           <p className="text-gray-600 mb-6">
             We sent a confirmation link to <strong>{email}</strong>.
@@ -66,7 +66,7 @@ export default function SignupPage() {
     <div className="min-h-[80vh] flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Shield className="h-12 w-12 text-blue-700 mx-auto mb-4" />
+          <Image src="/seal.png" alt="Military Benefits Assistant" width={64} height={64} className="mx-auto mb-4 rounded-full" />
           <h1 className="text-2xl font-bold text-gray-900">Create Your Account</h1>
           <p className="text-gray-600 mt-1">Start auto-filling VA forms today</p>
         </div>

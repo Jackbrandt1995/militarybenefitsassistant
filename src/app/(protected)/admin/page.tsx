@@ -13,6 +13,8 @@ import {
   User,
   AlertCircle,
   RefreshCw,
+  Package,
+  Save,
 } from 'lucide-react';
 
 interface AgentSubmission {
@@ -27,19 +29,24 @@ interface AgentSubmission {
   first_name: string | null;
   last_name: string | null;
   email: string | null;
+  tracking_number: string | null;
 }
 
 type FilterType = 'all' | 'agent_pending' | 'agent_mailed';
 
 export default function AdminPage() {
-  const [submissions, setSubmissions] = useState<AgentSubmission[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [filter, setFilter] = useState<FilterType>('agent_pending');
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const [mailingId, setMailingId] = useState<string | null>(null);
-  const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [error, setError] = useState('');
+  const [submissions, setSubmissions]       = useState<AgentSubmission[]>([]);
+  const [loading, setLoading]               = useState(true);
+  const [refreshing, setRefreshing]         = useState(false);
+  const [filter, setFilter]                 = useState<FilterType>('agent_pending');
+  const [expanded, setExpanded]             = useState<Record<string, boolean>>({});
+  const [mailingId, setMailingId]           = useState<string | null>(null);
+  const [downloadingId, setDownloadingId]   = useState<string | null>(null);
+  const [error, setError]                   = useState('');
+
+  // Per-submission tracking input state
+  const [trackingInputs, setTrackingInputs] = useState<Record<string, string>>({});
+  const [savingTracking, setSavingTracking] = useState<string | null>(null);
 
   const loadSubmissions = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -49,7 +56,12 @@ export default function AdminPage() {
       const supabase = createClient();
       const { data, error: rpcError } = await supabase.rpc('get_agent_submissions');
       if (rpcError) throw rpcError;
-      setSubmissions(data ?? []);
+      const rows = (data ?? []) as AgentSubmission[];
+      setSubmissions(rows);
+      // Seed tracking inputs with existing values
+      const seeds: Record<string, string> = {};
+      rows.forEach(r => { seeds[r.id] = r.tracking_number ?? ''; });
+      setTrackingInputs(prev => ({ ...seeds, ...prev }));
     } catch (err: any) {
       setError(err.message ?? 'Failed to load submissions.');
     } finally {
@@ -92,6 +104,26 @@ export default function AdminPage() {
       alert('Error marking as mailed: ' + (err.message ?? 'Unknown error'));
     } finally {
       setMailingId(null);
+    }
+  }
+
+  async function handleSaveTracking(id: string) {
+    const trackingNumber = (trackingInputs[id] ?? '').trim();
+    setSavingTracking(id);
+    try {
+      const supabase = createClient();
+      const { error: rpcError } = await supabase.rpc('set_tracking_number', {
+        p_submission_id: id,
+        p_tracking_number: trackingNumber,
+      });
+      if (rpcError) throw rpcError;
+      setSubmissions(prev =>
+        prev.map(s => s.id === id ? { ...s, tracking_number: trackingNumber || null } : s)
+      );
+    } catch (err: any) {
+      alert('Error saving tracking number: ' + (err.message ?? 'Unknown error'));
+    } finally {
+      setSavingTracking(null);
     }
   }
 
@@ -199,7 +231,9 @@ export default function AdminPage() {
         {!loading && !error && filtered.length === 0 && (
           <div className="bg-white rounded-xl border border-slate-200 p-14 text-center">
             <FileText className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-            <p className="font-medium text-slate-500">No {filter === 'all' ? '' : filter === 'agent_pending' ? 'pending ' : 'mailed '}submissions yet.</p>
+            <p className="font-medium text-slate-500">
+              No {filter === 'all' ? '' : filter === 'agent_pending' ? 'pending ' : 'mailed '}submissions yet.
+            </p>
           </div>
         )}
 
@@ -214,6 +248,8 @@ export default function AdminPage() {
           const time       = new Date(sub.created_at).toLocaleTimeString('en-US', {
             hour: 'numeric', minute: '2-digit',
           });
+          const trackingVal    = trackingInputs[sub.id] ?? sub.tracking_number ?? '';
+          const trackingChanged = trackingVal !== (sub.tracking_number ?? '');
 
           return (
             <div
@@ -237,6 +273,12 @@ export default function AdminPage() {
                         : <CheckCircle className="w-3 h-3" />}
                       {isPending ? 'Awaiting Mailing' : 'Mailed'}
                     </span>
+                    {sub.tracking_number && (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">
+                        <Package className="w-3 h-3" />
+                        {sub.tracking_number}
+                      </span>
+                    )}
                     <span className="text-xs text-slate-400">{date} at {time}</span>
                   </div>
 
@@ -297,6 +339,50 @@ export default function AdminPage() {
               {/* Expanded panel */}
               {isExpanded && (
                 <div className="border-t border-slate-100 bg-slate-50 px-5 py-5 space-y-5">
+
+                  {/* Tracking number */}
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                      Tracking Number
+                    </p>
+                    <div className="flex gap-2 items-center">
+                      <div className="relative flex-1 max-w-xs">
+                        <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input
+                          type="text"
+                          placeholder="e.g. 9400111899223397622887"
+                          value={trackingVal}
+                          onChange={e => setTrackingInputs(prev => ({ ...prev, [sub.id]: e.target.value }))}
+                          className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono placeholder:font-sans placeholder:text-slate-400"
+                        />
+                      </div>
+                      <Button
+                        onClick={() => handleSaveTracking(sub.id)}
+                        disabled={savingTracking === sub.id || !trackingChanged}
+                        className={`text-sm py-2 px-3 shrink-0 ${
+                          trackingChanged
+                            ? 'bg-indigo-600 hover:bg-indigo-700'
+                            : 'bg-slate-300 cursor-not-allowed'
+                        }`}
+                      >
+                        <Save className="w-3.5 h-3.5 mr-1.5" />
+                        {savingTracking === sub.id ? 'Saving…' : 'Save'}
+                      </Button>
+                    </div>
+                    {sub.tracking_number && (
+                      <p className="text-xs text-slate-400 mt-1.5">
+                        Visible to client on their History page.{' '}
+                        <a
+                          href={`https://tools.usps.com/go/TrackConfirmAction?tLabels=${sub.tracking_number}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-indigo-600 hover:underline"
+                        >
+                          Track on USPS →
+                        </a>
+                      </p>
+                    )}
+                  </div>
 
                   {/* Authorization signature */}
                   <div>
