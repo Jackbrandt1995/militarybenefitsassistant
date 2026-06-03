@@ -162,7 +162,7 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
       const pdfPath = `${user.id}/${submissionId}/form.pdf`;
       const { error: uploadErr } = await supabase.storage
         .from('form_submissions')
-        .upload(pdfPath, new Blob([pdfBytes], { type: 'application/pdf' }));
+        .upload(pdfPath, new Blob([pdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' }));
       if (uploadErr) throw uploadErr;
 
       // Record authorization on the submission
