@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Resend } from 'resend';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import nodemailer from 'nodemailer';
 
 const ADMIN_EMAIL = 'info@militarybenefitsassistant.com';
-const FROM_EMAIL  = process.env.RESEND_FROM_EMAIL ?? 'MBA Notifications <noreply@militarybenefitsassistant.com>';
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,6 +10,14 @@ export async function POST(req: NextRequest) {
     if (!userName || !formName || !formId) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
     }
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
+      },
+    });
 
     // Subject format: {User_Name}_{Benefit}_{Application}
     const subject = `${userName}_${formName}_${formId.toUpperCase()}`;
@@ -78,7 +83,7 @@ export async function POST(req: NextRequest) {
       <p style="font-size:13px;color:#475569;margin:0 0 16px;">
         Log in to the MBA admin panel to download the filled PDF, review the authorization signature, and mark the form as mailed once sent.
       </p>
-      <a href="https://militarybenefitsassistant.com/admin" class="cta">Open Admin Panel →</a>
+      <a href="https://militarybenefitsassistant.vercel.app/admin" class="cta">Open Admin Panel →</a>
     </div>
     <div class="footer">
       Military Benefits Assistant · This is an automated notification.
@@ -87,14 +92,12 @@ export async function POST(req: NextRequest) {
 </body>
 </html>`;
 
-    const { error } = await resend.emails.send({
-      from: FROM_EMAIL,
-      to:   ADMIN_EMAIL,
+    await transporter.sendMail({
+      from: `"MBA Notifications" <${process.env.GMAIL_USER}>`,
+      to: ADMIN_EMAIL,
       subject,
       html,
     });
-
-    if (error) throw error;
 
     return NextResponse.json({ ok: true });
   } catch (err: any) {
