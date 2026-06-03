@@ -194,7 +194,7 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
       try {
         const firstName = (safeAnswers?.firstName as string) ?? '';
         const lastName  = (safeAnswers?.lastName  as string) ?? '';
-        const userName  = [firstName, lastName].filter(Boolean).join(' ') || user.email ?? 'Unknown';
+        const userName  = [firstName, lastName].filter(Boolean).join(' ') || (user.email ?? 'Unknown');
 
         await fetch('/api/notify-filing', {
           method: 'POST',
