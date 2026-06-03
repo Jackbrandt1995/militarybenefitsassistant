@@ -26,6 +26,7 @@ export default function FormWizard({ form }: FormWizardProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const [uploadError, setUploadError] = useState('');
 
   const {
     currentStep,
@@ -43,8 +44,24 @@ export default function FormWizard({ form }: FormWizardProps) {
 
   const stepDef = form.steps[currentStep];
 
+  // Voided check is required whenever the user has entered routing or account number
+  const voidedCheckRequired =
+    !!(answers.routingNumber && String(answers.routingNumber).replace(/\D/g, '').length > 0) ||
+    !!(answers.accountNumber && String(answers.accountNumber).replace(/\D/g, '').length > 0);
+
+  const isUploadStep = ['requiredDocs', 'optionalDocs', 'attachments'].includes(stepDef.id);
+
   async function handleNext() {
     if (!validateCurrentStep()) return;
+
+    // If banking info was entered, require at least one file on every upload step
+    if (isUploadStep && voidedCheckRequired && attachedFiles.length === 0) {
+      setUploadError(
+        'You entered routing and account numbers, so a voided check or bank deposit slip is required. Please upload one before continuing.'
+      );
+      return;
+    }
+    setUploadError('');
 
     if (isLastStep) {
       // Save attached files to module cache so complete/page.tsx can merge them
@@ -317,6 +334,28 @@ export default function FormWizard({ form }: FormWizardProps) {
                   </div>
                 )}
 
+                {/* Voided check — injected as required when banking info is present */}
+                {voidedCheckRequired && (
+                  <div className="rounded-lg border border-red-300 bg-red-50 p-4 space-y-1">
+                    <p className="text-sm font-semibold text-red-900 flex items-center gap-1.5">
+                      <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      Required: Upload a voided check or bank deposit slip
+                    </p>
+                    <p className="text-sm text-red-800">
+                      Because you entered routing and account numbers, VA requires a voided check or bank deposit slip to verify your direct deposit information. Write "VOID" in large letters across a blank check, or use a pre-printed deposit slip.
+                    </p>
+                  </div>
+                )}
+
+                {/* Upload error message */}
+                {uploadError && (
+                  <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3">
+                    <p className="text-sm text-red-800 font-medium">{uploadError}</p>
+                  </div>
+                )}
+
                 {/* File uploader — additive across both upload steps */}
                 <div>
                   <p className="text-sm font-semibold text-gray-700 mb-2">
@@ -343,13 +382,14 @@ export default function FormWizard({ form }: FormWizardProps) {
                     </ul>
                   )}
                   <DocumentUploader
-                    onFilesSelected={newFiles =>
+                    onFilesSelected={newFiles => {
                       setAttachedFiles(prev => {
                         const map = new Map(prev.map(f => [f.name, f]));
                         newFiles.forEach(f => map.set(f.name, f));
                         return Array.from(map.values());
-                      })
-                    }
+                      });
+                      if (newFiles.length > 0) setUploadError('');
+                    }}
                   />
                 </div>
               </div>
