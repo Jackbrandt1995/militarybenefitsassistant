@@ -96,39 +96,45 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
 
         setPdfBytes(bytes);
 
-        // Scrub sensitive fields before storing
-        const sensitiveFieldIds = new Set<string>();
-        for (const step of form!.steps) {
-          for (const field of step.fields) {
-            if (field.type === 'ssn' || field.sensitive === true) {
-              sensitiveFieldIds.add(field.id);
-            }
-          }
-        }
-        const safeAnswers: Record<string, string | boolean> = {};
-        for (const [k, v] of Object.entries(answers)) {
-          if (!sensitiveFieldIds.has(k)) safeAnswers[k] = v as string | boolean;
-        }
-
-        if (user) {
-          const supabase = createClient();
-          const { data, error } = await supabase
-            .from('form_submissions')
-            .insert({
-              user_id: user.id,
-              form_id: formId,
-              form_name: form!.title,
-              answers_json: safeAnswers,
-              submission_status: 'downloaded',
-            })
-            .select('id')
-            .single();
-          if (error) throw error;
-          setSubmissionId(data?.id ?? null);
-        }
-
+        // PDF is ready — show the page immediately so the user can download
         localStorage.removeItem(`form-wizard-${formId}`);
         setStatus('ready');
+
+        // Record submission in the background — never block the download on DB errors
+        if (user) {
+          try {
+            // Scrub sensitive fields before storing
+            const sensitiveFieldIds = new Set<string>();
+            for (const step of form!.steps) {
+              for (const field of step.fields) {
+                if (field.type === 'ssn' || field.sensitive === true) {
+                  sensitiveFieldIds.add(field.id);
+                }
+              }
+            }
+            const safeAnswers: Record<string, string | boolean> = {};
+            for (const [k, v] of Object.entries(answers)) {
+              if (!sensitiveFieldIds.has(k)) safeAnswers[k] = v as string | boolean;
+            }
+
+            const supabase = createClient();
+            const { data } = await supabase
+              .from('form_submissions')
+              .insert({
+                user_id: user.id,
+                form_id: formId,
+                form_name: form!.title,
+                answers_json: safeAnswers,
+                submission_status: 'downloaded',
+              })
+              .select('id')
+              .single();
+            setSubmissionId(data?.id ?? null);
+          } catch (dbErr) {
+            // Non-fatal — submission tracking failed but the user can still download
+            console.warn('Submission record error (non-fatal):', dbErr);
+          }
+        }
       } catch (err: any) {
         console.error('PDF generation error:', err);
         setErrorMsg(err.message || 'Failed to generate PDF.');
