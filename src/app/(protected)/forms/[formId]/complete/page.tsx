@@ -190,6 +190,28 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
       });
       if (updateErr) throw updateErr;
 
+      // Send notification email to MBA staff (non-fatal — don't block confirmation)
+      try {
+        const firstName = (safeAnswers?.firstName as string) ?? '';
+        const lastName  = (safeAnswers?.lastName  as string) ?? '';
+        const userName  = [firstName, lastName].filter(Boolean).join(' ') || user.email ?? 'Unknown';
+
+        await fetch('/api/notify-filing', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userName,
+            formName:     form!.title,
+            formId,
+            userEmail:    user.email,
+            submissionId,
+            submittedAt:  new Date().toISOString(),
+          }),
+        });
+      } catch (emailErr) {
+        console.warn('Notification email failed (non-fatal):', emailErr);
+      }
+
       setAgentAuthorized(true);
     } catch (err: any) {
       console.error('Agent authorization error:', err);
