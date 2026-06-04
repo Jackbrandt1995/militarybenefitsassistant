@@ -15,6 +15,8 @@ import {
   ArrowRight,
   Package,
   ExternalLink,
+  RotateCcw,
+  AlertCircle,
 } from 'lucide-react';
 
 interface Submission {
@@ -25,6 +27,7 @@ interface Submission {
   submission_status: string | null;
   agent_filing_requested: boolean | null;
   tracking_number: string | null;
+  return_reason: string | null;
 }
 
 interface InProgressForm {
@@ -38,14 +41,15 @@ type DisplayStatus =
   | 'complete'
   | 'received'
   | 'processing'
-  | 'sent';
+  | 'sent'
+  | 'returned';
 
 function getDisplayStatus(sub: Submission): DisplayStatus {
-  if (sub.submission_status === 'agent_mailed') return 'sent';
+  if (sub.submission_status === 'agent_mailed')   return 'sent';
+  if (sub.submission_status === 'agent_returned') return 'returned';
 
   if (sub.agent_filing_requested) {
-    const hoursSince =
-      (Date.now() - new Date(sub.generated_at).getTime()) / 1000 / 3600;
+    const hoursSince = (Date.now() - new Date(sub.generated_at).getTime()) / 1000 / 3600;
     return hoursSince >= 24 ? 'processing' : 'received';
   }
 
@@ -81,6 +85,11 @@ const STATUS_CONFIG: Record<
     icon: <Send className="w-3.5 h-3.5" />,
     bg: 'bg-emerald-50', text: 'text-emerald-800', border: 'border-emerald-200',
   },
+  returned: {
+    label: 'Action Required',
+    icon: <AlertCircle className="w-3.5 h-3.5" />,
+    bg: 'bg-red-50', text: 'text-red-800', border: 'border-red-200',
+  },
 };
 
 function StatusBadge({ status }: { status: DisplayStatus }) {
@@ -95,11 +104,10 @@ function StatusBadge({ status }: { status: DisplayStatus }) {
 
 export default function HistoryPage() {
   const { user } = useAuth();
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [submissions, setSubmissions]       = useState<Submission[]>([]);
   const [inProgressForms, setInProgressForms] = useState<InProgressForm[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading]               = useState(true);
 
-  // Check localStorage for in-progress forms (client-only)
   useEffect(() => {
     const allForms = getAllForms();
     const inProgress = allForms.filter(f =>
@@ -112,13 +120,12 @@ export default function HistoryPage() {
     })));
   }, []);
 
-  // Fetch completed submissions from Supabase
   useEffect(() => {
     if (!user) return;
     const supabase = createClient();
     supabase
       .from('form_submissions')
-      .select('id, form_id, form_name, generated_at, submission_status, agent_filing_requested, tracking_number')
+      .select('id, form_id, form_name, generated_at, submission_status, agent_filing_requested, tracking_number, return_reason')
       .eq('user_id', user.id)
       .order('generated_at', { ascending: false })
       .then(({ data }) => {
@@ -163,9 +170,7 @@ export default function HistoryPage() {
             <p className="font-medium text-slate-600">No forms yet.</p>
             <p className="text-sm text-slate-400 mt-1">
               Head to the{' '}
-              <Link href="/dashboard" className="text-blue-600 hover:underline">
-                Dashboard
-              </Link>{' '}
+              <Link href="/dashboard" className="text-blue-600 hover:underline">Dashboard</Link>{' '}
               to get started.
             </p>
           </div>
@@ -201,49 +206,70 @@ export default function HistoryPage() {
           </section>
         )}
 
-        {/* Completed submissions */}
+        {/* Submitted forms */}
         {!loading && submissions.length > 0 && (
           <section className="space-y-3">
             <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Submitted Forms</h2>
             {submissions.map(sub => {
-              const status = getDisplayStatus(sub);
-              const date   = new Date(sub.generated_at).toLocaleDateString('en-US', {
-                month: 'short', day: 'numeric', year: 'numeric',
-              });
-              const time   = new Date(sub.generated_at).toLocaleTimeString('en-US', {
-                hour: 'numeric', minute: '2-digit',
-              });
+              const status   = getDisplayStatus(sub);
+              const isReturn = status === 'returned';
+              const date     = new Date(sub.generated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+              const time     = new Date(sub.generated_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
               return (
                 <div
                   key={sub.id}
-                  className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-4"
+                  className={`bg-white rounded-xl border p-4 ${isReturn ? 'border-red-200' : 'border-slate-200'}`}
                 >
-                  <div className="w-9 h-9 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0">
-                    <FileText className="w-4 h-4 text-slate-500" />
+                  <div className="flex items-start gap-4">
+                    <div className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 ${
+                      isReturn ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-200'
+                    }`}>
+                      {isReturn
+                        ? <RotateCcw className="w-4 h-4 text-red-500" />
+                        : <FileText className="w-4 h-4 text-slate-500" />}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-slate-900 text-sm leading-tight">{sub.form_name}</p>
+                      <p className="text-xs text-slate-400 font-mono uppercase mt-0.5">{sub.form_id}</p>
+                      <p className="text-xs text-slate-400 mt-1">{date} at {time}</p>
+
+                      {sub.tracking_number && (
+                        <a
+                          href={`https://tools.usps.com/go/TrackConfirmAction?tLabels=${sub.tracking_number}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-full hover:bg-indigo-100 transition-colors"
+                        >
+                          <Package className="w-3 h-3" />
+                          Track: {sub.tracking_number}
+                          <ExternalLink className="w-3 h-3 opacity-70" />
+                        </a>
+                      )}
+                    </div>
+
+                    <div className="shrink-0">
+                      <StatusBadge status={status} />
+                    </div>
                   </div>
 
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-slate-900 text-sm leading-tight">{sub.form_name}</p>
-                    <p className="text-xs text-slate-400 font-mono uppercase mt-0.5">{sub.form_id}</p>
-                    <p className="text-xs text-slate-400 mt-1">{date} at {time}</p>
-                    {sub.tracking_number && (
+                  {/* Return reason message */}
+                  {isReturn && sub.return_reason && (
+                    <div className="mt-3 ml-12 bg-red-50 border border-red-200 rounded-lg p-3.5">
+                      <p className="text-xs font-semibold text-red-700 mb-1.5 flex items-center gap-1.5">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        Message from MBA — action needed
+                      </p>
+                      <p className="text-sm text-red-900 whitespace-pre-wrap leading-relaxed">{sub.return_reason}</p>
                       <a
-                        href={`https://tools.usps.com/go/TrackConfirmAction?tLabels=${sub.tracking_number}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-full hover:bg-indigo-100 transition-colors"
+                        href="mailto:info@militarybenefitsassistant.com"
+                        className="inline-block mt-2.5 text-xs font-medium text-red-700 hover:underline"
                       >
-                        <Package className="w-3 h-3" />
-                        Track: {sub.tracking_number}
-                        <ExternalLink className="w-3 h-3 opacity-70" />
+                        Reply to info@militarybenefitsassistant.com →
                       </a>
-                    )}
-                  </div>
-
-                  <div className="shrink-0">
-                    <StatusBadge status={status} />
-                  </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
