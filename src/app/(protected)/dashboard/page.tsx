@@ -43,6 +43,8 @@ export default function DashboardPage() {
     { key: 'change',        label: 'Change Requests' },
     { key: 'reimbursement', label: 'Reimbursements' },
     { key: 'dependent',     label: 'Dependent Forms' },
+    { key: 'healthcare',    label: 'Health Care' },
+    { key: 'home-loan',     label: 'Home Loan' },
     { key: 'other',         label: 'Other' },
   ];
 

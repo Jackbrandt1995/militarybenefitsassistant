@@ -16,6 +16,8 @@ const categoryColors: Record<FormCategory, string> = {
   change: 'bg-amber-100 text-amber-800',
   reimbursement: 'bg-green-100 text-green-800',
   dependent: 'bg-purple-100 text-purple-800',
+  healthcare: 'bg-teal-100 text-teal-800',
+  'home-loan': 'bg-orange-100 text-orange-800',
   other: 'bg-gray-100 text-gray-800',
 };
 
@@ -24,6 +26,8 @@ const categoryLabels: Record<FormCategory, string> = {
   change: 'Change Request',
   reimbursement: 'Reimbursement',
   dependent: 'Dependent',
+  healthcare: 'Health Care',
+  'home-loan': 'Home Loan',
   other: 'Other',
 };
 

@@ -35,7 +35,7 @@ export interface FormStepDef {
   optionalAttachments?: AttachmentSpec[];
 }
 
-export type FormCategory = 'application' | 'change' | 'reimbursement' | 'dependent' | 'other';
+export type FormCategory = 'application' | 'change' | 'reimbursement' | 'dependent' | 'healthcare' | 'home-loan' | 'other';
 
 export interface FormDefinition {
   id: string;
