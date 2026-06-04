@@ -17,6 +17,7 @@ const forms = [
   { number: '22-1999c', title: 'Correspondence Course Enrollment Affirmation' },
   { number: '10-10EZ',  title: 'Application for VA Health Care' },
   { number: '26-1880',  title: 'Request for Certificate of Eligibility (Home Loan)' },
+  { number: '21-22A',   title: 'Appointment of Individual as Claimant\'s Representative' },
 ];
 
 export default function Home() {
@@ -25,7 +26,7 @@ export default function Home() {
       {/* Stats bar */}
       <div className="bg-slate-800 text-gray-300 text-xs text-center py-2 px-4">
         <span className="inline-flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-          <span>14 VA Forms Supported</span>
+          <span>15 VA Forms Supported</span>
           <span className="text-slate-600 hidden sm:inline">·</span>
           <span>Free to Use</span>
           <span className="text-slate-600 hidden sm:inline">·</span>
@@ -93,7 +94,7 @@ export default function Home() {
               <div className="text-xs font-bold text-green-600 uppercase tracking-widest mb-2">Step 2</div>
               <h3 className="text-xl font-semibold mb-2">Pick your form</h3>
               <p className="text-gray-600 text-sm leading-relaxed">
-                Select from 14 supported VA forms. We pre-fill everything we can from your profile
+                Select from 15 supported VA forms. We pre-fill everything we can from your profile
                 so you only answer what&apos;s new.
               </p>
             </div>
@@ -141,7 +142,7 @@ export default function Home() {
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-purple-100 text-purple-700 mb-4">
                 <FileText className="h-6 w-6" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">14 Forms, One Account</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">15 Forms, One Account</h3>
               <p className="text-gray-600 text-sm leading-relaxed">
                 All major VA education benefit forms in one place. Switch between forms without
                 re-entering your information.
@@ -214,7 +215,7 @@ export default function Home() {
       {/* Supported forms */}
       <section id="forms" className="py-20 bg-slate-50">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-4">14 Supported VA Forms</h2>
+          <h2 className="text-3xl font-bold text-center text-gray-900 mb-4">15 Supported VA Forms</h2>
           <p className="text-center text-gray-500 mb-12 max-w-2xl mx-auto text-sm">
             Major VA education, health care, and home loan benefit forms — all in one place.
           </p>

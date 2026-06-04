@@ -13,6 +13,7 @@ import { va281900Mapping } from './va-28-1900';
 import { va221999cMapping } from './va-22-1999c';
 import { va1010ezMapping } from './va-10-10ez';
 import { va261880Mapping } from './va-26-1880';
+import { va2122aMapping } from './va-21-22a';
 
 const mappings: Record<string, FieldMapping> = {
   'va-22-1990': va221990Mapping,
@@ -29,6 +30,7 @@ const mappings: Record<string, FieldMapping> = {
   'va-22-1999c': va221999cMapping,
   'va-10-10ez': va1010ezMapping,
   'va-26-1880': va261880Mapping,
+  'va-21-22a': va2122aMapping,
 };
 
 export function getFieldMapping(formId: string): FieldMapping | undefined {

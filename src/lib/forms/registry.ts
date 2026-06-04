@@ -13,6 +13,7 @@ import { va281900 } from './definitions/va-28-1900';
 import { va221999c } from './definitions/va-22-1999c';
 import { va1010ez } from './definitions/va-10-10ez';
 import { va261880 } from './definitions/va-26-1880';
+import { va2122a } from './definitions/va-21-22a';
 
 const forms: FormDefinition[] = [
   va221990,
@@ -29,6 +30,7 @@ const forms: FormDefinition[] = [
   va221999c,
   va1010ez,
   va261880,
+  va2122a,
 ];
 
 const formMap = new Map<string, FormDefinition>(
