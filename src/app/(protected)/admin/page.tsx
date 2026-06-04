@@ -17,6 +17,7 @@ import {
   Save,
   RotateCcw,
   Send,
+  MessageSquare,
 } from 'lucide-react';
 
 interface AgentSubmission {
@@ -34,6 +35,14 @@ interface AgentSubmission {
   tracking_number: string | null;
   return_reason: string | null;
   returned_at: string | null;
+}
+
+interface MessageItem {
+  id: string;
+  sender_type: string;
+  message: string;
+  created_at: string;
+  is_read: boolean;
 }
 
 type FilterType = 'all' | 'agent_pending' | 'agent_mailed' | 'agent_returned';
@@ -75,6 +84,13 @@ export default function AdminPage() {
   const [returningId, setReturningId]         = useState<string | null>(null);
   const [showReturnForm, setShowReturnForm]   = useState<Record<string, boolean>>({});
 
+  // Messaging state
+  const [messages, setMessages]               = useState<Record<string, MessageItem[]>>({});
+  const [loadingMessages, setLoadingMessages] = useState<Record<string, boolean>>({});
+  const [adminNewMessage, setAdminNewMessage] = useState<Record<string, string>>({});
+  const [sendingAdminMessage, setSendingAdminMessage] = useState<Record<string, boolean>>({});
+  const [unreadCounts, setUnreadCounts]       = useState<Record<string, number>>({});
+
   const loadSubmissions = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     else setRefreshing(true);
@@ -88,6 +104,20 @@ export default function AdminPage() {
       const seeds: Record<string, string> = {};
       rows.forEach(r => { seeds[r.id] = r.tracking_number ?? ''; });
       setTrackingInputs(prev => ({ ...seeds, ...prev }));
+
+      // Load unread message counts via RPC
+      try {
+        const { data: counts } = await supabase.rpc('get_unread_message_counts');
+        if (counts && Array.isArray(counts)) {
+          const countMap: Record<string, number> = {};
+          (counts as { submission_id: string; unread_count: number }[]).forEach(row => {
+            countMap[row.submission_id] = row.unread_count;
+          });
+          setUnreadCounts(countMap);
+        }
+      } catch (countErr) {
+        console.warn('[admin] get_unread_message_counts failed (non-fatal):', countErr);
+      }
     } catch (err: any) {
       setError(err.message ?? 'Failed to load submissions.');
     } finally {
@@ -97,6 +127,56 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => { loadSubmissions(); }, [loadSubmissions]);
+
+  async function loadAdminMessages(submissionId: string) {
+    setLoadingMessages(prev => ({ ...prev, [submissionId]: true }));
+    const supabase = createClient();
+    const { data, error: rpcErr } = await supabase.rpc('admin_get_messages', {
+      p_submission_id: submissionId,
+    });
+    if (!rpcErr && data) {
+      setMessages(prev => ({ ...prev, [submissionId]: data as MessageItem[] }));
+    }
+    setLoadingMessages(prev => ({ ...prev, [submissionId]: false }));
+  }
+
+  async function sendAdminMessage(sub: AgentSubmission) {
+    const text = (adminNewMessage[sub.id] ?? '').trim();
+    if (!text) return;
+
+    setSendingAdminMessage(prev => ({ ...prev, [sub.id]: true }));
+    const supabase = createClient();
+
+    const { error: rpcErr } = await supabase.rpc('admin_send_message', {
+      p_submission_id: sub.id,
+      p_message: text,
+    });
+
+    if (!rpcErr) {
+      setAdminNewMessage(prev => ({ ...prev, [sub.id]: '' }));
+      // Reload thread to show the new message
+      await loadAdminMessages(sub.id);
+    } else {
+      console.error('[admin_send_message]', rpcErr);
+    }
+
+    // Non-fatal notification
+    try {
+      await fetch('/api/notify-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          submission_id: sub.id,
+          direction: 'admin_to_client',
+          userEmail: sub.email,
+        }),
+      });
+    } catch (e) {
+      console.warn('[notify-message] non-fatal:', e);
+    }
+
+    setSendingAdminMessage(prev => ({ ...prev, [sub.id]: false }));
+  }
 
   async function handleDownload(sub: AgentSubmission) {
     if (!sub.pdf_storage_path) { alert('No PDF path on file for this submission.'); return; }
@@ -197,7 +277,12 @@ export default function AdminPage() {
   }
 
   function toggleExpand(id: string) {
-    setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
+    const willOpen = !expanded[id];
+    setExpanded(prev => ({ ...prev, [id]: willOpen }));
+    // Auto-load messages when expanding
+    if (willOpen && !messages[id]) {
+      loadAdminMessages(id);
+    }
   }
 
   const filtered = submissions.filter(s =>
@@ -306,17 +391,21 @@ export default function AdminPage() {
 
         {/* Submission cards */}
         {!loading && filtered.map(sub => {
-          const isExpanded     = !!expanded[sub.id];
-          const isPending      = sub.submission_status === 'agent_pending';
-          const isReturned     = sub.submission_status === 'agent_returned';
-          const statusCfg      = STATUS_CONFIG[sub.submission_status] ?? STATUS_CONFIG.agent_pending;
-          const fullName       = [sub.first_name, sub.last_name].filter(Boolean).join(' ') || 'Unknown';
-          const date           = new Date(sub.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-          const time           = new Date(sub.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-          const trackingVal    = trackingInputs[sub.id] ?? sub.tracking_number ?? '';
+          const isExpanded      = !!expanded[sub.id];
+          const isPending       = sub.submission_status === 'agent_pending';
+          const isReturned      = sub.submission_status === 'agent_returned';
+          const statusCfg       = STATUS_CONFIG[sub.submission_status] ?? STATUS_CONFIG.agent_pending;
+          const fullName        = [sub.first_name, sub.last_name].filter(Boolean).join(' ') || 'Unknown';
+          const date            = new Date(sub.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          const time            = new Date(sub.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+          const trackingVal     = trackingInputs[sub.id] ?? sub.tracking_number ?? '';
           const trackingChanged = trackingVal !== (sub.tracking_number ?? '');
-          const showReturn     = !!showReturnForm[sub.id];
-          const returnMsg      = returnInputs[sub.id] ?? '';
+          const showReturn      = !!showReturnForm[sub.id];
+          const returnMsg       = returnInputs[sub.id] ?? '';
+          const unreadCount     = unreadCounts[sub.id] ?? 0;
+          const threadMsgs      = messages[sub.id] ?? [];
+          const msgLoading      = !!loadingMessages[sub.id];
+          const isSendingMsg    = !!sendingAdminMessage[sub.id];
 
           return (
             <div
@@ -353,6 +442,13 @@ export default function AdminPage() {
                     </div>
                     <span className="text-sm font-medium text-slate-700">{fullName}</span>
                     {sub.email && <span className="text-sm text-slate-400">· {sub.email}</span>}
+                    {/* Unread message badge */}
+                    {unreadCount > 0 && (
+                      <span className="inline-flex items-center gap-1 text-xs font-bold bg-red-500 text-white px-2 py-0.5 rounded-full ml-1">
+                        <MessageSquare className="w-3 h-3" />
+                        {unreadCount} new
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -396,7 +492,77 @@ export default function AdminPage() {
               {isExpanded && (
                 <div className="border-t border-slate-100 bg-slate-50 px-5 py-5 space-y-5">
 
-                  {/* Return with edits */}
+                  {/* ── Messages ── */}
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      Messages
+                    </p>
+
+                    {/* Thread */}
+                    <div className="bg-white rounded-xl border border-slate-200 p-3 space-y-2 max-h-72 overflow-y-auto mb-3">
+                      {msgLoading && (
+                        <div className="text-center py-6">
+                          <div className="animate-spin w-6 h-6 border-4 border-blue-200 border-t-blue-600 rounded-full mx-auto" />
+                        </div>
+                      )}
+
+                      {!msgLoading && threadMsgs.length === 0 && (
+                        <p className="text-xs text-slate-400 text-center py-4">No messages yet.</p>
+                      )}
+
+                      {!msgLoading && threadMsgs.map(msg => {
+                        const isAdminMsg = msg.sender_type === 'admin';
+                        const msgDate    = new Date(msg.created_at).toLocaleString('en-US', {
+                          month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+                        });
+                        return (
+                          <div
+                            key={msg.id}
+                            className={`flex ${isAdminMsg ? 'justify-end' : 'justify-start'}`}
+                          >
+                            <div className={`max-w-[80%] rounded-xl px-3.5 py-2.5 text-sm ${
+                              isAdminMsg
+                                ? 'bg-slate-700 text-white rounded-tr-none'
+                                : 'bg-blue-100 text-blue-900 rounded-tl-none'
+                            }`}>
+                              <p className="leading-relaxed whitespace-pre-wrap">{msg.message}</p>
+                              <p className={`text-[10px] mt-1.5 ${isAdminMsg ? 'text-slate-300' : 'text-blue-400'}`}>
+                                {isAdminMsg ? 'MBA' : 'Client'} · {msgDate}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Admin compose */}
+                    <div className="flex gap-2 items-end">
+                      <textarea
+                        rows={2}
+                        placeholder="Reply to client…"
+                        value={adminNewMessage[sub.id] ?? ''}
+                        onChange={e => setAdminNewMessage(prev => ({ ...prev, [sub.id]: e.target.value }))}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            sendAdminMessage(sub);
+                          }
+                        }}
+                        className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 resize-none"
+                      />
+                      <Button
+                        onClick={() => sendAdminMessage(sub)}
+                        disabled={isSendingMsg || !(adminNewMessage[sub.id] ?? '').trim()}
+                        className="shrink-0 text-sm py-2 px-3 bg-slate-700 hover:bg-slate-800"
+                      >
+                        <Send className="w-3.5 h-3.5 mr-1.5" />
+                        {isSendingMsg ? 'Sending…' : 'Send'}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* ── Return with edits ── */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Return with Edits</p>
@@ -464,7 +630,7 @@ export default function AdminPage() {
                     )}
                   </div>
 
-                  {/* Tracking number */}
+                  {/* ── Tracking number ── */}
                   <div>
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Tracking Number</p>
                     <div className="flex gap-2 items-center">
@@ -501,7 +667,7 @@ export default function AdminPage() {
                     )}
                   </div>
 
-                  {/* Authorization signature */}
+                  {/* ── Authorization signature ── */}
                   <div>
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Client Authorization Signature</p>
                     {sub.agent_auth_signature ? (
@@ -520,7 +686,7 @@ export default function AdminPage() {
                     )}
                   </div>
 
-                  {/* Meta */}
+                  {/* ── Meta ── */}
                   <div className="grid sm:grid-cols-2 gap-3">
                     {[
                       { label: 'Submission ID', value: sub.id },

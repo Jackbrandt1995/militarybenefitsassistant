@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Shield } from 'lucide-react';
+import Image from 'next/image';
 
 export const metadata = {
   title: 'Terms of Service & Privacy Notice | Military Benefits Assistant',
@@ -11,7 +11,7 @@ export default function TermsPage() {
       <div className="max-w-3xl mx-auto">
 
         <div className="text-center mb-10">
-          <Shield className="h-12 w-12 text-blue-700 mx-auto mb-4" />
+          <Image src="/seal.png" alt="Military Benefits Assistant" width={64} height={64} className="mx-auto mb-4 rounded-full" />
           <h1 className="text-3xl font-bold text-gray-900">Terms of Service &amp; Privacy Notice</h1>
           <p className="text-gray-500 mt-2 text-sm">Effective date: May 2026 &nbsp;·&nbsp; Last updated: May 2026</p>
         </div>
