@@ -46,11 +46,10 @@ export default function Home() {
             />
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold mb-5 leading-tight">
-            Stop Wasting Hours on<br className="hidden sm:block" /> VA Paperwork
+            Accessing your benefits has<br className="hidden sm:block" /> never been easier.
           </h1>
           <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto mb-8">
-            Answer a guided interview once. Get a filled, print-ready VA PDF in minutes —
-            or let MBA mail it for you.
+            Answer a few questions and we will handle the rest.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -92,7 +91,7 @@ export default function Home() {
               <div className="text-xs font-bold text-green-600 uppercase tracking-widest mb-2">Step 2</div>
               <h3 className="text-xl font-semibold mb-2">Pick your form</h3>
               <p className="text-gray-600 text-sm leading-relaxed">
-                Select from 12 supported VA forms. MBA pre-fills everything it can from your profile
+                Select from 12 supported VA forms. We pre-fill everything we can from your profile
                 so you only answer what&apos;s new.
               </p>
             </div>
@@ -103,8 +102,8 @@ export default function Home() {
               <div className="text-xs font-bold text-purple-600 uppercase tracking-widest mb-2">Step 3</div>
               <h3 className="text-xl font-semibold mb-2">Download or let us mail it</h3>
               <p className="text-gray-600 text-sm leading-relaxed">
-                Download your filled PDF to print and submit yourself, or have MBA print,
-                sign as agent, and mail it to the correct VA RPO for you.
+                Download your filled PDF to print and submit yourself, or let us do the legwork for you —
+                we will print, sign as your agent, and mail it to the correct VA Regional Processing Office.
               </p>
             </div>
           </div>
@@ -130,9 +129,9 @@ export default function Home() {
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 text-green-700 mb-4">
                 <Mail className="h-6 w-6" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">We Can Mail It For You</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">We Will Do the Legwork For You</h3>
               <p className="text-gray-600 text-sm leading-relaxed">
-                MBA prints your completed form, signs it as your authorized agent, and mails
+                We print your completed form, sign it as your authorized agent, and mail
                 it directly to the correct VA Regional Processing Office.
               </p>
             </div>
