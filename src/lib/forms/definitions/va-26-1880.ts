@@ -458,4 +458,35 @@ export const va261880: FormDefinition = {
       ],
     },
   ],
+
+  computeAnswers: (answers) => {
+    const s = (v: unknown) => String(v ?? '').trim();
+
+    // Full name in "Last, First [Middle]" format (PDF NameOfVeteran field)
+    const last = s(answers.lastName);
+    const first = s(answers.firstName);
+    const mid   = s(answers.middleName);
+    const nameParts = [first, mid].filter(Boolean).join(' ');
+    const fullName  = last && nameParts ? `${last}, ${nameParts}` : last || nameParts;
+
+    // SSN formatted as "XXX-XX-XXXX"
+    const rawSsn = s(answers.ssn).replace(/\D/g, '');
+    const ssnFormatted = rawSsn.length === 9
+      ? `${rawSsn.slice(0, 3)}-${rawSsn.slice(3, 5)}-${rawSsn.slice(5)}`
+      : s(answers.ssn);
+
+    // Full address as one line: "Street [Apt], City, ST ZIP"
+    const streetLine = [s(answers.street), s(answers.apt)].filter(Boolean).join(' ');
+    const statePart  = [s(answers.state), s(answers.zip)].filter(Boolean).join(' ');
+    const fullAddress = [streetLine, s(answers.city), statePart]
+      .filter(Boolean).join(', ');
+
+    // Phone formatted as "(XXX) XXX-XXXX"
+    const rawPhone = s(answers.daytimePhone).replace(/\D/g, '');
+    const phoneFormatted = rawPhone.length === 10
+      ? `(${rawPhone.slice(0, 3)}) ${rawPhone.slice(3, 6)}-${rawPhone.slice(6)}`
+      : s(answers.daytimePhone);
+
+    return { ...answers, fullName, ssnFormatted, fullAddress, phoneFormatted };
+  },
 };

@@ -696,4 +696,37 @@ export const va1010ez: FormDefinition = {
       ],
     },
   ],
+
+  computeAnswers: (answers) => {
+    const s = (v: unknown) => String(v ?? '').trim();
+
+    // Full name in "Last, First [Middle]" format (PDF LastFirstMiddle field)
+    const last = s(answers.lastName);
+    const first = s(answers.firstName);
+    const mid   = s(answers.middleName);
+    const nameParts = [first, mid].filter(Boolean).join(' ');
+    const fullName  = last && nameParts ? `${last}, ${nameParts}` : last || nameParts;
+
+    // SSN formatted as "XXX-XX-XXXX"
+    const rawSsn = s(answers.ssn).replace(/\D/g, '');
+    const ssnFormatted = rawSsn.length === 9
+      ? `${rawSsn.slice(0, 3)}-${rawSsn.slice(3, 5)}-${rawSsn.slice(5)}`
+      : s(answers.ssn);
+
+    // Place of birth: "City, State/Country"
+    const placeOfBirth = [s(answers.birthCity), s(answers.birthStateOrCountry)]
+      .filter(Boolean).join(', ');
+
+    // Spouse full name: "First Last"
+    const spouseFullName = [s(answers.spouseFirstName), s(answers.spouseLastName)]
+      .filter(Boolean).join(' ');
+
+    // Spouse SSN formatted as "XXX-XX-XXXX"
+    const rawSpouseSsn = s(answers.spouseSsn).replace(/\D/g, '');
+    const spouseSsnFormatted = rawSpouseSsn.length === 9
+      ? `${rawSpouseSsn.slice(0, 3)}-${rawSpouseSsn.slice(3, 5)}-${rawSpouseSsn.slice(5)}`
+      : s(answers.spouseSsn);
+
+    return { ...answers, fullName, ssnFormatted, placeOfBirth, spouseFullName, spouseSsnFormatted };
+  },
 };
