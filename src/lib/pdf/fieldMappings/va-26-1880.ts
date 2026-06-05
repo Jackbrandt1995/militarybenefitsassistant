@@ -86,14 +86,28 @@ export const va261880Mapping: FieldMapping = {
   // Property address written to the Remarks section on page 2
   propertyAddress: { pdfFieldName: 'form1[0].#subform[1].Remarks[0]', type: 'text' },
 
-  // ── Prior use / entitlement — Yes/No radios (cx not confirmed, unmapped) ─
-  priorUse:           [],
-  entitlementRestored:[],
-  stillOwnPriorHome:  [],
+  // ── Prior use / entitlement — Yes/No draw-checks ─────────────────────────
+  // RadioButtonList[1] p=0 cx=414.8 cy=630/618 — "Have you used VA loan entitlement before?"
+  priorUse: [
+    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[1]', type: 'draw-check', checkPage: 0, checkCX: 414.8, checkCY: 630.0, transform: (v) => v === 'Yes' ? 'true' : '' },
+    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[1]', type: 'draw-check', checkPage: 0, checkCX: 414.8, checkCY: 618.0, transform: (v) => v === 'No'  ? 'true' : '' },
+  ],
+  // RadioButtonList[5] p=0 cx=36.8 cy=138/126 — "Was entitlement restored?"
+  entitlementRestored: [
+    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[5]', type: 'draw-check', checkPage: 0, checkCX: 36.8, checkCY: 138.0, transform: (v) => v === 'Yes' ? 'true' : '' },
+    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[5]', type: 'draw-check', checkPage: 0, checkCX: 36.8, checkCY: 126.0, transform: (v) => v === 'No'  ? 'true' : '' },
+  ],
+  // RadioButtonList[6] p=0 cx=264.8 cy=138/126 — "Do you still own the prior home?"
+  stillOwnPriorHome: [
+    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[6]', type: 'draw-check', checkPage: 0, checkCX: 264.8, checkCY: 138.0, transform: (v) => v === 'Yes' ? 'true' : '' },
+    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[6]', type: 'draw-check', checkPage: 0, checkCX: 264.8, checkCY: 126.0, transform: (v) => v === 'No'  ? 'true' : '' },
+  ],
 
-  // ── Active Duty — RadioButtonList[0] options ['1','2'] ────────────────────
-  // cy=480 (Yes='1'), cy=468 (No='2') at p=0 — cx not available from extraction
-  onActiveDuty:      [],
+  // ── Active Duty — RadioButtonList[0] options ['1','2'], p=0 cx=36.8 ────────
+  onActiveDuty: [
+    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[0]', type: 'draw-check', checkPage: 0, checkCX: 36.8, checkCY: 480.0, transform: (v) => v === 'Yes' ? 'true' : '' },
+    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[0]', type: 'draw-check', checkPage: 0, checkCX: 36.8, checkCY: 468.0, transform: (v) => v === 'No'  ? 'true' : '' },
+  ],
   expectedSeparation:[],
 
   // ── Military Service — Period 1 (Item 11A, row 1) ─────────────────────────
@@ -115,12 +129,25 @@ export const va261880Mapping: FieldMapping = {
   service3Discharge: { pdfFieldName: 'form1[0].#subform[0].TypeOfDischarge11A3[0]',    type: 'text' },
 
   // ── Prior VA Loans (Item 14) ──────────────────────────────────────────────
-  hadPriorLoan:     [],   // Yes/No radio — cx not confirmed
+  // Three Yes/No radios side-by-side at p=0 cy=420/408:
+  //   RadioButtonList[2] cx=36.8  — "Have you ever had a VA home loan?"
+  //   RadioButtonList[3] cx=204.8 — "Was the loan paid in full?"
+  //   RadioButtonList[4] cx=372.8 — "Was the property sold?"
+  hadPriorLoan: [
+    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[2]', type: 'draw-check', checkPage: 0, checkCX: 36.8,  checkCY: 420.0, transform: (v) => v === 'Yes' ? 'true' : '' },
+    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[2]', type: 'draw-check', checkPage: 0, checkCX: 36.8,  checkCY: 408.0, transform: (v) => v === 'No'  ? 'true' : '' },
+  ],
   priorLoanAddress: { pdfFieldName: 'form1[0].#subform[0].COMPLETE_ADDRESS14[0]',  type: 'text' },
-  priorLoanAmount:  [],   // Loan amount field not confirmed in extraction
+  priorLoanAmount:  [],   // No dedicated amount field found in PDF
   priorLoanDate:    { pdfFieldName: 'form1[0].#subform[0].DATE_OF_LOAN14[0]',      type: 'text' },
-  priorLoanPaidOff: [],   // Yes/No radio — cx not confirmed
-  priorPropertySold:[],   // Yes/No radio — cx not confirmed
+  priorLoanPaidOff: [
+    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[3]', type: 'draw-check', checkPage: 0, checkCX: 204.8, checkCY: 420.0, transform: (v) => v === 'Yes' ? 'true' : '' },
+    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[3]', type: 'draw-check', checkPage: 0, checkCX: 204.8, checkCY: 408.0, transform: (v) => v === 'No'  ? 'true' : '' },
+  ],
+  priorPropertySold: [
+    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[4]', type: 'draw-check', checkPage: 0, checkCX: 372.8, checkCY: 420.0, transform: (v) => v === 'Yes' ? 'true' : '' },
+    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[4]', type: 'draw-check', checkPage: 0, checkCX: 372.8, checkCY: 408.0, transform: (v) => v === 'No'  ? 'true' : '' },
+  ],
 
   // ── Certification & Signature ─────────────────────────────────────────────
   // privacyAct is a wizard checkbox — no corresponding PDF field

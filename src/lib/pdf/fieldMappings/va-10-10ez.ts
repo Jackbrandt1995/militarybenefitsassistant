@@ -56,9 +56,19 @@ export const va1010ezMapping: FieldMapping = {
     { pdfFieldName: 'F[0].P4[0].BirthSex[0]', type: 'draw-check', checkPage: 3, checkCX: 37.3, checkCY: 546.0, transform: (v) => v === 'Female' ? 'true' : '' },
   ],
 
-  // Marital status — CurrentMaritalStatus[0] options ['1'-'5'] at p=3, 5 widgets
-  // Widget cx/cy not available from extraction — unmapped
-  maritalStatus: [],
+  // Marital status — CurrentMaritalStatus[0] options ['1'-'5'] at p=3, all cy=396
+  //   w0 cx=37.3  → '1' Married
+  //   w1 cx=97.3  → '2' Single
+  //   w2 cx=187.3 → '3' Separated
+  //   w3 cx=259.3 → '4' Divorced
+  //   w4 cx=325.3 → '5' Widowed
+  maritalStatus: [
+    { pdfFieldName: 'F[0].P4[0].CurrentMaritalStatus[0]', type: 'draw-check', checkPage: 3, checkCX: 37.3,  checkCY: 396.0, transform: (v) => v === 'Married'   ? 'true' : '' },
+    { pdfFieldName: 'F[0].P4[0].CurrentMaritalStatus[0]', type: 'draw-check', checkPage: 3, checkCX: 97.3,  checkCY: 396.0, transform: (v) => v === 'Single'    ? 'true' : '' },
+    { pdfFieldName: 'F[0].P4[0].CurrentMaritalStatus[0]', type: 'draw-check', checkPage: 3, checkCX: 187.3, checkCY: 396.0, transform: (v) => v === 'Separated'  ? 'true' : '' },
+    { pdfFieldName: 'F[0].P4[0].CurrentMaritalStatus[0]', type: 'draw-check', checkPage: 3, checkCX: 259.3, checkCY: 396.0, transform: (v) => v === 'Divorced'   ? 'true' : '' },
+    { pdfFieldName: 'F[0].P4[0].CurrentMaritalStatus[0]', type: 'draw-check', checkPage: 3, checkCX: 325.3, checkCY: 396.0, transform: (v) => v === 'Widowed'    ? 'true' : '' },
+  ],
 
   // ── Contact & Address ─────────────────────────────────────────────────────
   street: { pdfFieldName: 'F[0].P4[0].MailingAddress_Street[0]',  type: 'text' },
@@ -132,13 +142,13 @@ export const va1010ezMapping: FieldMapping = {
   //
   // Checkboxes [7]–[9] cover additional exposures not in the wizard.
 
-  combatTheater: [{ pdfFieldName: 'F[0].P4[0].ExposedToTheFollowing[0]', type: 'draw-check', checkPage: 4, checkCX: 299.0, checkCY: 546.0, transform: (v) => v === 'true' ? 'true' : '' }],
-  swAsiaTheater: [{ pdfFieldName: 'F[0].P4[0].ExposedToTheFollowing[1]', type: 'draw-check', checkPage: 4, checkCX: 299.0, checkCY: 534.0, transform: (v) => v === 'true' ? 'true' : '' }],
-  agentOrange:   [{ pdfFieldName: 'F[0].P4[0].ExposedToTheFollowing[2]', type: 'draw-check', checkPage: 4, checkCX: 299.0, checkCY: 522.0, transform: (v) => v === 'true' ? 'true' : '' }],
-  campLejeune:   [{ pdfFieldName: 'F[0].P4[0].ExposedToTheFollowing[3]', type: 'draw-check', checkPage: 4, checkCX: 299.0, checkCY: 510.0, transform: (v) => v === 'true' ? 'true' : '' }],
-  radiationRisk: [{ pdfFieldName: 'F[0].P4[0].ExposedToTheFollowing[4]', type: 'draw-check', checkPage: 4, checkCX: 371.0, checkCY: 510.0, transform: (v) => v === 'true' ? 'true' : '' }],
-  project112:    [{ pdfFieldName: 'F[0].P4[0].ExposedToTheFollowing[5]', type: 'draw-check', checkPage: 4, checkCX: 299.0, checkCY: 498.0, transform: (v) => v === 'true' ? 'true' : '' }],
-  mst:           [{ pdfFieldName: 'F[0].P4[0].ExposedToTheFollowing[6]', type: 'draw-check', checkPage: 4, checkCX: 299.0, checkCY: 486.0, transform: (v) => v === 'true' ? 'true' : '' }],
+  combatTheater: [{ pdfFieldName: 'F[0].P5[0].ExposedToTheFollowing[0]', type: 'draw-check', checkPage: 4, checkCX: 299.0, checkCY: 546.0, transform: (v) => v === 'true' ? 'true' : '' }],
+  swAsiaTheater: [{ pdfFieldName: 'F[0].P5[0].ExposedToTheFollowing[1]', type: 'draw-check', checkPage: 4, checkCX: 299.0, checkCY: 534.0, transform: (v) => v === 'true' ? 'true' : '' }],
+  agentOrange:   [{ pdfFieldName: 'F[0].P5[0].ExposedToTheFollowing[2]', type: 'draw-check', checkPage: 4, checkCX: 299.0, checkCY: 522.0, transform: (v) => v === 'true' ? 'true' : '' }],
+  campLejeune:   [{ pdfFieldName: 'F[0].P5[0].ExposedToTheFollowing[3]', type: 'draw-check', checkPage: 4, checkCX: 299.0, checkCY: 510.0, transform: (v) => v === 'true' ? 'true' : '' }],
+  radiationRisk: [{ pdfFieldName: 'F[0].P5[0].ExposedToTheFollowing[4]', type: 'draw-check', checkPage: 4, checkCX: 371.0, checkCY: 510.0, transform: (v) => v === 'true' ? 'true' : '' }],
+  project112:    [{ pdfFieldName: 'F[0].P5[0].ExposedToTheFollowing[5]', type: 'draw-check', checkPage: 4, checkCX: 299.0, checkCY: 498.0, transform: (v) => v === 'true' ? 'true' : '' }],
+  mst:           [{ pdfFieldName: 'F[0].P5[0].ExposedToTheFollowing[6]', type: 'draw-check', checkPage: 4, checkCX: 299.0, checkCY: 486.0, transform: (v) => v === 'true' ? 'true' : '' }],
 
   // ── Health Insurance (F[0].P5[0] fields, p=4–5) ──────────────────────────
   // hasOtherInsurance Yes/No radio — coordinates not confirmed
@@ -167,21 +177,30 @@ export const va1010ezMapping: FieldMapping = {
   spouseLivedWithYou: [],
 
   // ── Employment (F[0].P6[0] fields, p=5) ───────────────────────────────────
-  // VeteransEmploymentStatus radio with exact-text options — coordinates not confirmed
-  employmentStatus: [],
+  // VeteransEmploymentStatus[0] options ['FULL TIME','PART TIME','NOT EMPLOYED','RETIRED']
+  // p=5 all at cy=690: w0 cx=37.3 / w1 cx=115.3 / w2 cx=193.3 / w3 cx=289.3
+  employmentStatus: [
+    { pdfFieldName: 'F[0].P6[0].VeteransEmploymentStatus[0]', type: 'draw-check', checkPage: 5, checkCX: 37.3,  checkCY: 690.0, transform: (v) => v === 'Employed full-time' ? 'true' : '' },
+    { pdfFieldName: 'F[0].P6[0].VeteransEmploymentStatus[0]', type: 'draw-check', checkPage: 5, checkCX: 115.3, checkCY: 690.0, transform: (v) => v === 'Employed part-time' ? 'true' : '' },
+    { pdfFieldName: 'F[0].P6[0].VeteransEmploymentStatus[0]', type: 'draw-check', checkPage: 5, checkCX: 193.3, checkCY: 690.0, transform: (v) => v === 'Not employed'       ? 'true' : '' },
+    { pdfFieldName: 'F[0].P6[0].VeteransEmploymentStatus[0]', type: 'draw-check', checkPage: 5, checkCX: 289.3, checkCY: 690.0, transform: (v) => v === 'Retired'            ? 'true' : '' },
+    // 'Self-employed' has no matching option on the PDF form
+  ],
 
   employerName:    { pdfFieldName: 'F[0].P6[0].CompanyName[0]',      type: 'text' },
   employerAddress: { pdfFieldName: 'F[0].P6[0].CompleteAddress[0]',  type: 'text' },
   employerPhone:   { pdfFieldName: 'F[0].P6[0].CompanyPhone[0]',     type: 'text' },
 
   // ── Financial Disclosure (F[0].P6[0].Table1 and Section8, p=5) ───────────
-  // Table1 subform[0] = veteran's income (3 fields: employment, farm, other)
-  // Table1 subform[1] = spouse income (3 fields)
-  grossEmploymentIncome: { pdfFieldName: 'F[0].P6[0].Table1[0].#subform[0].Amount[0]', type: 'text' },
-  netFarmBusinessIncome: { pdfFieldName: 'F[0].P6[0].Table1[0].#subform[0].Amount[1]', type: 'text' },
-  otherIncome:           { pdfFieldName: 'F[0].P6[0].Table1[0].#subform[0].Amount[2]', type: 'text' },
+  // Table1 subform[1] = veteran's income row  (Amount[0,1,2])
+  // Table1 subform[2] = spouse income row    (Amount[3,4,5])
+  // Table1 subform[3] = dependent income row (Amount[6,7,8])
+  // Columns: [0/3/6]=gross employment, [1/4/7]=farm/business, [2/5/8]=other income
+  grossEmploymentIncome: { pdfFieldName: 'F[0].P6[0].Table1[0].#subform[1].Amount[0]', type: 'text' },
+  netFarmBusinessIncome: { pdfFieldName: 'F[0].P6[0].Table1[0].#subform[1].Amount[1]', type: 'text' },
+  otherIncome:           { pdfFieldName: 'F[0].P6[0].Table1[0].#subform[1].Amount[2]', type: 'text' },
 
-  spouseGrossIncome: { pdfFieldName: 'F[0].P6[0].Table1[0].#subform[1].Amount[0]', type: 'text' },
+  spouseGrossIncome: { pdfFieldName: 'F[0].P6[0].Table1[0].#subform[2].Amount[3]', type: 'text' },
 
   // Section 8 deductions / dependent counts
   unreimbursedMedicalExpenses: { pdfFieldName: 'F[0].P6[0].Section8_Q1[0]', type: 'text' },
