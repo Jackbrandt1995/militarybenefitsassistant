@@ -14,12 +14,12 @@ export const va1010ez: FormDefinition = {
     'Submit this form to your nearest VA medical center or mail it to the VA Health Eligibility Center, P.O. Box 17885, Denver, CO 80217-0885.',
   steps: [
 
-    // ── STEP 1: Personal Information ──────────────────────────────────────────
+    // ── STEP 1: Name & Identity ───────────────────────────────────────────────
     {
       id: 'personal',
-      title: 'Personal Information',
+      title: 'Name & Identity',
       description:
-        'Your legal name and identifying information are used to match your records across VA systems. Use the exact name shown on your discharge papers or government-issued ID. Your Social Security Number and date of birth are required by law to process your enrollment.',
+        'Enter your legal name exactly as it appears on your discharge papers or government-issued ID. Your Social Security Number and date of birth are required by law (38 U.S.C. § 1705) to process your enrollment.',
       fields: [
         {
           id: 'firstName',
@@ -60,15 +60,6 @@ export const va1010ez: FormDefinition = {
           ],
         },
         {
-          id: 'mothersMaidenName',
-          label: "Mother's Maiden Name",
-          type: 'text',
-          required: true,
-          maxLength: 35,
-          helpText: 'Your mother\'s last name before she was married. VA uses this as a secondary identity verification.',
-          placeholder: 'e.g., Smith',
-        },
-        {
           id: 'ssn',
           label: 'Social Security Number',
           type: 'ssn',
@@ -83,6 +74,16 @@ export const va1010ez: FormDefinition = {
           required: true,
           profilePath: 'profile.dob',
         },
+      ],
+    },
+
+    // ── STEP 2: Birth & Status ────────────────────────────────────────────────
+    {
+      id: 'personal-status',
+      title: 'Birth & Status',
+      description:
+        'Provide your birth details and current marital status. Your mother\'s maiden name is used by VA as a secondary identity verification check.',
+      fields: [
         {
           id: 'sex',
           label: 'Sex (as listed on military records)',
@@ -94,6 +95,15 @@ export const va1010ez: FormDefinition = {
             { label: 'Male', value: 'Male' },
             { label: 'Female', value: 'Female' },
           ],
+        },
+        {
+          id: 'mothersMaidenName',
+          label: "Mother's Maiden Name",
+          type: 'text',
+          required: true,
+          maxLength: 35,
+          helpText: "Your mother's last name before she was married. VA uses this as a secondary identity verification.",
+          placeholder: 'e.g., Smith',
         },
         {
           id: 'birthCity',

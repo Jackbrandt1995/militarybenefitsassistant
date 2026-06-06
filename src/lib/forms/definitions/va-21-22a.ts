@@ -26,10 +26,10 @@ export const va2122a: FormDefinition = {
 
   steps: [
 
-    // ── STEP 1: Veteran Information ─────────────────────────────────────────
+    // ── STEP 1: Veteran Identity ─────────────────────────────────────────────
     {
       id: 'veteran',
-      title: 'Veteran\'s Information',
+      title: 'Veteran\'s Identity',
       description:
         'Enter the veteran\'s identifying information exactly as it appears on their VA records or DD-214. If you are the veteran, your profile information will be pre-filled.',
       fields: [
@@ -89,6 +89,16 @@ export const va2122a: FormDefinition = {
           helpText:
             'Only veterans who served before 1974 have a separate service number. Leave blank if your SSN is your service number.',
         },
+      ],
+    },
+
+    // ── STEP 2: Veteran Contact Information ──────────────────────────────────
+    {
+      id: 'veteran-contact',
+      title: 'Veteran\'s Contact Information',
+      description:
+        'Enter the veteran\'s current mailing address and contact details. VA will use this address to send correspondence about the representation request.',
+      fields: [
         {
           id: 'vetStreet',
           label: 'Mailing Address',
@@ -267,12 +277,12 @@ export const va2122a: FormDefinition = {
       ],
     },
 
-    // ── STEP 3: Representative Information ─────────────────────────────────
+    // ── STEP 4: Representative Identity ─────────────────────────────────────
     {
       id: 'representative',
-      title: 'Representative\'s Information',
+      title: 'Representative\'s Identity',
       description:
-        'Enter the full contact information of the individual you are appointing to represent you. This person will be authorized to communicate with the VA on your behalf. Make sure to get their consent before submitting this form — they will also need to sign.',
+        'Enter the name and affiliation of the individual you are appointing to represent you before the VA. Make sure to get their consent before submitting — they will also need to sign this form.',
       fields: [
         {
           id: 'repFirstName',
@@ -286,6 +296,7 @@ export const va2122a: FormDefinition = {
           label: 'Representative\'s Middle Initial',
           type: 'text',
           maxLength: 1,
+          helpText: 'One letter only.',
         },
         {
           id: 'repLastName',
@@ -302,9 +313,19 @@ export const va2122a: FormDefinition = {
           helpText:
             'If the representative is affiliated with a law firm, accredited organization, or other entity, enter its name here. Leave blank if they are an unaffiliated individual.',
         },
+      ],
+    },
+
+    // ── STEP 5: Representative Contact ───────────────────────────────────────
+    {
+      id: 'representative-contact',
+      title: 'Representative\'s Contact Information',
+      description:
+        'Enter the representative\'s mailing address and phone number. VA will send copies of all correspondence about your claim to this address.',
+      fields: [
         {
           id: 'repStreet',
-          label: 'Representative\'s Mailing Address',
+          label: 'Mailing Address',
           type: 'text',
           required: true,
           placeholder: '456 Oak Ave',
@@ -342,13 +363,14 @@ export const va2122a: FormDefinition = {
         },
         {
           id: 'repPhone',
-          label: 'Representative\'s Phone',
+          label: 'Phone',
           type: 'phone',
           required: true,
+          helpText: 'Required — VA uses this number to contact your representative directly.',
         },
         {
           id: 'repEmail',
-          label: 'Representative\'s Email',
+          label: 'Email Address',
           type: 'email',
         },
       ],
