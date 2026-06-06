@@ -86,6 +86,22 @@ export const va261880: FormDefinition = {
           helpText:
             'Your VA claim file number if you have one. Leave blank if unknown.',
         },
+        {
+          id: 'otherNames',
+          label: 'Other Names Used During Military Service',
+          type: 'text',
+          placeholder: 'e.g., maiden name, former name',
+          helpText:
+            'Enter any other name under which you served in the military (e.g., a maiden name). Leave blank if you only ever served under the name listed above.',
+        },
+        {
+          id: 'serviceNumber',
+          label: 'Military Service Number (if different from SSN)',
+          type: 'text',
+          placeholder: 'e.g., RA12345678',
+          helpText:
+            'Veterans who served before July 1, 1972 were assigned a separate military service number. Leave blank if your SSN is your service number.',
+        },
       ],
     },
 
@@ -270,12 +286,12 @@ export const va261880: FormDefinition = {
       ],
     },
 
-    // ─── Step 5: Military Service — Periods 2 & 3 ─────────────────────────────
+    // ─── Step 5: Military Service — Periods 2, 3 & 4 ──────────────────────────
     {
-      id: 'service23',
-      title: 'Military Service — Periods 2 & 3',
+      id: 'service234',
+      title: 'Military Service — Periods 2, 3 & 4',
       description:
-        'If you served multiple periods of military service, enter them here. Each period of service may affect your entitlement calculation. Leave all fields blank if this does not apply to you.',
+        'If you served multiple periods of active duty, enter additional periods here. Leave all fields blank for any period that does not apply to you.',
       fields: [
         // Period 2
         {
@@ -331,10 +347,133 @@ export const va261880: FormDefinition = {
           profilePath: 'servicePeriods[2].character_of_discharge',
           options: dischargeOptions,
         },
+        // Period 4
+        {
+          id: 'service4Branch',
+          label: 'Period 4 — Branch of Service',
+          type: 'select',
+          options: branchOptions,
+        },
+        {
+          id: 'service4Entered',
+          label: 'Period 4 — Date Entered Service',
+          type: 'date',
+        },
+        {
+          id: 'service4Separated',
+          label: 'Period 4 — Date Separated / Released',
+          type: 'date',
+        },
+        {
+          id: 'service4Discharge',
+          label: 'Period 4 — Character of Discharge',
+          type: 'select',
+          options: dischargeOptions,
+        },
       ],
     },
 
-    // ─── Step 6: Prior VA Loans ─────────────────────────────────────────────────
+    // ─── Step 6: National Guard & Reserve Service ──────────────────────────────
+    {
+      id: 'guardReserve',
+      title: 'National Guard & Reserve Service',
+      description:
+        'If you served in the Selected Reserve or National Guard and were activated to federal active duty under a federal order, enter those periods here. This is different from your regular active duty service listed in the previous steps. Leave all fields blank if this does not apply to you.',
+      fields: [
+        {
+          id: 'hadGuardReserveService',
+          label: 'Did you serve in the Selected Reserve or National Guard?',
+          type: 'radio',
+          required: true,
+          options: [
+            { label: 'Yes — I have Guard or Reserve activation periods to report', value: 'Yes' },
+            { label: 'No — I did not serve in the Guard or Reserve', value: 'No' },
+          ],
+        },
+        // Guard/Reserve Period 1 (11B1)
+        {
+          id: 'guardService1Branch',
+          label: 'Guard/Reserve Period 1 — Branch',
+          type: 'select',
+          condition: { field: 'hadGuardReserveService', value: 'Yes' },
+          options: branchOptions,
+        },
+        {
+          id: 'guardService1Entered',
+          label: 'Guard/Reserve Period 1 — Date Activated',
+          type: 'date',
+          condition: { field: 'hadGuardReserveService', value: 'Yes' },
+        },
+        {
+          id: 'guardService1Separated',
+          label: 'Guard/Reserve Period 1 — Date Released',
+          type: 'date',
+          condition: { field: 'hadGuardReserveService', value: 'Yes' },
+        },
+        // Guard/Reserve Period 2 (11B2)
+        {
+          id: 'guardService2Branch',
+          label: 'Guard/Reserve Period 2 — Branch',
+          type: 'select',
+          condition: { field: 'hadGuardReserveService', value: 'Yes' },
+          options: branchOptions,
+        },
+        {
+          id: 'guardService2Entered',
+          label: 'Guard/Reserve Period 2 — Date Activated',
+          type: 'date',
+          condition: { field: 'hadGuardReserveService', value: 'Yes' },
+        },
+        {
+          id: 'guardService2Separated',
+          label: 'Guard/Reserve Period 2 — Date Released',
+          type: 'date',
+          condition: { field: 'hadGuardReserveService', value: 'Yes' },
+        },
+        // Guard/Reserve Period 3 (11B3)
+        {
+          id: 'guardService3Branch',
+          label: 'Guard/Reserve Period 3 — Branch',
+          type: 'select',
+          condition: { field: 'hadGuardReserveService', value: 'Yes' },
+          options: branchOptions,
+        },
+        {
+          id: 'guardService3Entered',
+          label: 'Guard/Reserve Period 3 — Date Activated',
+          type: 'date',
+          condition: { field: 'hadGuardReserveService', value: 'Yes' },
+        },
+        {
+          id: 'guardService3Separated',
+          label: 'Guard/Reserve Period 3 — Date Released',
+          type: 'date',
+          condition: { field: 'hadGuardReserveService', value: 'Yes' },
+        },
+        // Guard/Reserve Period 4 (11B4)
+        {
+          id: 'guardService4Branch',
+          label: 'Guard/Reserve Period 4 — Branch',
+          type: 'select',
+          condition: { field: 'hadGuardReserveService', value: 'Yes' },
+          options: branchOptions,
+        },
+        {
+          id: 'guardService4Entered',
+          label: 'Guard/Reserve Period 4 — Date Activated',
+          type: 'date',
+          condition: { field: 'hadGuardReserveService', value: 'Yes' },
+        },
+        {
+          id: 'guardService4Separated',
+          label: 'Guard/Reserve Period 4 — Date Released',
+          type: 'date',
+          condition: { field: 'hadGuardReserveService', value: 'Yes' },
+        },
+      ],
+    },
+
+    // ─── Step 7: Prior VA Loans ─────────────────────────────────────────────────
     {
       id: 'priorLoans',
       title: 'Prior VA Loans',
@@ -351,23 +490,26 @@ export const va261880: FormDefinition = {
             { label: 'No', value: 'No' },
           ],
         },
+
+        // ── Prior Loan 1 ──────────────────────────────────────────────────────
         {
           id: 'priorLoanAddress',
-          label: 'Property Address of Prior VA Loan',
+          label: 'Loan 1 — Property Address',
           type: 'textarea',
           condition: { field: 'hadPriorLoan', value: 'Yes' },
-          helpText: 'Enter the full address of the property secured by the prior VA-guaranteed loan.',
+          helpText: 'Full address of the property secured by the prior VA-guaranteed loan.',
         },
         {
-          id: 'priorLoanAmount',
-          label: 'Approximate Loan Amount',
+          id: 'priorLoanNumber',
+          label: 'Loan 1 — VA Loan Number',
           type: 'text',
           condition: { field: 'hadPriorLoan', value: 'Yes' },
-          placeholder: 'e.g., $250,000',
+          placeholder: 'e.g., 123456789',
+          helpText: 'The VA loan number assigned at closing. Check your closing documents if unsure.',
         },
         {
           id: 'priorLoanDate',
-          label: 'Date of Loan',
+          label: 'Loan 1 — Date of Loan',
           type: 'text',
           condition: { field: 'hadPriorLoan', value: 'Yes' },
           placeholder: 'e.g., June 2018',
@@ -375,7 +517,7 @@ export const va261880: FormDefinition = {
         },
         {
           id: 'priorLoanPaidOff',
-          label: 'Was the loan paid in full?',
+          label: 'Loan 1 — Was the loan paid in full?',
           type: 'radio',
           condition: { field: 'hadPriorLoan', value: 'Yes' },
           options: [
@@ -385,7 +527,7 @@ export const va261880: FormDefinition = {
         },
         {
           id: 'priorPropertySold',
-          label: 'Was the property sold?',
+          label: 'Loan 1 — Was the property sold?',
           type: 'radio',
           condition: { field: 'hadPriorLoan', value: 'Yes' },
           helpText:
@@ -393,6 +535,108 @@ export const va261880: FormDefinition = {
           options: [
             { label: 'Yes', value: 'Yes' },
             { label: 'No', value: 'No' },
+          ],
+        },
+        {
+          id: 'restorationType',
+          label: 'Loan 1 — Type of Action Requested',
+          type: 'radio',
+          condition: { field: 'hadPriorLoan', value: 'Yes' },
+          helpText:
+            'Indicate what you are requesting VA to do with your prior loan entitlement. Select "Entitlement Inquiry Only" if you just want to know your current entitlement status.',
+          options: [
+            { label: 'Entitlement Inquiry Only (no restoration needed)', value: 'Inquiry' },
+            { label: 'Cash-Out Refinance Restoration', value: 'CashOutRestoration' },
+            { label: 'Interest Rate Reduction Refinance (IRRRL) Restoration', value: 'IRRRLRestoration' },
+            { label: 'One-Time Restoration', value: 'OneTimeRestoration' },
+          ],
+        },
+
+        // ── Prior Loan 2 ──────────────────────────────────────────────────────
+        {
+          id: 'hadPriorLoan2',
+          label: 'Do you have a second prior VA-guaranteed loan to report?',
+          type: 'radio',
+          condition: { field: 'hadPriorLoan', value: 'Yes' },
+          options: [
+            { label: 'Yes', value: 'Yes' },
+            { label: 'No', value: 'No' },
+          ],
+        },
+        {
+          id: 'priorLoan2Address',
+          label: 'Loan 2 — Property Address',
+          type: 'textarea',
+          condition: { field: 'hadPriorLoan2', value: 'Yes' },
+        },
+        {
+          id: 'priorLoan2Number',
+          label: 'Loan 2 — VA Loan Number',
+          type: 'text',
+          condition: { field: 'hadPriorLoan2', value: 'Yes' },
+          placeholder: 'e.g., 123456789',
+        },
+        {
+          id: 'priorLoan2Date',
+          label: 'Loan 2 — Date of Loan',
+          type: 'text',
+          condition: { field: 'hadPriorLoan2', value: 'Yes' },
+          placeholder: 'e.g., March 2010',
+        },
+        {
+          id: 'restorationType2',
+          label: 'Loan 2 — Type of Action Requested',
+          type: 'radio',
+          condition: { field: 'hadPriorLoan2', value: 'Yes' },
+          options: [
+            { label: 'Entitlement Inquiry Only', value: 'Inquiry' },
+            { label: 'Cash-Out Refinance Restoration', value: 'CashOutRestoration' },
+            { label: 'Interest Rate Reduction Refinance (IRRRL) Restoration', value: 'IRRRLRestoration' },
+            { label: 'One-Time Restoration', value: 'OneTimeRestoration' },
+          ],
+        },
+
+        // ── Prior Loan 3 ──────────────────────────────────────────────────────
+        {
+          id: 'hadPriorLoan3',
+          label: 'Do you have a third prior VA-guaranteed loan to report?',
+          type: 'radio',
+          condition: { field: 'hadPriorLoan2', value: 'Yes' },
+          options: [
+            { label: 'Yes', value: 'Yes' },
+            { label: 'No', value: 'No' },
+          ],
+        },
+        {
+          id: 'priorLoan3Address',
+          label: 'Loan 3 — Property Address',
+          type: 'textarea',
+          condition: { field: 'hadPriorLoan3', value: 'Yes' },
+        },
+        {
+          id: 'priorLoan3Number',
+          label: 'Loan 3 — VA Loan Number',
+          type: 'text',
+          condition: { field: 'hadPriorLoan3', value: 'Yes' },
+          placeholder: 'e.g., 123456789',
+        },
+        {
+          id: 'priorLoan3Date',
+          label: 'Loan 3 — Date of Loan',
+          type: 'text',
+          condition: { field: 'hadPriorLoan3', value: 'Yes' },
+          placeholder: 'e.g., October 2005',
+        },
+        {
+          id: 'restorationType3',
+          label: 'Loan 3 — Type of Action Requested',
+          type: 'radio',
+          condition: { field: 'hadPriorLoan3', value: 'Yes' },
+          options: [
+            { label: 'Entitlement Inquiry Only', value: 'Inquiry' },
+            { label: 'Cash-Out Refinance Restoration', value: 'CashOutRestoration' },
+            { label: 'Interest Rate Reduction Refinance (IRRRL) Restoration', value: 'IRRRLRestoration' },
+            { label: 'One-Time Restoration', value: 'OneTimeRestoration' },
           ],
         },
       ],
