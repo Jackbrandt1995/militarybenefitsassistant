@@ -31,11 +31,11 @@ export const va1010ez: FormDefinition = {
         },
         {
           id: 'middleName',
-          label: 'Middle Name',
+          label: 'Middle Initial',
           type: 'text',
           profilePath: 'profile.middle_name',
-          maxLength: 30,
-          helpText: 'Enter your full middle name if you have one (optional).',
+          maxLength: 1,
+          helpText: 'One letter only.',
         },
         {
           id: 'lastName',

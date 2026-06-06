@@ -196,6 +196,7 @@ export const va2122a: FormDefinition = {
           type: 'text',
           condition: { field: 'claimantIsVeteran', value: 'No' },
           maxLength: 1,
+          helpText: 'One letter only.',
         },
         {
           id: 'claimantLastName',

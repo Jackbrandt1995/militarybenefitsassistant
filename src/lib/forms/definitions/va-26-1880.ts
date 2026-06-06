@@ -39,9 +39,11 @@ export const va261880: FormDefinition = {
         },
         {
           id: 'middleName',
-          label: 'Middle Name',
+          label: 'Middle Initial',
           type: 'text',
           profilePath: 'profile.middle_name',
+          maxLength: 1,
+          helpText: 'One letter only.',
         },
         {
           id: 'lastName',
