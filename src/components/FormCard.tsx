@@ -9,6 +9,12 @@ interface FormCardProps {
   title: string;
   description: string;
   category: FormCategory;
+  /**
+   * Optional plain-language action label. When provided (e.g. from the goal
+   * finder), it becomes the card heading and the official form title is shown
+   * as a smaller secondary line.
+   */
+  actionLabel?: string;
 }
 
 const categoryColors: Record<FormCategory, string> = {
@@ -31,7 +37,7 @@ const categoryLabels: Record<FormCategory, string> = {
   other: 'Other',
 };
 
-export default function FormCard({ formId, formNumber, title, description, category }: FormCardProps) {
+export default function FormCard({ formId, formNumber, title, description, category, actionLabel }: FormCardProps) {
   return (
     <div className="rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col">
       <div className="flex items-start justify-between mb-3">
@@ -42,7 +48,14 @@ export default function FormCard({ formId, formNumber, title, description, categ
           {categoryLabels[category]}
         </span>
       </div>
-      <h3 className="text-base font-semibold text-gray-900 mb-2">{title}</h3>
+      {actionLabel ? (
+        <>
+          <h3 className="text-base font-semibold text-gray-900 mb-1">{actionLabel}</h3>
+          <p className="text-xs text-gray-500 mb-2">{title}</p>
+        </>
+      ) : (
+        <h3 className="text-base font-semibold text-gray-900 mb-2">{title}</h3>
+      )}
       <p className="text-sm text-gray-600 mb-4 flex-1">{description}</p>
       <Link
         href={`/forms/${formId}`}
