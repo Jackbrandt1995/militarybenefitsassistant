@@ -30,6 +30,36 @@ export default function LoginPage() {
     }
   };
 
+  // ── One-click demo sign-in ─────────────────────────────────────────────────
+  // Only enabled when NEXT_PUBLIC_ENABLE_DEMO === 'true'. Lets a prospective user
+  // try the app with no credentials. Run supabase/seed_demo_accounts.sql first.
+  const demoEnabled = process.env.NEXT_PUBLIC_ENABLE_DEMO === 'true';
+  const demoCreds = {
+    user: {
+      email: process.env.NEXT_PUBLIC_DEMO_USER_EMAIL || 'demo.user@militarybenefitsassistant.com',
+      password: process.env.NEXT_PUBLIC_DEMO_USER_PASSWORD || 'DemoUser2026!',
+    },
+    admin: {
+      email: process.env.NEXT_PUBLIC_DEMO_ADMIN_EMAIL || 'demo.admin@militarybenefitsassistant.com',
+      password: process.env.NEXT_PUBLIC_DEMO_ADMIN_PASSWORD || 'DemoAdmin2026!',
+    },
+  };
+
+  const handleDemo = async (role: 'user' | 'admin') => {
+    setError('');
+    setLoading(true);
+    const { email: demoEmail, password: demoPassword } = demoCreds[role];
+    const { error } = await supabase.auth.signInWithPassword({ email: demoEmail, password: demoPassword });
+    if (error) {
+      setError(
+        `Demo ${role} sign-in failed: ${error.message}. Make sure the demo accounts have been seeded (supabase/seed_demo_accounts.sql).`,
+      );
+      setLoading(false);
+    } else {
+      router.push(role === 'admin' ? '/admin' : '/dashboard');
+    }
+  };
+
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
       <div className="w-full max-w-md">
@@ -82,6 +112,42 @@ export default function LoginPage() {
           Don&apos;t have an account?{' '}
           <Link href="/signup" className="text-blue-700 font-medium hover:underline">Sign up</Link>
         </p>
+
+        {demoEnabled && (
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-white px-3 text-xs uppercase tracking-wide text-gray-400">
+                  Or try a demo
+                </span>
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => handleDemo('user')}
+                disabled={loading}
+                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-slate-50 disabled:opacity-60"
+              >
+                Demo as User
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDemo('admin')}
+                disabled={loading}
+                className="rounded-md border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100 disabled:opacity-60"
+              >
+                Demo as Admin
+              </button>
+            </div>
+            <p className="mt-2 text-center text-xs text-gray-400">
+              Demo accounts are pre-filled and shared. Don&apos;t enter real personal information.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
