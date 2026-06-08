@@ -62,6 +62,20 @@ export const va2122aMapping: FieldMapping = {
   vetVAFileNumber:  { pdfFieldName: 'form1[0].#subform[0].Veterans_Service_Number_If_Applicable[0]', type: 'text', transform: sl(9) },
   vetServiceNumber: { pdfFieldName: 'form1[0].#subform[0].Veterans_Service_Number_If_Applicable[1]', type: 'text', transform: sl(10) },
 
+  // Item 6 — Branch of Service. RadioButtonList[1] (8 widgets, exact rects):
+  //   row1 cy=495.7: Army 209.9 · Navy 260.9 · Air Force 305.4 · Marine Corps 363.8 · Coast Guard 437.5
+  //   row2 cy=478.x: Space Force 209.9 · NOAA 288.8 · USPHS 336.1
+  branchOfService: [
+    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[1]', type: 'draw-check', transform: v => v === 'Army'         ? 'true' : '', checkPage: 0, checkCX: 209.9, checkCY: 495.7, checkSize: 6 },
+    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[1]', type: 'draw-check', transform: v => v === 'Navy'         ? 'true' : '', checkPage: 0, checkCX: 260.9, checkCY: 495.7, checkSize: 6 },
+    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[1]', type: 'draw-check', transform: v => v === 'Air Force'    ? 'true' : '', checkPage: 0, checkCX: 305.4, checkCY: 495.7, checkSize: 6 },
+    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[1]', type: 'draw-check', transform: v => v === 'Marine Corps' ? 'true' : '', checkPage: 0, checkCX: 363.8, checkCY: 495.6, checkSize: 6 },
+    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[1]', type: 'draw-check', transform: v => v === 'Coast Guard'  ? 'true' : '', checkPage: 0, checkCX: 437.5, checkCY: 495.6, checkSize: 6 },
+    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[1]', type: 'draw-check', transform: v => v === 'Space Force'  ? 'true' : '', checkPage: 0, checkCX: 209.9, checkCY: 478.7, checkSize: 6 },
+    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[1]', type: 'draw-check', transform: v => v === 'NOAA'         ? 'true' : '', checkPage: 0, checkCX: 288.8, checkCY: 478.4, checkSize: 6 },
+    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[1]', type: 'draw-check', transform: v => v === 'USPHS'        ? 'true' : '', checkPage: 0, checkCX: 336.1, checkCY: 478.8, checkSize: 6 },
+  ],
+
   vetStreet:  { pdfFieldName: 'form1[0].#subform[0].MailingAddress_NumberAndStreet[0]',       type: 'text', transform: sl(30) },
   vetApt:     { pdfFieldName: 'form1[0].#subform[0].MailingAddress_ApartmentOrUnitNumber[0]', type: 'text', transform: sl(5) },
   vetCity:    { pdfFieldName: 'form1[0].#subform[0].MailingAddress_City[0]',                  type: 'text', transform: sl(18) },
@@ -84,20 +98,12 @@ export const va2122aMapping: FieldMapping = {
   // ── SECTION II: CLAIMANT (page 0) ────────────────────────────────────────
   claimantIsVeteran: [],   // wizard-only gate — no PDF field
 
-  // Item 12 — relationship to veteran. RadioButtonList[1] values 4–11.
-  //   row 1 cy=495.7: 4=209.9 5=260.9 6=305.4 7=363.8 8=437.5
-  //   row 2 cy=478.x: 9=209.9 10=288.8 11=336.1
-  claimantRelationshipType: [
-    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[1]', type: 'draw-check', transform: v => v === '4'  ? 'true' : '', checkPage: 0, checkCX: 209.9, checkCY: 495.7, checkSize: 6 },
-    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[1]', type: 'draw-check', transform: v => v === '5'  ? 'true' : '', checkPage: 0, checkCX: 260.9, checkCY: 495.7, checkSize: 6 },
-    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[1]', type: 'draw-check', transform: v => v === '6'  ? 'true' : '', checkPage: 0, checkCX: 305.4, checkCY: 495.7, checkSize: 6 },
-    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[1]', type: 'draw-check', transform: v => v === '7'  ? 'true' : '', checkPage: 0, checkCX: 363.8, checkCY: 495.7, checkSize: 6 },
-    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[1]', type: 'draw-check', transform: v => v === '8'  ? 'true' : '', checkPage: 0, checkCX: 437.5, checkCY: 495.6, checkSize: 6 },
-    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[1]', type: 'draw-check', transform: v => v === '9'  ? 'true' : '', checkPage: 0, checkCX: 209.9, checkCY: 478.7, checkSize: 6 },
-    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[1]', type: 'draw-check', transform: v => v === '10' ? 'true' : '', checkPage: 0, checkCX: 288.8, checkCY: 478.4, checkSize: 6 },
-    { pdfFieldName: 'form1[0].#subform[0].RadioButtonList[1]', type: 'draw-check', transform: v => v === '11' ? 'true' : '', checkPage: 0, checkCX: 336.1, checkCY: 478.8, checkSize: 6 },
-  ],
-  claimantRelationshipOther: { pdfFieldName: 'form1[0].#subform[0].RelationshipToVeteran[0]', type: 'text' },
+  // Item 12 — relationship to veteran is a free-TEXT field (RelationshipToVeteran[0]),
+  // NOT a radio. claimantRelationship is built by computeAnswers (label, or the
+  // "Other" detail) and written here. The raw type/other inputs fold into it.
+  claimantRelationship:      { pdfFieldName: 'form1[0].#subform[0].RelationshipToVeteran[0]', type: 'text' },
+  claimantRelationshipType:  [],
+  claimantRelationshipOther: [],
 
   claimantFirstName:     { pdfFieldName: 'form1[0].#subform[0].Claimants_First_Name[0]',    type: 'text', transform: sl(12) },
   claimantMiddleInitial: { pdfFieldName: 'form1[0].#subform[0].Claimants_Middle_Initial[0]', type: 'text', transform: mi },

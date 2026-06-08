@@ -59,4 +59,11 @@ export interface FormDefinition {
    * button, e.g., "Take this form to your tutor…".
    */
   nextSteps?: string;
+  /**
+   * When true, the form is NOT shown in the public catalog (goal finder /
+   * "Browse all forms"). It remains fully fillable via a direct link to
+   * /forms/<id> — used for forms surfaced only inside a specific flow, e.g.
+   * VA 21-22A is reached from the "Have MBA file for me" agent-filing step.
+   */
+  hidden?: boolean;
 }

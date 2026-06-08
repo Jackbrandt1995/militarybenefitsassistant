@@ -60,7 +60,9 @@ function getCompleteness(p: ReturnType<typeof useProfile>['profile']): number {
 
 export default function DashboardPage() {
   const { profile, loading: profileLoading } = useProfile();
-  const forms = getAllForms();
+  // Exclude forms hidden from the public catalog (e.g. VA 21-22A, which is
+  // reached only from the "Have MBA file for me" agent-filing flow).
+  const forms = getAllForms().filter(f => !f.hidden);
 
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const selectedGoal = goals.find(g => g.id === selectedGoalId) ?? null;

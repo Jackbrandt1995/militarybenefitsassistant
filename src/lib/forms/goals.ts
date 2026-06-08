@@ -89,15 +89,9 @@ export const goals: Goal[] = [
       { formId: 'va-10-10ez', actionLabel: 'Apply for VA health care' },
     ],
   },
-  {
-    id: 'representative',
-    label: 'Appoint someone to represent you',
-    tagline: 'Authorize a representative to act on your behalf',
-    icon: 'UserCheck',
-    forms: [
-      { formId: 'va-21-22a', actionLabel: 'Appoint an individual as your representative' },
-    ],
-  },
+  // NOTE: VA 21-22A (Appointment of Representative) is intentionally NOT a public
+  // goal. It is surfaced only from the "Have MBA file for me" agent-filing flow,
+  // where the veteran appoints MBA as their representative before we can file.
   {
     id: 'refunds',
     label: 'Refunds & other forms',

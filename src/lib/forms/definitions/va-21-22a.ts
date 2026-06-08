@@ -15,6 +15,9 @@ const relationshipOptions = [
 export const va2122a: FormDefinition = {
   id: 'va-21-22a',
   version: 2,
+  // Not in the public catalog — surfaced only from the "Have MBA file for me"
+  // agent-filing flow, where the veteran appoints MBA as their representative.
+  hidden: true,
   formNumber: 'VA 21-22A',
   title: 'Appointment of Individual as Claimant\'s Representative',
   description:
@@ -88,6 +91,23 @@ export const va2122a: FormDefinition = {
           placeholder: 'Pre-1974 service number (if applicable)',
           helpText:
             'Only veterans who served before 1974 have a separate service number. Leave blank if your SSN is your service number.',
+        },
+        {
+          id: 'branchOfService',
+          label: 'Branch of Service (Item 6)',
+          type: 'select',
+          profilePath: 'servicePeriods[0].branch',
+          helpText: 'The veteran\'s branch of service.',
+          options: [
+            { label: 'Army', value: 'Army' },
+            { label: 'Navy', value: 'Navy' },
+            { label: 'Air Force', value: 'Air Force' },
+            { label: 'Marine Corps', value: 'Marine Corps' },
+            { label: 'Coast Guard', value: 'Coast Guard' },
+            { label: 'Space Force', value: 'Space Force' },
+            { label: 'NOAA', value: 'NOAA' },
+            { label: 'USPHS (Public Health Service)', value: 'USPHS' },
+          ],
         },
       ],
     },
@@ -502,4 +522,27 @@ export const va2122a: FormDefinition = {
       ],
     },
   ],
+
+  computeAnswers: (answers) => {
+    const s = (v: unknown) => String(v ?? '').trim();
+    // Item 12 relationship is a free-text field; convert the coded selection to a
+    // label (or use the "Other" detail) so it can be written as plain text.
+    const relMap: Record<string, string> = {
+      '4': 'Veteran (self)',
+      '5': 'Surviving Spouse',
+      '6': 'Child (under 18)',
+      '7': 'Child (18–23, enrolled in school)',
+      '8': 'Child (helpless/permanently disabled)',
+      '9': 'Parent',
+      '10': 'Court-appointed guardian or fiduciary',
+      '11': 'Other',
+    };
+    const code = s(answers.claimantRelationshipType);
+    const claimantRelationship = !code
+      ? ''
+      : code === '11'
+        ? (s(answers.claimantRelationshipOther) || 'Other')
+        : (relMap[code] || '');
+    return { ...answers, claimantRelationship };
+  },
 };
