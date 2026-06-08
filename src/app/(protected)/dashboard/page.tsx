@@ -130,7 +130,12 @@ export default function DashboardPage() {
 
       {/* ── Goal finder ──────────────────────────────────────────────────── */}
       <section className="mb-12">
-        <div className="flex flex-wrap items-end justify-between gap-3 mb-5">
+        {/* Header — hidden on mobile once a goal is chosen (results screen has its own header) */}
+        <div
+          className={`flex-wrap items-end justify-between gap-3 mb-5 ${
+            selectedGoalId ? 'hidden lg:flex' : 'flex'
+          }`}
+        >
           <h2 className="text-lg font-semibold text-gray-800">What do you want to do?</h2>
           {/* Guided finder for users who aren't sure */}
           <a
@@ -144,78 +149,88 @@ export default function DashboardPage() {
           </a>
         </div>
 
-        {/* Goal cards grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {goals.map(goal => {
-            const Icon = GOAL_ICONS[goal.icon] ?? Compass;
-            const isSelected = goal.id === selectedGoalId;
-            return (
-              <button
-                key={goal.id}
-                type="button"
-                onClick={() => setSelectedGoalId(isSelected ? null : goal.id)}
-                aria-pressed={isSelected}
-                className={`text-left rounded-xl border p-5 transition-all ${
-                  isSelected
-                    ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-200'
-                    : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-md'
-                }`}
-              >
-                <span
-                  className={`inline-flex items-center justify-center w-10 h-10 rounded-lg mb-3 ${
-                    isSelected ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-700'
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                </span>
-                <h3 className="text-sm font-semibold text-gray-900 leading-snug">{goal.label}</h3>
-                <p className="text-xs text-gray-500 mt-1">{goal.tagline}</p>
-                <p className="text-xs font-medium text-blue-700 mt-3">
-                  {goal.forms.length === 1 ? '1 form' : `${goal.forms.length} forms`}
-                </p>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Matching forms for the selected goal */}
-        {selectedGoal && (
-          <div className="mt-8 rounded-2xl border border-blue-100 bg-blue-50/40 p-6">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-base font-semibold text-gray-900">
-                {selectedGoal.label}
-                <span className="ml-2 text-sm font-normal text-gray-500">
-                  — choose the form that fits
-                </span>
-              </h3>
-              <button
-                type="button"
-                onClick={() => setSelectedGoalId(null)}
-                className="inline-flex items-center gap-1 text-sm font-medium text-gray-500 hover:text-gray-700"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Choose a different goal
-              </button>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {selectedGoal.forms.map(gf => {
-                const form = getFormById(gf.formId);
-                if (!form) return null;
+        <div className="lg:grid lg:grid-cols-[20rem_1fr] lg:gap-8 lg:items-start">
+          {/* LEFT — goal cards. On mobile, hidden once a goal is selected (results take over). */}
+          <div className={selectedGoalId ? 'hidden lg:block' : 'block'}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
+              {goals.map(goal => {
+                const Icon = GOAL_ICONS[goal.icon] ?? Compass;
+                const isSelected = goal.id === selectedGoalId;
                 return (
-                  <FormCard
-                    key={form.id}
-                    formId={form.id}
-                    formNumber={form.formNumber}
-                    title={form.title}
-                    description={form.description}
-                    category={form.category}
-                    actionLabel={gf.actionLabel}
-                  />
+                  <button
+                    key={goal.id}
+                    type="button"
+                    onClick={() => setSelectedGoalId(goal.id)}
+                    aria-pressed={isSelected}
+                    className={`flex items-start gap-3 text-left rounded-xl border p-4 transition-all ${
+                      isSelected
+                        ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-200'
+                        : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-md'
+                    }`}
+                  >
+                    <span
+                      className={`inline-flex items-center justify-center w-10 h-10 rounded-lg shrink-0 ${
+                        isSelected ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-700'
+                      }`}
+                    >
+                      <Icon className="w-5 h-5" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold text-gray-900 leading-snug">{goal.label}</span>
+                      <span className="block text-xs text-gray-500 mt-0.5">{goal.tagline}</span>
+                      <span className="block text-xs font-medium text-blue-700 mt-1.5">
+                        {goal.forms.length === 1 ? '1 form' : `${goal.forms.length} forms`}
+                      </span>
+                    </span>
+                  </button>
                 );
               })}
             </div>
           </div>
-        )}
+
+          {/* RIGHT — results. On mobile this is a separate screen; on desktop it's the right pane. */}
+          <div className={selectedGoal ? 'block' : 'hidden lg:block'}>
+            {selectedGoal ? (
+              <div className="rounded-2xl border border-blue-100 bg-blue-50/40 p-5 sm:p-6">
+                {/* Mobile back button → returns to the goal list */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedGoalId(null)}
+                  className="lg:hidden inline-flex items-center gap-1 text-sm font-medium text-blue-700 hover:text-blue-900 mb-4"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  All goals
+                </button>
+                <h3 className="text-base font-semibold text-gray-900 mb-1">{selectedGoal.label}</h3>
+                <p className="text-sm text-gray-500 mb-5">Choose the form that fits.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {selectedGoal.forms.map(gf => {
+                    const form = getFormById(gf.formId);
+                    if (!form) return null;
+                    return (
+                      <FormCard
+                        key={form.id}
+                        formId={form.id}
+                        formNumber={form.formNumber}
+                        title={form.title}
+                        description={form.description}
+                        category={form.category}
+                        actionLabel={gf.actionLabel}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              /* Desktop empty state (mobile never reaches here — the list shows instead) */
+              <div className="hidden lg:flex flex-col items-center justify-center text-center rounded-2xl border border-dashed border-gray-200 bg-gray-50/60 px-6 py-16 h-full">
+                <Compass className="w-8 h-8 text-gray-400 mb-3" />
+                <p className="text-sm font-medium text-gray-600">Select what you want to do</p>
+                <p className="text-sm text-gray-400 mt-1">The matching forms will appear here.</p>
+              </div>
+            )}
+          </div>
+        </div>
       </section>
 
       {/* ── Browse all forms ─────────────────────────────────────────────── */}
