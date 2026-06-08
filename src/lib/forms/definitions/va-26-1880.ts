@@ -1,34 +1,31 @@
 import type { FormDefinition } from '../types';
 import { stateOptions, branchOptions } from '@/lib/validation';
 
-const dischargeOptions = [
-  { label: 'Honorable', value: 'Honorable' },
-  { label: 'General Under Honorable Conditions', value: 'General' },
-  { label: 'Other Than Honorable', value: 'OTH' },
-  { label: 'Bad Conduct', value: 'Bad Conduct' },
-  { label: 'Dishonorable', value: 'Dishonorable' },
-  { label: 'Uncharacterized', value: 'Uncharacterized' },
-  { label: 'N/A – Still Serving', value: 'N/A' },
+const restorationOptions = [
+  { label: 'No — entitlement inquiry only', value: 'Inquiry' },
+  { label: 'Cash-out refinance restoration', value: 'CashOutRestoration' },
+  { label: 'Interest Rate Reduction Refinance (IRRRL)', value: 'IRRRLRestoration' },
+  { label: 'One-time restoration', value: 'OneTimeRestoration' },
 ];
 
 export const va261880: FormDefinition = {
   id: 'va-26-1880',
-  version: 1,
+  version: 2,
   formNumber: 'VA 26-1880',
-  title: 'Request for Certificate of Eligibility',
+  title: 'Request for a Certificate of Eligibility',
   description:
     'Request your VA Home Loan Certificate of Eligibility (COE). This document proves to lenders that you qualify for a VA-backed home loan, which offers competitive interest rates, no down payment requirement, and no private mortgage insurance.',
   pdfTemplate: '/forms/VA-26-1880.pdf',
   category: 'home-loan',
   nextSteps:
-    'Mail this form with your supporting documents to: VA Eligibility Center, P.O. Box 20729, Winston-Salem, NC 27120. Processing typically takes 7–10 business days. You can also apply online at VA.gov for faster processing.',
+    'Mail the completed form to your VA Regional Loan Center of jurisdiction (addresses are on page 4 of the form). For faster service, most veterans can get a COE instantly at VA.gov or through their lender.',
   steps: [
-    // ─── Step 1: Personal Information ──────────────────────────────────────────
+    // ─── Step 1: Name (Section I, Item 1–2) ────────────────────────────────
     {
-      id: 'personal',
-      title: 'Personal Information',
+      id: 'identity',
+      title: 'Your Name',
       description:
-        'Enter your name and identifying information exactly as they appear on your military records. VA uses your Social Security Number and VA File Number to locate your service record and any prior benefit history.',
+        'Enter your name exactly as you want it to appear on your Certificate of Eligibility. If it differs from your service records, you may be asked for supporting documents (e.g., a marriage certificate or court order).',
       fields: [
         {
           id: 'firstName',
@@ -58,59 +55,41 @@ export const va261880: FormDefinition = {
           type: 'select',
           profilePath: 'profile.suffix',
           options: [
-            { label: 'Jr.', value: 'Jr' },
-            { label: 'Sr.', value: 'Sr' },
+            { label: 'None', value: '' },
+            { label: 'Jr.', value: 'Jr.' },
+            { label: 'Sr.', value: 'Sr.' },
             { label: 'II', value: 'II' },
             { label: 'III', value: 'III' },
             { label: 'IV', value: 'IV' },
           ],
         },
         {
-          id: 'ssn',
-          label: 'Social Security Number',
-          type: 'ssn',
+          id: 'servedUnderAnotherName',
+          label: 'Did you serve under another name? (Item 2A)',
+          type: 'radio',
           required: true,
-          profilePath: 'profile.ssn_encrypted',
-        },
-        {
-          id: 'dob',
-          label: 'Date of Birth',
-          type: 'date',
-          profilePath: 'profile.dob',
-        },
-        {
-          id: 'vaFileNumber',
-          label: 'VA File Number',
-          type: 'text',
-          profilePath: 'profile.va_file_number',
-          helpText:
-            'Your VA claim file number if you have one. Leave blank if unknown.',
+          options: [
+            { label: 'Yes', value: 'Yes' },
+            { label: 'No', value: 'No' },
+          ],
         },
         {
           id: 'otherNames',
-          label: 'Other Names Used During Military Service',
+          label: 'Other name(s) used during military service (Item 2B)',
           type: 'text',
-          placeholder: 'e.g., maiden name, former name',
-          helpText:
-            'Enter any other name under which you served in the military (e.g., a maiden name). Leave blank if you only ever served under the name listed above.',
-        },
-        {
-          id: 'serviceNumber',
-          label: 'Military Service Number (if different from SSN)',
-          type: 'text',
-          placeholder: 'e.g., RA12345678',
-          helpText:
-            'Veterans who served before July 1, 1972 were assigned a separate military service number. Leave blank if your SSN is your service number.',
+          condition: { field: 'servedUnderAnotherName', value: 'Yes' },
+          placeholder: 'As shown on your DD-214',
+          helpText: 'Enter the name exactly as it appears on your discharge certificate (DD Form 214).',
         },
       ],
     },
 
-    // ─── Step 2: Contact Information ───────────────────────────────────────────
+    // ─── Step 2: Contact Information (Section I, Item 3, 7, 8) ──────────────
     {
       id: 'contact',
       title: 'Contact Information',
       description:
-        "Provide your current mailing address so VA can send your Certificate of Eligibility and any correspondence about your request. Make sure the address is current — the COE will be mailed here if it isn't returned electronically.",
+        'Provide your current mailing address and contact details so VA can reach you and mail your Certificate of Eligibility if it is not issued electronically.',
       fields: [
         {
           id: 'street',
@@ -149,7 +128,7 @@ export const va261880: FormDefinition = {
         },
         {
           id: 'daytimePhone',
-          label: 'Daytime Phone',
+          label: 'Telephone Number',
           type: 'phone',
           profilePath: 'profile.phone_mobile',
         },
@@ -162,40 +141,39 @@ export const va261880: FormDefinition = {
       ],
     },
 
-    // ─── Step 3: Type of Loan ───────────────────────────────────────────────────
+    // ─── Step 3: Identifiers & Disability (Section I, Items 4–6, 9) ─────────
     {
-      id: 'loanInfo',
-      title: 'Type of Loan',
+      id: 'identifiers',
+      title: 'Identifiers',
       description:
-        'Tell VA what you plan to use the loan benefit for. Different loan purposes may require different supporting documents or affect your funding fee. If you have used your VA home loan benefit before, VA needs to verify your remaining entitlement.',
+        'VA uses these identifiers to locate your service record and any prior benefit history.',
       fields: [
         {
-          id: 'loanPurpose',
-          label: 'Purpose of Loan',
-          type: 'radio',
+          id: 'dob',
+          label: 'Date of Birth',
+          type: 'date',
           required: true,
-          options: [
-            { label: 'Purchase a Home', value: 'Purchase' },
-            { label: 'Cash-out Refinance (regular)', value: 'CashOutRefi' },
-            {
-              label: 'Interest Rate Reduction Refinancing Loan (IRRRL)',
-              value: 'IRRRL',
-            },
-            { label: 'Manufactured Home', value: 'ManufacturedHome' },
-            { label: 'Native American Direct Loan', value: 'NADL' },
-          ],
+          profilePath: 'profile.dob',
         },
         {
-          id: 'propertyAddress',
-          label: 'Property Address',
-          type: 'textarea',
-          placeholder: 'Full property address including city, state, and ZIP',
+          id: 'ssn',
+          label: 'Social Security Number',
+          type: 'ssn',
+          required: true,
+          profilePath: 'profile.ssn_encrypted',
+          helpText: 'Your 9-digit SSN. Entered securely and used to identify your VA record.',
+        },
+        {
+          id: 'serviceNumber',
+          label: 'Service Number (Item 6)',
+          type: 'text',
+          placeholder: 'If applicable',
           helpText:
-            'Enter the address of the property you are purchasing or refinancing. Leave blank if you have not yet identified a property.',
+            'Veterans who served before July 1972 were assigned a separate service number. Leave blank if your SSN is your service number.',
         },
         {
-          id: 'priorUse',
-          label: 'Have you previously used your VA home loan benefit?',
+          id: 'dischargedForDisability',
+          label: 'Were you discharged, retired, or separated from service because of a disability? (Item 9A)',
           type: 'radio',
           required: true,
           options: [
@@ -204,22 +182,53 @@ export const va261880: FormDefinition = {
           ],
         },
         {
-          id: 'entitlementRestored',
-          label: 'Was your prior entitlement restored?',
-          type: 'radio',
-          condition: { field: 'priorUse', value: 'Yes' },
+          id: 'vaFileNumber',
+          label: 'VA Claim Number (Item 9B)',
+          type: 'text',
+          profilePath: 'profile.va_file_number',
+          placeholder: 'If known',
           helpText:
-            'Entitlement can be restored after a prior VA loan is paid in full and the property sold, or in certain other circumstances.',
+            'In most cases this is the same as your SSN. If you are not sure, leave it blank.',
+        },
+      ],
+    },
+
+    // ─── Step 4: Service Status (Section II, Items 10A–10C) ─────────────────
+    {
+      id: 'serviceStatus',
+      title: 'Service Status',
+      description:
+        'These answers determine whether the VA funding fee may be waived. A current active-duty Purple Heart recipient, or a veteran with a qualifying pre-discharge disability rating, may be exempt from the funding fee.',
+      fields: [
+        {
+          id: 'onActiveDuty',
+          label: 'Are you currently on active duty? (Item 10A)',
+          type: 'radio',
+          required: true,
           options: [
             { label: 'Yes', value: 'Yes' },
             { label: 'No', value: 'No' },
           ],
         },
         {
-          id: 'stillOwnPriorHome',
-          label: 'Do you still own the home purchased with that VA loan?',
+          id: 'purpleHeart',
+          label: 'Are you a Purple Heart recipient? (Item 10B)',
           type: 'radio',
-          condition: { field: 'priorUse', value: 'Yes' },
+          required: true,
+          helpText:
+            'The VA funding fee may not be collected from an active-duty service member who has been awarded the Purple Heart. You may be asked to provide evidence of the award. (Title 32 activations do not qualify for this exemption.)',
+          options: [
+            { label: 'Yes', value: 'Yes' },
+            { label: 'No', value: 'No' },
+          ],
+        },
+        {
+          id: 'predischargeClaim',
+          label: 'Do you have a pre-discharge claim pending with VA? (Item 10C)',
+          type: 'radio',
+          required: true,
+          helpText:
+            'The funding fee may be waived for a veteran rated eligible to receive compensation as the result of a pre-discharge disability exam and rating (or a memorandum rating). If the rating is not obtained before closing, the exemption does not apply.',
           options: [
             { label: 'Yes', value: 'Yes' },
             { label: 'No', value: 'No' },
@@ -228,12 +237,12 @@ export const va261880: FormDefinition = {
       ],
     },
 
-    // ─── Step 4: Military Service — Period 1 ───────────────────────────────────
+    // ─── Step 5: Active Service — Period 1 (Item 11A) ──────────────────────
     {
-      id: 'service1',
-      title: 'Military Service — Period 1',
+      id: 'activeService1',
+      title: 'Active Service — Period 1',
       description:
-        'Enter your most recent period of military service. VA uses your service dates and discharge type to confirm you meet the minimum active-duty requirements for the VA home loan benefit. If you served multiple periods, you will be asked about those in the next step.',
+        'List your active-duty service. Do NOT include Active Duty for Training or Active Guard Reserve service here — but DO include any Reserve or Guard activation under Title 10, or full-time National Guard duty under Title 32 §§ 316, 502, 503, 504, or 505.',
       fields: [
         {
           id: 'service1Branch',
@@ -245,140 +254,46 @@ export const va261880: FormDefinition = {
         },
         {
           id: 'service1Entered',
-          label: 'Date Entered Service',
+          label: 'Date Entered',
           type: 'date',
           required: true,
           profilePath: 'servicePeriods[0].date_entered',
         },
         {
           id: 'service1Separated',
-          label: 'Date Separated / Released',
+          label: 'Date Separated',
           type: 'date',
           profilePath: 'servicePeriods[0].date_separated',
           helpText: 'Leave blank if you are still serving.',
         },
-        {
-          id: 'service1Discharge',
-          label: 'Character of Discharge',
-          type: 'select',
-          required: true,
-          profilePath: 'servicePeriods[0].character_of_discharge',
-          options: dischargeOptions,
-        },
-        {
-          id: 'onActiveDuty',
-          label: 'Are you currently on active duty?',
-          type: 'radio',
-          required: true,
-          options: [
-            { label: 'Yes', value: 'Yes' },
-            { label: 'No', value: 'No' },
-          ],
-        },
-        {
-          id: 'expectedSeparation',
-          label: 'Expected Separation Date',
-          type: 'date',
-          condition: { field: 'onActiveDuty', value: 'Yes' },
-          helpText:
-            'Active duty members may be eligible 90 days before their expected separation date.',
-        },
       ],
     },
 
-    // ─── Step 5: Military Service — Periods 2, 3 & 4 ──────────────────────────
+    // ─── Step 6: Active Service — Periods 2–4 (Item 11A) ───────────────────
     {
-      id: 'service234',
-      title: 'Military Service — Periods 2, 3 & 4',
+      id: 'activeService234',
+      title: 'Active Service — Additional Periods',
       description:
-        'If you served multiple periods of active duty, enter additional periods here. Leave all fields blank for any period that does not apply to you.',
+        'If you served additional periods of active duty, enter them here. Leave blank any period that does not apply.',
       fields: [
-        // Period 2
-        {
-          id: 'service2Branch',
-          label: 'Period 2 — Branch of Service',
-          type: 'select',
-          profilePath: 'servicePeriods[1].branch',
-          options: branchOptions,
-        },
-        {
-          id: 'service2Entered',
-          label: 'Period 2 — Date Entered Service',
-          type: 'date',
-          profilePath: 'servicePeriods[1].date_entered',
-        },
-        {
-          id: 'service2Separated',
-          label: 'Period 2 — Date Separated / Released',
-          type: 'date',
-          profilePath: 'servicePeriods[1].date_separated',
-        },
-        {
-          id: 'service2Discharge',
-          label: 'Period 2 — Character of Discharge',
-          type: 'select',
-          profilePath: 'servicePeriods[1].character_of_discharge',
-          options: dischargeOptions,
-        },
-        // Period 3
-        {
-          id: 'service3Branch',
-          label: 'Period 3 — Branch of Service',
-          type: 'select',
-          profilePath: 'servicePeriods[2].branch',
-          options: branchOptions,
-        },
-        {
-          id: 'service3Entered',
-          label: 'Period 3 — Date Entered Service',
-          type: 'date',
-          profilePath: 'servicePeriods[2].date_entered',
-        },
-        {
-          id: 'service3Separated',
-          label: 'Period 3 — Date Separated / Released',
-          type: 'date',
-          profilePath: 'servicePeriods[2].date_separated',
-        },
-        {
-          id: 'service3Discharge',
-          label: 'Period 3 — Character of Discharge',
-          type: 'select',
-          profilePath: 'servicePeriods[2].character_of_discharge',
-          options: dischargeOptions,
-        },
-        // Period 4
-        {
-          id: 'service4Branch',
-          label: 'Period 4 — Branch of Service',
-          type: 'select',
-          options: branchOptions,
-        },
-        {
-          id: 'service4Entered',
-          label: 'Period 4 — Date Entered Service',
-          type: 'date',
-        },
-        {
-          id: 'service4Separated',
-          label: 'Period 4 — Date Separated / Released',
-          type: 'date',
-        },
-        {
-          id: 'service4Discharge',
-          label: 'Period 4 — Character of Discharge',
-          type: 'select',
-          options: dischargeOptions,
-        },
+        { id: 'service2Branch',    label: 'Period 2 — Branch',         type: 'select', profilePath: 'servicePeriods[1].branch', options: branchOptions },
+        { id: 'service2Entered',   label: 'Period 2 — Date Entered',   type: 'date',   profilePath: 'servicePeriods[1].date_entered' },
+        { id: 'service2Separated', label: 'Period 2 — Date Separated', type: 'date',   profilePath: 'servicePeriods[1].date_separated' },
+        { id: 'service3Branch',    label: 'Period 3 — Branch',         type: 'select', profilePath: 'servicePeriods[2].branch', options: branchOptions },
+        { id: 'service3Entered',   label: 'Period 3 — Date Entered',   type: 'date',   profilePath: 'servicePeriods[2].date_entered' },
+        { id: 'service3Separated', label: 'Period 3 — Date Separated', type: 'date',   profilePath: 'servicePeriods[2].date_separated' },
+        { id: 'service4Branch',    label: 'Period 4 — Branch',         type: 'select', options: branchOptions },
+        { id: 'service4Entered',   label: 'Period 4 — Date Entered',   type: 'date' },
+        { id: 'service4Separated', label: 'Period 4 — Date Separated', type: 'date' },
       ],
     },
 
-    // ─── Step 6: National Guard & Reserve Service ──────────────────────────────
+    // ─── Step 7: Reserve / National Guard Service (Item 11B) ───────────────
     {
       id: 'guardReserve',
-      title: 'National Guard & Reserve Service',
+      title: 'Reserve / National Guard Service',
       description:
-        'If you served in the Selected Reserve or National Guard and were activated to federal active duty under a federal order, enter those periods here. This is different from your regular active duty service listed in the previous steps. Leave all fields blank if this does not apply to you.',
+        'Enter Selected Reserve or National Guard service here, INCLUDING any Active Duty for Training (ADT) or Active Guard Reserve service. Do NOT include Title 10 activations or full-time Title 32 National Guard duty (those belong under Active Service). Leave blank if this does not apply.',
       fields: [
         {
           id: 'hadGuardReserveService',
@@ -386,103 +301,56 @@ export const va261880: FormDefinition = {
           type: 'radio',
           required: true,
           options: [
-            { label: 'Yes — I have Guard or Reserve activation periods to report', value: 'Yes' },
-            { label: 'No — I did not serve in the Guard or Reserve', value: 'No' },
+            { label: 'Yes', value: 'Yes' },
+            { label: 'No', value: 'No' },
           ],
         },
-        // Guard/Reserve Period 1 (11B1)
+        { id: 'guardService1Branch',    label: 'Period 1 — Branch',         type: 'select', condition: { field: 'hadGuardReserveService', value: 'Yes' }, options: branchOptions },
+        { id: 'guardService1Entered',   label: 'Period 1 — Date Entered',   type: 'date',   condition: { field: 'hadGuardReserveService', value: 'Yes' } },
+        { id: 'guardService1Separated', label: 'Period 1 — Date Separated', type: 'date',   condition: { field: 'hadGuardReserveService', value: 'Yes' } },
+        { id: 'guardService2Branch',    label: 'Period 2 — Branch',         type: 'select', condition: { field: 'hadGuardReserveService', value: 'Yes' }, options: branchOptions },
+        { id: 'guardService2Entered',   label: 'Period 2 — Date Entered',   type: 'date',   condition: { field: 'hadGuardReserveService', value: 'Yes' } },
+        { id: 'guardService2Separated', label: 'Period 2 — Date Separated', type: 'date',   condition: { field: 'hadGuardReserveService', value: 'Yes' } },
+        { id: 'guardService3Branch',    label: 'Period 3 — Branch',         type: 'select', condition: { field: 'hadGuardReserveService', value: 'Yes' }, options: branchOptions },
+        { id: 'guardService3Entered',   label: 'Period 3 — Date Entered',   type: 'date',   condition: { field: 'hadGuardReserveService', value: 'Yes' } },
+        { id: 'guardService3Separated', label: 'Period 3 — Date Separated', type: 'date',   condition: { field: 'hadGuardReserveService', value: 'Yes' } },
+        { id: 'guardService4Branch',    label: 'Period 4 — Branch',         type: 'select', condition: { field: 'hadGuardReserveService', value: 'Yes' }, options: branchOptions },
+        { id: 'guardService4Entered',   label: 'Period 4 — Date Entered',   type: 'date',   condition: { field: 'hadGuardReserveService', value: 'Yes' } },
+        { id: 'guardService4Separated', label: 'Period 4 — Date Separated', type: 'date',   condition: { field: 'hadGuardReserveService', value: 'Yes' } },
+      ],
+    },
+
+    // ─── Step 8: How You'll Use Your COE (Section III, Item 12) ────────────
+    {
+      id: 'loanPurpose',
+      title: 'How You Will Use Your COE',
+      description: 'Indicate how you intend to use your Certificate of Eligibility.',
+      fields: [
         {
-          id: 'guardService1Branch',
-          label: 'Guard/Reserve Period 1 — Branch',
-          type: 'select',
-          condition: { field: 'hadGuardReserveService', value: 'Yes' },
-          options: branchOptions,
-        },
-        {
-          id: 'guardService1Entered',
-          label: 'Guard/Reserve Period 1 — Date Activated',
-          type: 'date',
-          condition: { field: 'hadGuardReserveService', value: 'Yes' },
-        },
-        {
-          id: 'guardService1Separated',
-          label: 'Guard/Reserve Period 1 — Date Released',
-          type: 'date',
-          condition: { field: 'hadGuardReserveService', value: 'Yes' },
-        },
-        // Guard/Reserve Period 2 (11B2)
-        {
-          id: 'guardService2Branch',
-          label: 'Guard/Reserve Period 2 — Branch',
-          type: 'select',
-          condition: { field: 'hadGuardReserveService', value: 'Yes' },
-          options: branchOptions,
-        },
-        {
-          id: 'guardService2Entered',
-          label: 'Guard/Reserve Period 2 — Date Activated',
-          type: 'date',
-          condition: { field: 'hadGuardReserveService', value: 'Yes' },
-        },
-        {
-          id: 'guardService2Separated',
-          label: 'Guard/Reserve Period 2 — Date Released',
-          type: 'date',
-          condition: { field: 'hadGuardReserveService', value: 'Yes' },
-        },
-        // Guard/Reserve Period 3 (11B3)
-        {
-          id: 'guardService3Branch',
-          label: 'Guard/Reserve Period 3 — Branch',
-          type: 'select',
-          condition: { field: 'hadGuardReserveService', value: 'Yes' },
-          options: branchOptions,
-        },
-        {
-          id: 'guardService3Entered',
-          label: 'Guard/Reserve Period 3 — Date Activated',
-          type: 'date',
-          condition: { field: 'hadGuardReserveService', value: 'Yes' },
-        },
-        {
-          id: 'guardService3Separated',
-          label: 'Guard/Reserve Period 3 — Date Released',
-          type: 'date',
-          condition: { field: 'hadGuardReserveService', value: 'Yes' },
-        },
-        // Guard/Reserve Period 4 (11B4)
-        {
-          id: 'guardService4Branch',
-          label: 'Guard/Reserve Period 4 — Branch',
-          type: 'select',
-          condition: { field: 'hadGuardReserveService', value: 'Yes' },
-          options: branchOptions,
-        },
-        {
-          id: 'guardService4Entered',
-          label: 'Guard/Reserve Period 4 — Date Activated',
-          type: 'date',
-          condition: { field: 'hadGuardReserveService', value: 'Yes' },
-        },
-        {
-          id: 'guardService4Separated',
-          label: 'Guard/Reserve Period 4 — Date Released',
-          type: 'date',
-          condition: { field: 'hadGuardReserveService', value: 'Yes' },
+          id: 'loanPurpose',
+          label: 'How will you use your Certificate of Eligibility? (Item 12)',
+          type: 'radio',
+          required: true,
+          options: [
+            { label: 'Entitlement inquiry only', value: 'Inquiry' },
+            { label: 'Purchase a home', value: 'Purchase' },
+            { label: 'Cash-out refinance', value: 'CashOut' },
+            { label: 'Interest Rate Reduction Refinance Loan (IRRRL)', value: 'IRRRL' },
+          ],
         },
       ],
     },
 
-    // ─── Step 7: Prior VA Loans ─────────────────────────────────────────────────
+    // ─── Step 9: Previous VA Loans (Section III, Items 13–16) ──────────────
     {
       id: 'priorLoans',
-      title: 'Prior VA Loans',
+      title: 'Previous VA Loans',
       description:
-        "VA needs to know about any previous VA-backed home loans to determine your remaining entitlement. Your total entitlement is the amount VA guarantees to a lender. If you still have an outstanding VA loan, your remaining (or \"bonus\") entitlement may affect the loan amount available to you.",
+        'VA needs to know about prior VA-guaranteed home loans to determine your remaining entitlement and whether any entitlement can be restored.',
       fields: [
         {
-          id: 'hadPriorLoan',
-          label: 'Have you ever had a VA-guaranteed home loan?',
+          id: 'priorUse',
+          label: 'Have you used the VA home loan program before? (Item 13A)',
           type: 'radio',
           required: true,
           options: [
@@ -490,74 +358,51 @@ export const va261880: FormDefinition = {
             { label: 'No', value: 'No' },
           ],
         },
-
-        // ── Prior Loan 1 ──────────────────────────────────────────────────────
         {
-          id: 'priorLoanAddress',
-          label: 'Loan 1 — Property Address',
+          id: 'stillOwnHomes',
+          label: 'Do you still own any of the homes you used the VA home loan program for? (Item 13B)',
+          type: 'radio',
+          condition: { field: 'priorUse', value: 'Yes' },
+          options: [
+            { label: 'Yes', value: 'Yes' },
+            { label: 'No', value: 'No' },
+          ],
+        },
+
+        // Previous loan 1 (Items 14A–14D)
+        {
+          id: 'priorLoan1Address',
+          label: 'Loan 1 — Property Address (Item 14A)',
           type: 'textarea',
-          condition: { field: 'hadPriorLoan', value: 'Yes' },
-          helpText: 'Full address of the property secured by the prior VA-guaranteed loan.',
+          condition: { field: 'stillOwnHomes', value: 'Yes' },
         },
         {
-          id: 'priorLoanNumber',
-          label: 'Loan 1 — VA Loan Number',
+          id: 'priorLoan1Number',
+          label: 'Loan 1 — VA Loan Number (Item 14B)',
           type: 'text',
-          condition: { field: 'hadPriorLoan', value: 'Yes' },
-          placeholder: 'e.g., 123456789',
-          helpText: 'The VA loan number assigned at closing. Check your closing documents if unsure.',
+          condition: { field: 'stillOwnHomes', value: 'Yes' },
         },
         {
-          id: 'priorLoanDate',
-          label: 'Loan 1 — Date of Loan',
+          id: 'priorLoan1Date',
+          label: 'Loan 1 — Date of Loan (Item 14C)',
           type: 'text',
-          condition: { field: 'hadPriorLoan', value: 'Yes' },
-          placeholder: 'e.g., June 2018',
-          helpText: 'An approximate month and year is fine.',
+          condition: { field: 'stillOwnHomes', value: 'Yes' },
+          placeholder: 'Month and year (e.g., June 2018)',
         },
         {
-          id: 'priorLoanPaidOff',
-          label: 'Loan 1 — Was the loan paid in full?',
+          id: 'restorationType1',
+          label: 'Loan 1 — Are you applying for entitlement restoration? (Item 14D)',
           type: 'radio',
-          condition: { field: 'hadPriorLoan', value: 'Yes' },
-          options: [
-            { label: 'Yes', value: 'Yes' },
-            { label: 'No', value: 'No' },
-          ],
-        },
-        {
-          id: 'priorPropertySold',
-          label: 'Loan 1 — Was the property sold?',
-          type: 'radio',
-          condition: { field: 'hadPriorLoan', value: 'Yes' },
-          helpText:
-            'Entitlement is typically restored only when both the loan is paid in full and the property has been sold.',
-          options: [
-            { label: 'Yes', value: 'Yes' },
-            { label: 'No', value: 'No' },
-          ],
-        },
-        {
-          id: 'restorationType',
-          label: 'Loan 1 — Type of Action Requested',
-          type: 'radio',
-          condition: { field: 'hadPriorLoan', value: 'Yes' },
-          helpText:
-            'Indicate what you are requesting VA to do with your prior loan entitlement. Select "Entitlement Inquiry Only" if you just want to know your current entitlement status.',
-          options: [
-            { label: 'Entitlement Inquiry Only (no restoration needed)', value: 'Inquiry' },
-            { label: 'Cash-Out Refinance Restoration', value: 'CashOutRestoration' },
-            { label: 'Interest Rate Reduction Refinance (IRRRL) Restoration', value: 'IRRRLRestoration' },
-            { label: 'One-Time Restoration', value: 'OneTimeRestoration' },
-          ],
+          condition: { field: 'stillOwnHomes', value: 'Yes' },
+          options: restorationOptions,
         },
 
-        // ── Prior Loan 2 ──────────────────────────────────────────────────────
+        // Previous loan 2 (Items 15A–15D)
         {
           id: 'hadPriorLoan2',
-          label: 'Do you have a second prior VA-guaranteed loan to report?',
+          label: 'Do you have a second previous VA loan to report?',
           type: 'radio',
-          condition: { field: 'hadPriorLoan', value: 'Yes' },
+          condition: { field: 'stillOwnHomes', value: 'Yes' },
           options: [
             { label: 'Yes', value: 'Yes' },
             { label: 'No', value: 'No' },
@@ -565,41 +410,35 @@ export const va261880: FormDefinition = {
         },
         {
           id: 'priorLoan2Address',
-          label: 'Loan 2 — Property Address',
+          label: 'Loan 2 — Property Address (Item 15A)',
           type: 'textarea',
           condition: { field: 'hadPriorLoan2', value: 'Yes' },
         },
         {
           id: 'priorLoan2Number',
-          label: 'Loan 2 — VA Loan Number',
+          label: 'Loan 2 — VA Loan Number (Item 15B)',
           type: 'text',
           condition: { field: 'hadPriorLoan2', value: 'Yes' },
-          placeholder: 'e.g., 123456789',
         },
         {
           id: 'priorLoan2Date',
-          label: 'Loan 2 — Date of Loan',
+          label: 'Loan 2 — Date of Loan (Item 15C)',
           type: 'text',
           condition: { field: 'hadPriorLoan2', value: 'Yes' },
-          placeholder: 'e.g., March 2010',
+          placeholder: 'Month and year',
         },
         {
           id: 'restorationType2',
-          label: 'Loan 2 — Type of Action Requested',
+          label: 'Loan 2 — Are you applying for entitlement restoration? (Item 15D)',
           type: 'radio',
           condition: { field: 'hadPriorLoan2', value: 'Yes' },
-          options: [
-            { label: 'Entitlement Inquiry Only', value: 'Inquiry' },
-            { label: 'Cash-Out Refinance Restoration', value: 'CashOutRestoration' },
-            { label: 'Interest Rate Reduction Refinance (IRRRL) Restoration', value: 'IRRRLRestoration' },
-            { label: 'One-Time Restoration', value: 'OneTimeRestoration' },
-          ],
+          options: restorationOptions,
         },
 
-        // ── Prior Loan 3 ──────────────────────────────────────────────────────
+        // Previous loan 3 (Items 16A–16D)
         {
           id: 'hadPriorLoan3',
-          label: 'Do you have a third prior VA-guaranteed loan to report?',
+          label: 'Do you have a third previous VA loan to report?',
           type: 'radio',
           condition: { field: 'hadPriorLoan2', value: 'Yes' },
           options: [
@@ -609,95 +448,114 @@ export const va261880: FormDefinition = {
         },
         {
           id: 'priorLoan3Address',
-          label: 'Loan 3 — Property Address',
+          label: 'Loan 3 — Property Address (Item 16A)',
           type: 'textarea',
           condition: { field: 'hadPriorLoan3', value: 'Yes' },
         },
         {
           id: 'priorLoan3Number',
-          label: 'Loan 3 — VA Loan Number',
+          label: 'Loan 3 — VA Loan Number (Item 16B)',
           type: 'text',
           condition: { field: 'hadPriorLoan3', value: 'Yes' },
-          placeholder: 'e.g., 123456789',
         },
         {
           id: 'priorLoan3Date',
-          label: 'Loan 3 — Date of Loan',
+          label: 'Loan 3 — Date of Loan (Item 16C)',
           type: 'text',
           condition: { field: 'hadPriorLoan3', value: 'Yes' },
-          placeholder: 'e.g., October 2005',
+          placeholder: 'Month and year',
         },
         {
           id: 'restorationType3',
-          label: 'Loan 3 — Type of Action Requested',
+          label: 'Loan 3 — Are you applying for entitlement restoration? (Item 16D)',
           type: 'radio',
           condition: { field: 'hadPriorLoan3', value: 'Yes' },
+          options: restorationOptions,
+        },
+      ],
+    },
+
+    // ─── Step 10: Natural Disaster (Section III, Item 17) ──────────────────
+    {
+      id: 'disaster',
+      title: 'Disaster-Damaged Property',
+      description:
+        'Answer this only if a home you financed with a VA loan was damaged or destroyed by a federally declared natural disaster.',
+      fields: [
+        {
+          id: 'ownDisasterHome',
+          label:
+            'Do you still own a property financed with a VA home loan that was substantially damaged or destroyed by a federally declared natural disaster? (Item 17A)',
+          type: 'radio',
+          required: true,
           options: [
-            { label: 'Entitlement Inquiry Only', value: 'Inquiry' },
-            { label: 'Cash-Out Refinance Restoration', value: 'CashOutRestoration' },
-            { label: 'Interest Rate Reduction Refinance (IRRRL) Restoration', value: 'IRRRLRestoration' },
-            { label: 'One-Time Restoration', value: 'OneTimeRestoration' },
+            { label: 'Yes', value: 'Yes' },
+            { label: 'No', value: 'No' },
           ],
         },
+        {
+          id: 'disasterLoanDate',
+          label: 'Date of Loan (Item 17B)',
+          type: 'text',
+          condition: { field: 'ownDisasterHome', value: 'Yes' },
+          placeholder: 'Month and year',
+        },
+        {
+          id: 'disasterLossDate',
+          label: 'Date of Loss (Item 17C)',
+          type: 'text',
+          condition: { field: 'ownDisasterHome', value: 'Yes' },
+          placeholder: 'Month and year',
+        },
+        {
+          id: 'disasterPropertyAddress',
+          label: 'Address of Property (Item 17D)',
+          type: 'textarea',
+          condition: { field: 'ownDisasterHome', value: 'Yes' },
+        },
       ],
     },
 
-    // ─── Step 7: Required Documents ────────────────────────────────────────────
+    // ─── Step 11: Remarks (Section III, Item 18) ───────────────────────────
     {
-      id: 'requiredDocs',
-      title: 'Required Documents',
-      description:
-        'Upload or gather the supporting documents listed below before submitting your request. VA cannot process your Certificate of Eligibility request without proof of your qualifying military service.',
-      fields: [],
-      requiredAttachments: [
+      id: 'remarks',
+      title: 'Remarks',
+      description: 'Use this space for any additional information you want to provide. Optional.',
+      fields: [
         {
-          label: 'DD-214, Member 4 Copy',
-          helpText: 'One copy required per period of active duty service. If you do not have your DD-214, request a copy through the National Archives milConnect portal.',
-          condition: 'Required for veterans who have been discharged',
-        },
-        {
-          label: 'Statement of Service on Official Letterhead',
-          helpText:
-            'Must include your full name, Social Security Number, date of birth, date of entry on active duty, expected separation date, and the commanding officer\'s signature.',
-          condition: 'Active duty members only',
-        },
-      ],
-      optionalAttachments: [
-        {
-          label: 'Discharge Certificate (NGB-22)',
-          helpText:
-            'The NGB-22 is the National Guard equivalent of the DD-214 and documents federal activation periods.',
-          condition: 'National Guard members who were federally activated',
+          id: 'remarks',
+          label: 'Remarks (Item 18)',
+          type: 'textarea',
+          helpText: 'Optional. Add any clarifications or the address of a property you intend to purchase, if relevant.',
         },
       ],
     },
 
-    // ─── Step 8: Certification & Signature ─────────────────────────────────────
+    // ─── Step 12: Certification & Signature (Section IV, Item 19) ───────────
     {
       id: 'signature',
       title: 'Certification & Signature',
       description:
-        'By signing below you certify under penalty of law that all information provided on this form is true and correct to the best of your knowledge and belief. Intentionally providing false information to obtain a federal benefit is a federal crime under 18 U.S.C. § 1001 and may result in fines, imprisonment, or both.\n\nPRIVACY ACT NOTICE: Information you provide is protected under the Privacy Act of 1974. VA uses this information only to determine your eligibility for the home loan benefit and will not disclose it except as authorized by law.',
+        'I CERTIFY THAT the statements in this document are true and complete to the best of my knowledge.\n\nFederal statutes provide severe penalties for fraud, intentional misrepresentation, or conspiracy intended to influence the issuance of any guaranty or insurance by the Secretary of Veterans Affairs (e.g., 18 U.S.C. §§ 1001, 372, and 287).',
       fields: [
         {
           id: 'privacyAct',
           label:
-            'I certify that all statements on this application are true and correct to the best of my knowledge and belief.',
+            'I certify that the statements in this document are true and complete to the best of my knowledge.',
           type: 'checkbox',
           required: true,
-          helpText:
-            'You must check this box to certify your answers before signing.',
+          helpText: 'You must check this box to certify your answers before signing.',
         },
         {
           id: 'signaturePad',
-          label: 'Your Signature',
+          label: 'Signature of Veteran (Item 19A)',
           type: 'signature',
           required: true,
           helpText: 'Draw your signature using your mouse or finger.',
         },
         {
           id: 'signatureDate',
-          label: 'Date Signed',
+          label: 'Date Signed (Item 19B)',
           type: 'date',
           required: true,
         },
@@ -708,31 +566,25 @@ export const va261880: FormDefinition = {
   computeAnswers: (answers) => {
     const s = (v: unknown) => String(v ?? '').trim();
 
-    // Full name in "Last, First [Middle]" format (PDF NameOfVeteran field)
-    const last = s(answers.lastName);
-    const first = s(answers.firstName);
-    const mid   = s(answers.middleName);
-    const nameParts = [first, mid].filter(Boolean).join(' ');
-    const fullName  = last && nameParts ? `${last}, ${nameParts}` : last || nameParts;
+    // Item 1 — Name in "First Middle Last [Suffix]" order
+    const first  = s(answers.firstName);
+    const mid    = s(answers.middleName);
+    const last   = s(answers.lastName);
+    const suffix = s(answers.suffix);
+    const fullName = [first, mid, last, suffix].filter(Boolean).join(' ');
 
-    // SSN formatted as "XXX-XX-XXXX"
-    const rawSsn = s(answers.ssn).replace(/\D/g, '');
-    const ssnFormatted = rawSsn.length === 9
-      ? `${rawSsn.slice(0, 3)}-${rawSsn.slice(3, 5)}-${rawSsn.slice(5)}`
-      : s(answers.ssn);
-
-    // Full address as one line: "Street [Apt], City, ST ZIP"
+    // Item 3 — Full address as one line: "Street [Apt], City, ST ZIP"
     const streetLine = [s(answers.street), s(answers.apt)].filter(Boolean).join(' ');
     const statePart  = [s(answers.state), s(answers.zip)].filter(Boolean).join(' ');
-    const fullAddress = [streetLine, s(answers.city), statePart]
-      .filter(Boolean).join(', ');
+    const fullAddress = [streetLine, s(answers.city), statePart].filter(Boolean).join(', ');
 
-    // Phone formatted as "(XXX) XXX-XXXX"
+    // Item 7 — Phone formatted as "(XXX) XXX-XXXX"
     const rawPhone = s(answers.daytimePhone).replace(/\D/g, '');
     const phoneFormatted = rawPhone.length === 10
       ? `(${rawPhone.slice(0, 3)}) ${rawPhone.slice(3, 6)}-${rawPhone.slice(6)}`
       : s(answers.daytimePhone);
 
-    return { ...answers, fullName, ssnFormatted, fullAddress, phoneFormatted };
+    // Item 5 — SSN is written digits-only by the mapping transform (field maxLength=9)
+    return { ...answers, fullName, fullAddress, phoneFormatted };
   },
 };
