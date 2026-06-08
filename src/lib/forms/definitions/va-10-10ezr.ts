@@ -233,6 +233,7 @@ export const va1010ezr: FormDefinition = {
         { id: 'netFarmBusinessIncome', label: 'Net Income from Farm, Ranch, Property, or Business (line 2)', type: 'number', helpText: 'Net of business expenses. Report losses as 0.', placeholder: '0' },
         { id: 'otherIncome', label: 'Other Income (Social Security, pension, interest, dividends) (line 3)', type: 'number', helpText: 'Excludes welfare/SSI and VA compensation/pension.', placeholder: '0' },
         { id: 'spouseGrossIncome', label: "Spouse's Gross Employment Income", type: 'number', condition: { field: 'married', value: 'Yes' }, placeholder: '0' },
+        { id: 'spouseFarmIncome', label: "Spouse's Net Farm / Business Income", type: 'number', condition: { field: 'married', value: 'Yes' }, helpText: 'Net of business expenses. Report losses as 0.', placeholder: '0' },
         { id: 'spouseOtherIncome', label: "Spouse's Other Income", type: 'number', condition: { field: 'married', value: 'Yes' }, placeholder: '0' },
       ],
     },

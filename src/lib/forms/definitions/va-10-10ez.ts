@@ -218,6 +218,15 @@ export const va1010ez: FormDefinition = {
           profilePath: 'profile.email',
           helpText: 'VA may use your email to send appointment reminders and enrollment updates.',
         },
+        {
+          id: 'scheduleFirstAppointment',
+          label: 'Would you like VA to contact you to schedule your first appointment?',
+          type: 'radio',
+          options: [
+            { label: 'Yes', value: 'Yes' },
+            { label: 'No', value: 'No' },
+          ],
+        },
       ],
     },
 
@@ -773,6 +782,14 @@ export const va1010ez: FormDefinition = {
           type: 'number',
           condition: { field: 'married', value: 'Yes' },
           helpText: 'Your spouse\'s gross employment income (before taxes) for the prior calendar year.',
+          placeholder: '0',
+        },
+        {
+          id: 'spouseFarmIncome',
+          label: "Spouse's Net Income from Farm, Ranch, Property, or Business",
+          type: 'number',
+          condition: { field: 'married', value: 'Yes' },
+          helpText: 'Net of business expenses. Report losses as 0.',
           placeholder: '0',
         },
         {
