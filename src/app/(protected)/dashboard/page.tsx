@@ -7,7 +7,6 @@ import { getAllForms, getFormById } from '@/lib/forms/registry';
 import { goals } from '@/lib/forms/goals';
 import Link from 'next/link';
 import {
-  CheckCircle,
   AlertCircle,
   GraduationCap,
   BadgeCheck,
@@ -91,42 +90,33 @@ export default function DashboardPage() {
         <p className="text-gray-600 mt-1">Tell us what you want to do, and we&apos;ll find the right form.</p>
       </div>
 
-      {/* Profile completeness banner */}
-      {!profileLoading && (
+      {/* Profile completeness banner — only shown when the profile needs more info */}
+      {!profileLoading && !isComplete && (
         <div className="mb-8">
-          {isComplete ? (
-            <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-5 py-4">
-              <CheckCircle className="w-5 h-5 text-green-600 shrink-0" />
-              <p className="text-sm font-medium text-green-800">
-                Profile complete ✓ — your forms will be pre-filled automatically
-              </p>
-            </div>
-          ) : (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 space-y-3">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-amber-900">
-                    Your profile is {pct}% complete — fill it in to auto-populate your forms
-                  </p>
-                  <div className="mt-2 w-full bg-amber-200 rounded-full h-2">
-                    <div
-                      className="bg-amber-500 h-2 rounded-full transition-all duration-500"
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 space-y-3">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-amber-900">
+                  Your profile is {pct}% complete — fill it in to auto-populate your forms
+                </p>
+                <div className="mt-2 w-full bg-amber-200 rounded-full h-2">
+                  <div
+                    className="bg-amber-500 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${pct}%` }}
+                  />
                 </div>
               </div>
-              <div className="pl-8">
-                <Link
-                  href="/profile"
-                  className="text-sm font-semibold text-amber-700 hover:text-amber-900 hover:underline"
-                >
-                  Complete Profile →
-                </Link>
-              </div>
             </div>
-          )}
+            <div className="pl-8">
+              <Link
+                href="/profile"
+                className="text-sm font-semibold text-amber-700 hover:text-amber-900 hover:underline"
+              >
+                Complete Profile →
+              </Link>
+            </div>
+          </div>
         </div>
       )}
 

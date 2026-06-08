@@ -12,6 +12,7 @@ import { va228691Mapping } from './va-22-8691';
 import { va281900Mapping } from './va-28-1900';
 import { va221999cMapping } from './va-22-1999c';
 import { va1010ezMapping } from './va-10-10ez';
+import { va1010ezrMapping } from './va-10-10ezr';
 import { va261880Mapping } from './va-26-1880';
 import { va2122aMapping } from './va-21-22a';
 
@@ -29,6 +30,7 @@ const mappings: Record<string, FieldMapping> = {
   'va-28-1900': va281900Mapping,
   'va-22-1999c': va221999cMapping,
   'va-10-10ez': va1010ezMapping,
+  'va-10-10ezr': va1010ezrMapping,
   'va-26-1880': va261880Mapping,
   'va-21-22a': va2122aMapping,
 };

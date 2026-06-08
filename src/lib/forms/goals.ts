@@ -82,11 +82,12 @@ export const goals: Goal[] = [
   },
   {
     id: 'healthcare',
-    label: 'Enroll in VA health care',
-    tagline: 'Apply for VA medical benefits',
+    label: 'Enroll in or update VA health care',
+    tagline: 'Apply for or update VA medical benefits',
     icon: 'HeartPulse',
     forms: [
-      { formId: 'va-10-10ez', actionLabel: 'Apply for VA health care' },
+      { formId: 'va-10-10ez',  actionLabel: 'Apply for VA health care' },
+      { formId: 'va-10-10ezr', actionLabel: 'Update your VA health benefits information' },
     ],
   },
   // NOTE: VA 21-22A (Appointment of Representative) is intentionally NOT a public
