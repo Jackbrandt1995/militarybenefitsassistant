@@ -3,7 +3,7 @@ import { branchOptions, stateOptions } from '@/lib/validation';
 
 export const va1010ez: FormDefinition = {
   id: 'va-10-10ez',
-  version: 1,
+  version: 2,
   formNumber: 'VA 10-10EZ',
   title: 'Application for VA Health Care',
   description:
@@ -21,6 +21,18 @@ export const va1010ez: FormDefinition = {
       description:
         'Enter your legal name exactly as it appears on your discharge papers or government-issued ID. Your Social Security Number and date of birth are required by law (38 U.S.C. § 1705) to process your enrollment.',
       fields: [
+        {
+          id: 'benefitType',
+          label: 'What are you applying for?',
+          type: 'radio',
+          required: true,
+          helpText:
+            'Enrollment gives you the full VA medical benefits package. Registration is for veterans who only need care under a special eligibility (e.g., a service-connected condition, MST, or catastrophic disability) and do not need full enrollment.',
+          options: [
+            { label: 'Enrollment — full VA medical benefits', value: 'Enrollment' },
+            { label: 'Registration — care under a special eligibility only', value: 'Registration' },
+          ],
+        },
         {
           id: 'firstName',
           label: 'First Name',
@@ -129,11 +141,11 @@ export const va1010ez: FormDefinition = {
           type: 'select',
           required: true,
           options: [
-            { label: 'Single', value: 'Single' },
             { label: 'Married', value: 'Married' },
+            { label: 'Never Married', value: 'Single' },
             { label: 'Separated', value: 'Separated' },
-            { label: 'Divorced', value: 'Divorced' },
             { label: 'Widowed', value: 'Widowed' },
+            { label: 'Divorced', value: 'Divorced' },
           ],
         },
       ],
@@ -186,17 +198,6 @@ export const va1010ez: FormDefinition = {
           placeholder: '12345',
         },
         {
-          id: 'addressType',
-          label: 'Is this address permanent or temporary?',
-          type: 'radio',
-          required: true,
-          helpText: 'Permanent addresses are used for all future VA mail. If you are temporarily staying somewhere (e.g., staying with family during a transition), select Temporary.',
-          options: [
-            { label: 'Permanent', value: 'Permanent' },
-            { label: 'Temporary', value: 'Temporary' },
-          ],
-        },
-        {
           id: 'phoneHome',
           label: 'Home Phone',
           type: 'phone',
@@ -220,66 +221,72 @@ export const va1010ez: FormDefinition = {
       ],
     },
 
-    // ── STEP 3: VA Benefits & Status ──────────────────────────────────────────
+    // ── STEP 3: Military History (Section II, Item 2) ─────────────────────────
     {
-      id: 'vaBenefitsStatus',
-      title: 'VA Benefits & Status',
+      id: 'militaryHistory',
+      title: 'Military History',
       description:
-        'These questions help VA assign you to the correct priority group, which determines your copay levels and access to care. Veterans with higher disability ratings, special honors, or POW status are placed in higher priority groups and typically pay lower (or no) copays.',
+        'These six yes/no questions (Section II, Item 2 on the form) help VA assign your enrollment priority group, which affects your copays and access to care. Answer each one.',
       fields: [
         {
           id: 'purpleHeart',
-          label: 'Are you a Purple Heart recipient?',
+          label: 'Are you a Purple Heart award recipient? (2A)',
           type: 'radio',
           required: true,
-          helpText: 'Purple Heart recipients are enrolled in Priority Group 3 and receive enhanced benefits. You may be asked to provide documentation.',
+          helpText: 'Purple Heart recipients receive enhanced enrollment priority. You may be asked to provide documentation.',
           options: [
             { label: 'Yes', value: 'Yes' },
             { label: 'No', value: 'No' },
-          ],
-        },
-        {
-          id: 'medalOfHonor',
-          label: 'Are you a Medal of Honor recipient?',
-          type: 'radio',
-          required: true,
-          helpText: 'Medal of Honor recipients are enrolled in Priority Group 1 — the highest priority — and have no copays for VA health care.',
-          options: [
-            { label: 'Yes', value: 'Yes' },
-            { label: 'No', value: 'No' },
-          ],
-        },
-        {
-          id: 'medicarePartA',
-          label: 'Are you currently enrolled in Medicare Part A (hospital insurance)?',
-          type: 'radio',
-          required: true,
-          helpText: 'Medicare Part A covers hospital stays. If enrolled, VA coordinates benefits with Medicare so you are not billed twice. Medicare Part B (doctor visits) is a separate question.',
-          options: [
-            { label: 'Yes', value: 'Yes' },
-            { label: 'No', value: 'No' },
-          ],
-        },
-        {
-          id: 'disabilityRating',
-          label: 'What is your VA service-connected disability rating?',
-          type: 'radio',
-          required: true,
-          helpText: 'Your combined disability rating determines your priority group. A rating of 50% or higher places you in Priority Group 1 (no copays for most services). Select "None" if you have not received a rating or it has not been service-connected.',
-          options: [
-            { label: 'None / Not rated', value: 'None' },
-            { label: '10% – 20%', value: '10-20' },
-            { label: '30% – 40%', value: '30-40' },
-            { label: '50% – 60%', value: '50-60' },
-            { label: '70% or higher', value: '70+' },
           ],
         },
         {
           id: 'formerPOW',
-          label: 'Were you a prisoner of war (POW)?',
+          label: 'Are you a former prisoner of war (POW)? (2B)',
           type: 'radio',
           required: true,
-          helpText: 'Former POWs are enrolled in Priority Group 1 and qualify for a comprehensive medical evaluation. VA has specific health conditions presumed to be related to POW captivity.',
+          helpText: 'Former POWs receive high enrollment priority and qualify for a comprehensive medical evaluation.',
+          options: [
+            { label: 'Yes', value: 'Yes' },
+            { label: 'No', value: 'No' },
+          ],
+        },
+        {
+          id: 'combatTheaterPost911',
+          label: 'Did you serve in a combat theater of operations after 11/11/1998? (2C)',
+          type: 'radio',
+          required: true,
+          helpText: 'Includes Iraq, Afghanistan, and other designated combat zones. Recently discharged combat veterans get an enhanced eligibility period for VA care.',
+          options: [
+            { label: 'Yes', value: 'Yes' },
+            { label: 'No', value: 'No' },
+          ],
+        },
+        {
+          id: 'dischargedForDisability',
+          label: 'Were you discharged or retired from the military for a disability incurred in the line of duty? (2D)',
+          type: 'radio',
+          required: true,
+          options: [
+            { label: 'Yes', value: 'Yes' },
+            { label: 'No', value: 'No' },
+          ],
+        },
+        {
+          id: 'swAsiaGulfWar',
+          label: 'Did you serve in SW Asia during the Gulf War between 8/2/1990 and 11/11/1998? (2E)',
+          type: 'radio',
+          required: true,
+          options: [
+            { label: 'Yes', value: 'Yes' },
+            { label: 'No', value: 'No' },
+          ],
+        },
+        {
+          id: 'serviceConnectedRating',
+          label: 'Do you have a VA service-connected disability rating? (2F)',
+          type: 'radio',
+          required: true,
+          helpText: 'A VA-assigned rating for a condition connected to your service. A rating of 50% or higher (or any compensable rating) places you in a higher enrollment priority group.',
           options: [
             { label: 'Yes', value: 'Yes' },
             { label: 'No', value: 'No' },
@@ -335,6 +342,13 @@ export const va1010ez: FormDefinition = {
           ],
         },
         {
+          id: 'militaryServiceNumber',
+          label: 'Military Service Number (1F)',
+          type: 'text',
+          placeholder: 'If applicable',
+          helpText: 'Veterans who served before July 1972 were assigned a separate service number. Leave blank if your SSN is your service number.',
+        },
+        {
           id: 'currentlyActiveDuty',
           label: 'Are you currently on active duty?',
           type: 'radio',
@@ -346,62 +360,117 @@ export const va1010ez: FormDefinition = {
         },
         {
           id: 'expectedSeparationDate',
-          label: 'Expected Date of Separation',
+          label: 'Future Discharge Date (if still serving)',
           type: 'date',
           condition: { field: 'currentlyActiveDuty', value: 'Yes' },
-          helpText: 'Enter your scheduled date of separation from active duty. You can apply for VA health care up to 180 days before separation.',
+          helpText: 'If you are still on active duty, enter your scheduled separation date (Item 1C on the form).',
         },
       ],
     },
 
-    // ── STEP 5: Service Exposures ──────────────────────────────────────────────
+    // ── STEP 5a: Military Exposure — Locations (Section II, Item 3 A–D) ────────
     {
-      id: 'serviceExposures',
-      title: 'Service Exposures',
+      id: 'exposureLocations',
+      title: 'Military Exposure — Where You Served',
       description:
-        'VA presumes certain health conditions are connected to specific service environments. If you served in any of these locations or were exposed to these hazards, check all that apply. VA will use this information to screen for related conditions and ensure you receive appropriate care — at no additional cost to you.',
+        'Section II, Item 3 asks whether you served in locations associated with toxic or radiation exposure. Answer each yes/no question. If yes, provide an approximate time-frame (month/year) where asked. This helps VA screen you for related conditions at no cost.',
       fields: [
         {
-          id: 'combatTheater',
-          label: 'Served in a combat theater of operations after November 11, 1998',
-          type: 'checkbox',
-          helpText: 'Includes Iraq, Afghanistan, and other locations designated as combat zones after 11/11/1998. Combat veterans may receive free care for any illness — even if not service-connected — for 5 years after discharge.',
+          id: 'radiationActivity',
+          label: 'Did you serve in an ionizing-radiation location and take part in nuclear testing, treatments, or cleanup? (3A)',
+          type: 'radio',
+          required: true,
+          helpText: 'Examples: Hiroshima/Nagasaki cleanup, Enewetak Atoll cleanup, the Palomares or Thule B-52 nuclear-weapon incidents.',
+          options: [
+            { label: 'Yes', value: 'Yes' },
+            { label: 'No', value: 'No' },
+          ],
         },
         {
-          id: 'swAsiaTheater',
-          label: 'Served in Southwest Asia theater of operations (Gulf War 1990 – present)',
-          type: 'checkbox',
-          helpText: 'Includes service in the Persian Gulf, Iraq, Kuwait, Saudi Arabia, Bahrain, Qatar, UAE, Oman, Afghanistan, or nearby waters from August 2, 1990 to present. VA presumes certain undiagnosed illnesses (Gulf War Syndrome) are service-connected.',
+          id: 'gulfWarHazard',
+          label: 'Did you serve in a Gulf War hazard location? (3B)',
+          type: 'radio',
+          required: true,
+          helpText: 'Iraq, Kuwait, Saudi Arabia, Bahrain, Qatar, UAE, Oman, Yemen, Afghanistan, and surrounding waters, among others.',
+          options: [
+            { label: 'Yes', value: 'Yes' },
+            { label: 'No', value: 'No' },
+          ],
         },
         {
-          id: 'agentOrange',
-          label: 'Served in Vietnam and may have been exposed to Agent Orange (1962 – 1975)',
-          type: 'checkbox',
-          helpText: 'Includes service in the Republic of Vietnam, the Korean demilitarized zone (1968–1969), or certain other locations where Agent Orange was used or stored. VA presumes many cancers and other conditions are service-connected.',
+          id: 'gulfWarFrom',
+          label: 'Gulf War service — From (MM/YYYY)',
+          type: 'text',
+          condition: { field: 'gulfWarHazard', value: 'Yes' },
+          placeholder: 'MM/YYYY',
         },
         {
-          id: 'campLejeune',
-          label: 'Lived or worked at Camp Lejeune, NC for at least 30 days (1953 – 1987)',
-          type: 'checkbox',
-          helpText: 'Veterans (and their family members) who lived or worked at Camp Lejeune during this period may have been exposed to contaminated drinking water. VA provides free health care for 15 related conditions.',
+          id: 'gulfWarTo',
+          label: 'Gulf War service — To (MM/YYYY)',
+          type: 'text',
+          condition: { field: 'gulfWarHazard', value: 'Yes' },
+          placeholder: 'MM/YYYY',
         },
         {
-          id: 'radiationRisk',
-          label: 'Participated in radiation risk activities during service',
-          type: 'checkbox',
-          helpText: 'Includes onsite participation in atmospheric nuclear tests, post-war occupation of Hiroshima or Nagasaki, or other radiation-related duties. VA presumes certain cancers are related to radiation exposure.',
+          id: 'combatOperations',
+          label: 'Were you deployed in support of Enduring Freedom, Freedom’s Sentinel, Iraqi Freedom, New Dawn, Inherent Resolve, or Resolute Support? (3C)',
+          type: 'radio',
+          required: true,
+          options: [
+            { label: 'Yes', value: 'Yes' },
+            { label: 'No', value: 'No' },
+          ],
         },
         {
-          id: 'project112',
-          label: 'Participated in Project 112/SHAD (1962 – 1975)',
-          type: 'checkbox',
-          helpText: 'Project 112 and Shipboard Hazard and Defense (SHAD) were classified Cold War tests of biological and chemical warfare agents. Veterans who participated may qualify for related health care.',
+          id: 'agentOrangeService',
+          label: 'Did you serve in a herbicide (e.g., Agent Orange) location? (3D)',
+          type: 'radio',
+          required: true,
+          helpText: 'Republic of Vietnam (incl. territorial waters), Thailand bases, Laos, parts of Cambodia, the Korean DMZ, Guam/American Samoa, Johnston Atoll, or aboard a C-123 used to spray herbicides, among others.',
+          options: [
+            { label: 'Yes', value: 'Yes' },
+            { label: 'No', value: 'No' },
+          ],
         },
         {
-          id: 'mst',
-          label: 'Experienced military sexual trauma (MST) during service',
-          type: 'checkbox',
-          helpText: 'Military sexual trauma means sexual assault or repeated, threatening sexual harassment that occurred during military service. VA provides free, confidential counseling and treatment for MST-related conditions — no VA disability rating is required.',
+          id: 'agentOrangeFrom',
+          label: 'Herbicide-location service — From (MM/YYYY)',
+          type: 'text',
+          condition: { field: 'agentOrangeService', value: 'Yes' },
+          placeholder: 'MM/YYYY',
+        },
+        {
+          id: 'agentOrangeTo',
+          label: 'Herbicide-location service — To (MM/YYYY)',
+          type: 'text',
+          condition: { field: 'agentOrangeService', value: 'Yes' },
+          placeholder: 'MM/YYYY',
+        },
+      ],
+    },
+
+    // ── STEP 5b: Military Exposure — Hazards (Section II, Item 3E) ─────────────
+    {
+      id: 'exposureHazards',
+      title: 'Military Exposure — What You Were Exposed To',
+      description:
+        'Section II, Item 3E — check every hazard you may have been exposed to during service. Leave all unchecked if none apply. You can find additional exposure categories at publichealth.va.gov/exposures.',
+      fields: [
+        { id: 'expAirPollutants', label: 'Air pollutants (burn pits, sand, oil-well/sulfur fires)', type: 'checkbox' },
+        { id: 'expChemicals',     label: 'Chemicals (pesticides, herbicides, contaminated water)', type: 'checkbox' },
+        { id: 'expCampLejeune',   label: 'Contaminated water at Camp Lejeune', type: 'checkbox' },
+        { id: 'expRadiation',     label: 'Radiation', type: 'checkbox' },
+        { id: 'expShad',          label: 'SHAD (Shipboard Hazard and Defense)', type: 'checkbox' },
+        { id: 'expOccupational',  label: 'Occupational hazards (jet fuel, industrial solvents, lead, firefighting foams)', type: 'checkbox' },
+        { id: 'expAsbestos',      label: 'Asbestos', type: 'checkbox' },
+        { id: 'expMustardGas',    label: 'Mustard gas', type: 'checkbox' },
+        { id: 'expWarfareAgents', label: 'Warfare agents (nerve agents, chemical and biological weapons)', type: 'checkbox' },
+        { id: 'expOther',         label: 'Other exposure not listed above', type: 'checkbox' },
+        {
+          id: 'expOtherSpecify',
+          label: 'If "Other", please specify',
+          type: 'text',
+          condition: { field: 'expOther', value: true },
         },
       ],
     },
@@ -462,12 +531,39 @@ export const va1010ez: FormDefinition = {
           condition: { field: 'hasOtherInsurance', value: 'Yes' },
         },
         {
-          id: 'insurancePolicyholderDob',
-          label: "Policyholder's Date of Birth",
-          type: 'date',
+          id: 'eligibleForMedicaid',
+          label: 'Are you eligible for Medicaid?',
+          type: 'radio',
           required: true,
-          condition: { field: 'hasOtherInsurance', value: 'Yes' },
-          helpText: 'Required to identify the policyholder in insurance billing.',
+          helpText: 'Medicaid is federal/state health insurance for people with low income. Veterans receiving Medicaid are exempt from VA financial disclosure.',
+          options: [
+            { label: 'Yes', value: 'Yes' },
+            { label: 'No', value: 'No' },
+          ],
+        },
+        {
+          id: 'medicarePartA',
+          label: 'Are you enrolled in Medicare hospital insurance (Part A)?',
+          type: 'radio',
+          required: true,
+          helpText: 'Medicare Part A covers hospital stays. If enrolled, VA coordinates benefits with Medicare.',
+          options: [
+            { label: 'Yes', value: 'Yes' },
+            { label: 'No', value: 'No' },
+          ],
+        },
+        {
+          id: 'medicareEffectiveDate',
+          label: 'Medicare Part A Effective Date',
+          type: 'date',
+          condition: { field: 'medicarePartA', value: 'Yes' },
+        },
+        {
+          id: 'medicareClaimNumber',
+          label: 'Medicare Number',
+          type: 'text',
+          condition: { field: 'medicarePartA', value: 'Yes' },
+          helpText: 'The number printed on your Medicare card.',
         },
       ],
     },
@@ -484,35 +580,40 @@ export const va1010ez: FormDefinition = {
           label: 'Employment Status',
           type: 'radio',
           required: true,
+          helpText: 'The form records full-time, part-time, not employed, or retired.',
           options: [
             { label: 'Employed full-time', value: 'Employed full-time' },
             { label: 'Employed part-time', value: 'Employed part-time' },
-            { label: 'Self-employed', value: 'Self-employed' },
             { label: 'Not employed', value: 'Not employed' },
             { label: 'Retired', value: 'Retired' },
           ],
         },
         {
+          id: 'retirementDate',
+          label: 'Date of Retirement',
+          type: 'date',
+          condition: { field: 'employmentStatus', value: 'Retired' },
+        },
+        {
           id: 'employerName',
-          label: 'Employer Name',
+          label: 'Company Name',
           type: 'text',
           maxLength: 40,
           placeholder: 'e.g., ABC Corporation',
-          condition: { field: 'employmentStatus', value: 'Employed full-time' },
+          helpText: 'Complete if employed or retired.',
         },
         {
           id: 'employerAddress',
-          label: 'Employer Address',
+          label: 'Company Address',
           type: 'text',
           maxLength: 60,
           placeholder: '123 Business Blvd, Chicago, IL 60601',
-          condition: { field: 'employmentStatus', value: 'Employed full-time' },
+          helpText: 'Complete if employed or retired.',
         },
         {
           id: 'employerPhone',
-          label: 'Employer Phone',
+          label: 'Company Phone',
           type: 'phone',
-          condition: { field: 'employmentStatus', value: 'Employed full-time' },
         },
       ],
     },
@@ -525,51 +626,63 @@ export const va1010ez: FormDefinition = {
         'VA uses your gross household income from last year to determine your priority group and copay obligations. You are NOT required to provide financial information — veterans who decline are placed in Priority Group 8 and may be responsible for copays. Completing this section may qualify you for a higher priority group and lower or no copays. All amounts should be for the prior calendar year.',
       fields: [
         {
+          id: 'provideFinancialInfo',
+          label: 'Do you want to provide your household financial information (Sections VII–VIII)?',
+          type: 'radio',
+          required: true,
+          helpText:
+            'Disclosure is voluntary, but VA is not currently enrolling new applicants who decline unless they have another qualifying eligibility factor. Providing it may qualify you for cost-free care, medications, or travel assistance.',
+          options: [
+            { label: 'Yes — I will provide my financial information', value: 'Yes' },
+            { label: 'No — I do not wish to provide it (I agree to pay applicable copays)', value: 'No' },
+          ],
+        },
+        {
           id: 'grossEmploymentIncome',
-          label: 'Gross Annual Income from Employment',
+          label: 'Gross Annual Income from Employment (Section VII, line 1)',
           type: 'number',
-          required: false,
-          helpText: 'Include wages, salaries, tips, and other compensation from employment. Report the total before taxes and deductions. Do not include your spouse\'s income here.',
+          condition: { field: 'provideFinancialInfo', value: 'Yes' },
+          helpText: 'Wages, bonuses, tips, etc. — EXCLUDING income from your farm, ranch, property, or business. Report the prior calendar year, before taxes.',
           placeholder: '0',
         },
         {
           id: 'netFarmBusinessIncome',
-          label: 'Net Income from Farm, Ranch, Self-Employment, or Business',
+          label: 'Net Income from Farm, Ranch, Property, or Business (Section VII, line 2)',
           type: 'number',
-          required: false,
-          helpText: 'Net income after business expenses are deducted. Report losses as 0 (do not enter negative numbers).',
+          condition: { field: 'provideFinancialInfo', value: 'Yes' },
+          helpText: 'Net income after business expenses. Report losses as 0 (do not enter negative numbers).',
           placeholder: '0',
         },
         {
           id: 'otherIncome',
-          label: 'Other Income (Social Security, pension, interest, dividends, etc.)',
+          label: 'Other Income (Social Security, pension, interest, dividends, etc.) (Section VII, line 3)',
           type: 'number',
-          required: false,
-          helpText: 'Include Social Security benefits (not SSI), pension payments, annuities, investment income, rental income, and other recurring income. Do not include VA disability compensation or VA pension.',
+          condition: { field: 'provideFinancialInfo', value: 'Yes' },
+          helpText: 'Excludes welfare and SSI. Do not include VA disability compensation or VA pension.',
           placeholder: '0',
         },
         {
           id: 'unreimbursedMedicalExpenses',
-          label: 'Total Non-Reimbursable Medical Expenses Paid by You or Your Spouse',
+          label: 'Total Non-Reimbursed Medical Expenses Paid by You or Your Spouse (Section VIII, line 1)',
           type: 'number',
-          required: false,
-          helpText: 'Medical expenses paid out-of-pocket that were not reimbursed by insurance. Include doctor visits, prescriptions, dental, vision, and other health costs. This deduction can reduce your income for VA priority purposes.',
+          condition: { field: 'provideFinancialInfo', value: 'Yes' },
+          helpText: 'Out-of-pocket medical/dental/drug/insurance costs not reimbursed by insurance. VA calculates a deductible.',
           placeholder: '0',
         },
         {
-          id: 'numberOfDependents',
-          label: 'Number of Dependent Children and/or Other Dependents',
+          id: 'funeralBurialExpenses',
+          label: 'Funeral & Burial Expenses Paid for a Deceased Spouse or Dependent Child (Section VIII, line 2)',
           type: 'number',
-          required: false,
-          helpText: 'Count all children under 18, children 18–23 who are full-time students, and any other dependents you financially support (e.g., a dependent parent). Each dependent increases the income threshold for your priority group.',
+          condition: { field: 'provideFinancialInfo', value: 'Yes' },
+          helpText: 'Amount you paid last calendar year for funeral/burial (including prepaid burial) for your deceased spouse or dependent child.',
           placeholder: '0',
         },
         {
-          id: 'dependentEducationExpenses',
-          label: 'Total Education Expenses Paid for Dependents',
+          id: 'veteranEducationExpenses',
+          label: 'Your Own College or Vocational Education Expenses (Section VIII, line 3)',
           type: 'number',
-          required: false,
-          helpText: 'Tuition, fees, and other education costs you paid for dependent children in college or a training program. This deduction may help lower your effective income for VA purposes.',
+          condition: { field: 'provideFinancialInfo', value: 'Yes' },
+          helpText: 'Tuition, books, fees, and materials YOU paid last year for your own education. Do NOT list your dependents’ education expenses.',
           placeholder: '0',
         },
       ],
@@ -615,6 +728,16 @@ export const va1010ez: FormDefinition = {
           helpText: 'Required to verify household income. Stored securely and only used for benefit calculation.',
         },
         {
+          id: 'spouseSex',
+          label: "Spouse's Sex",
+          type: 'radio',
+          condition: { field: 'married', value: 'Yes' },
+          options: [
+            { label: 'Male', value: 'Male' },
+            { label: 'Female', value: 'Female' },
+          ],
+        },
+        {
           id: 'spouseDob',
           label: "Spouse's Date of Birth",
           type: 'date',
@@ -628,8 +751,15 @@ export const va1010ez: FormDefinition = {
           helpText: 'The date of your current marriage.',
         },
         {
-          id: 'spouseLivedWithYou',
-          label: 'Did your spouse live with you last year?',
+          id: 'spouseAddress',
+          label: "Spouse's Address & Phone (if different from yours)",
+          type: 'text',
+          condition: { field: 'married', value: 'Yes' },
+          placeholder: 'Street, City, State, ZIP — leave blank if same as yours',
+        },
+        {
+          id: 'providedSupport',
+          label: 'If your spouse or a dependent child did not live with you last year, did you provide support?',
           type: 'radio',
           condition: { field: 'married', value: 'Yes' },
           options: [
@@ -639,17 +769,17 @@ export const va1010ez: FormDefinition = {
         },
         {
           id: 'spouseGrossIncome',
-          label: "Spouse's Gross Annual Income",
+          label: "Spouse's Gross Annual Income from Employment",
           type: 'number',
           condition: { field: 'married', value: 'Yes' },
-          helpText: 'Your spouse\'s total gross income from all sources before taxes, for the prior calendar year.',
+          helpText: 'Your spouse\'s gross employment income (before taxes) for the prior calendar year.',
           placeholder: '0',
         },
         {
-          id: 'numberOfDependentChildren',
-          label: 'Number of Dependent Children',
+          id: 'spouseOtherIncome',
+          label: "Spouse's Other Income (Social Security, pension, interest, etc.)",
           type: 'number',
-          helpText: 'Enter the total number of children you claim as dependents, including step-children and adopted children.',
+          condition: { field: 'married', value: 'Yes' },
           placeholder: '0',
         },
       ],
@@ -727,9 +857,12 @@ export const va1010ez: FormDefinition = {
     const placeOfBirth = [s(answers.birthCity), s(answers.birthStateOrCountry)]
       .filter(Boolean).join(', ');
 
-    // Spouse full name: "First Last"
-    const spouseFullName = [s(answers.spouseFirstName), s(answers.spouseLastName)]
-      .filter(Boolean).join(' ');
+    // Spouse full name: "Last, First" (Section IV field is "Last, First, Middle Name")
+    const spouseLast  = s(answers.spouseLastName);
+    const spouseFirst = s(answers.spouseFirstName);
+    const spouseFullName = spouseLast && spouseFirst
+      ? `${spouseLast}, ${spouseFirst}`
+      : spouseLast || spouseFirst;
 
     // Spouse SSN formatted as "XXX-XX-XXXX"
     const rawSpouseSsn = s(answers.spouseSsn).replace(/\D/g, '');
