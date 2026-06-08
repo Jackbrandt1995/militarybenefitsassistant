@@ -14,7 +14,7 @@ const relationshipOptions = [
 
 export const va2122a: FormDefinition = {
   id: 'va-21-22a',
-  version: 1,
+  version: 2,
   formNumber: 'VA 21-22A',
   title: 'Appointment of Individual as Claimant\'s Representative',
   description:
@@ -305,14 +305,6 @@ export const va2122a: FormDefinition = {
           required: true,
           maxLength: 30,
         },
-        {
-          id: 'repOrganization',
-          label: 'Organization or Firm Name (if applicable)',
-          type: 'text',
-          placeholder: 'e.g., Smith Law Group, Veterans Aid Society',
-          helpText:
-            'If the representative is affiliated with a law firm, accredited organization, or other entity, enter its name here. Leave blank if they are an unaffiliated individual.',
-        },
       ],
     },
 
@@ -376,54 +368,88 @@ export const va2122a: FormDefinition = {
       ],
     },
 
-    // ── STEP 4: Type of Appointment & Authorization ─────────────────────────
+    // ── STEP 4: Type of Appointment (Item 16B) ──────────────────────────────
     {
-      id: 'authorization',
-      title: 'Type of Appointment & Authorization',
+      id: 'appointment',
+      title: 'Type of Representative',
       description:
-        'Select the type of appointment. Attorneys and accredited VA claims agents are permitted to charge a fee for their services; all others must represent you without compensation. Also check the boxes below to specify exactly what your representative is authorized to do.',
+        'Indicate what kind of representative you are appointing (Item 16B on the form). Only an accredited attorney or claims agent may charge a fee; an individual representing you under 38 C.F.R. §14.630 must do so without compensation.',
       fields: [
         {
           id: 'appointmentType',
-          label: 'Type of representative',
+          label: 'The individual I am appointing is…',
           type: 'radio',
           required: true,
           helpText:
-            'Choose the category that best describes the person you are appointing. If unsure, "Individual acting without compensation" applies to family members and friends helping you at no charge.',
+            'Confirm accreditation at va.gov/ogc/apps/accreditation before appointing an attorney or agent. The §14.630 option is for a one-time, no-charge representative (e.g., a family member or friend) and requires both you and the representative to sign Items 17A and 18A.',
           options: [
-            { label: 'Individual acting without compensation (family member, friend, etc.)', value: '4' },
-            { label: 'Attorney-at-law', value: '1' },
-            { label: 'VA-accredited claims agent', value: '3' },
-            { label: 'Other', value: '2' },
+            { label: 'Attorney', value: 'Attorney' },
+            { label: 'VA-accredited claims agent', value: 'Agent' },
+            { label: 'Individual representing me without compensation (under 38 C.F.R. §14.630)', value: 'Individual14630' },
+            { label: 'Service Organization (VSO) representative', value: 'ServiceOrg' },
           ],
         },
         {
-          id: 'authRecords',
-          label: 'Authorize representative to access my VA records',
+          id: 'repOrganization',
+          label: 'Service organization name (Item 16B)',
+          type: 'text',
+          condition: { field: 'appointmentType', value: 'ServiceOrg' },
+          placeholder: 'e.g., Disabled American Veterans',
+          helpText:
+            'The name of the Veterans Service Organization the representative belongs to. (If your representative is an attorney or agent at a firm, leave this blank — their firm name goes in Item 19a if you authorize affiliated disclosure.)',
+        },
+      ],
+    },
+
+    // ── STEP 5: Authorizations (Section IV — all optional opt-ins) ───────────
+    {
+      id: 'authorization',
+      title: 'Authorizations (Optional)',
+      description:
+        'These authorizations are optional. By default — if you leave a box unchecked — VA will NOT take that action. Check only the ones you want to grant. None of these are required to appoint your representative.',
+      fields: [
+        {
+          id: 'auth19aAffiliated',
+          label: 'Item 19a — Authorize VA to disclose my records to the associate attorneys, claims agents, and support staff affiliated with my representative.',
           type: 'checkbox',
           helpText:
-            'Checking this box allows your representative to view your VA files, medical records, and claims information.',
+            'Applies only if your representative is an accredited attorney or agent approved for VA IT-system access (38 C.F.R. 1.600–1.603). Does not include the protected records in Items 20–21.',
         },
         {
-          id: 'authActOnBehalf',
-          label: 'Authorize representative to act on my behalf for all VA claims and related matters',
-          type: 'checkbox',
-          helpText:
-            'Checking this box allows your representative to submit correspondence, appeals, and other documents to the VA in your name.',
+          id: 'auth19aFirmName',
+          label: 'Name of the firm or organization (for Item 19a)',
+          type: 'text',
+          condition: { field: 'auth19aAffiliated', value: true },
+          placeholder: 'Firm / organization name',
         },
         {
-          id: 'authDiscloseRecordsToRep',
-          label: 'Authorize VA to disclose information from my records to my representative',
+          id: 'auth19bAdministrative',
+          label: 'Item 19b — Authorize VA to disclose my records to specific named administrative employees of my representative.',
           type: 'checkbox',
           helpText:
-            'The VA will share your records and claim information directly with your representative when this box is checked.',
+            'For disclosures outside of VA electronic IT systems. Does not include the protected records in Items 20–21.',
         },
         {
-          id: 'authDiscloseRecordsToClaimant',
-          label: 'Authorize VA to disclose information from my records to me (as claimant)',
+          id: 'auth20SensitiveRecords',
+          label: 'Item 20 — Authorize disclosure of my protected health records (treatment for drug abuse, alcoholism, HIV, or sickle cell anemia) to my representative.',
           type: 'checkbox',
           helpText:
-            'Ensures the VA may also communicate records and decisions directly back to you (the claimant), not only through your representative.',
+            'IMPORTANT: Leave this UNCHECKED unless you specifically want these sensitive medical records shared with your representative. By law VA will NOT disclose them unless you check this box. You can revoke this authorization in writing at any time.',
+        },
+        {
+          id: 'limitationOfConsent',
+          label: 'Item 21 — Limits on the protected-records consent above (optional)',
+          type: 'textarea',
+          condition: { field: 'auth20SensitiveRecords', value: true },
+          placeholder: 'e.g., "Only HIV-related records. Does not include drug or alcohol treatment records."',
+          helpText: 'If you checked Item 20, you may narrow exactly which protected records may be disclosed.',
+        },
+        {
+          id: 'auth22ChangeAddress',
+          label: 'Item 22 — Authorize my representative to change my address in VA records on my behalf.',
+          type: 'checkbox',
+          helpText:
+            'By default VA will NOT let your representative change your address. Check this box only if you want to grant that authority.',
         },
       ],
     },
