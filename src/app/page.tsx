@@ -49,7 +49,7 @@ export default function Home() {
             />
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold mb-5 leading-tight">
-            Accessing your benefits has<br className="hidden sm:block" /> never been easier.
+            Accessing your benefits has<br className="hidden sm:block" /> never been easier
           </h1>
           <p className="text-lg sm:text-xl text-gray-300 max-w-2xl mx-auto mb-8">
             Answer a few questions and we will handle the rest.
