@@ -91,6 +91,29 @@ export default function AdminPage() {
   const [sendingAdminMessage, setSendingAdminMessage] = useState<Record<string, boolean>>({});
   const [unreadCounts, setUnreadCounts]       = useState<Record<string, number>>({});
 
+  // Reset-MFA panel
+  const [mfaEmail, setMfaEmail]               = useState('');
+  const [mfaResetting, setMfaResetting]       = useState(false);
+  const [mfaResult, setMfaResult]             = useState<{ ok: boolean; msg: string } | null>(null);
+
+  async function handleResetMfa(e: React.FormEvent) {
+    e.preventDefault();
+    const email = mfaEmail.trim();
+    if (!email) return;
+    if (!confirm(`Reset MFA for ${email}? They'll have to set up their authenticator again on next login.`)) return;
+    setMfaResetting(true);
+    setMfaResult(null);
+    const supabase = createClient();
+    const { data, error } = await supabase.rpc('admin_reset_mfa', { p_email: email });
+    setMfaResetting(false);
+    if (error) {
+      setMfaResult({ ok: false, msg: error.message });
+    } else {
+      setMfaResult({ ok: true, msg: `Removed ${data ?? 0} factor(s) for ${email}. They'll re-enroll on next login.` });
+      setMfaEmail('');
+    }
+  }
+
   const loadSubmissions = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     else setRefreshing(true);
@@ -331,6 +354,32 @@ export default function AdminPage() {
             <p className="text-3xl font-bold text-slate-700">{submissions.length}</p>
             <p className="text-sm text-slate-500 mt-1 font-medium">Total</p>
           </div>
+        </div>
+
+        {/* Reset a user's MFA (support: lost authenticator device) */}
+        <div className="bg-white rounded-xl border border-slate-200 p-5">
+          <div className="flex items-center gap-2 mb-1">
+            <RotateCcw className="w-4 h-4 text-slate-500" />
+            <h2 className="text-sm font-semibold text-slate-900">Reset a user&apos;s two-step verification</h2>
+          </div>
+          <p className="text-xs text-slate-500 mb-3">
+            For a user who lost their authenticator. This removes their MFA factors; they&apos;ll set it up again on their next login.
+          </p>
+          <form onSubmit={handleResetMfa} className="flex flex-wrap items-center gap-2">
+            <input
+              type="email"
+              value={mfaEmail}
+              onChange={e => setMfaEmail(e.target.value)}
+              placeholder="user@example.com"
+              className="flex-1 min-w-[220px] rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <Button type="submit" loading={mfaResetting} disabled={!mfaEmail.trim()} className="bg-slate-700 hover:bg-slate-800">
+              Reset MFA
+            </Button>
+          </form>
+          {mfaResult && (
+            <p className={`mt-2 text-sm ${mfaResult.ok ? 'text-green-700' : 'text-red-700'}`}>{mfaResult.msg}</p>
+          )}
         </div>
 
         {/* Filter tabs */}
