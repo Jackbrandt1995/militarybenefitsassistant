@@ -77,14 +77,14 @@ export default function AcceptTermsPage() {
 
             <p className="font-semibold text-gray-900">How your data is protected</p>
             <p>
-              Your data is stored on <strong>Supabase</strong>, which is SOC 2 Type II certified. All data is
-              encrypted at rest with AES-256 and transmitted over TLS/HTTPS. Row-Level Security (RLS) rules
-              in the database ensure that only you can read or write your own records — no other user can ever
-              access your data.
+              Your data is stored on <strong>Supabase</strong>. All data is encrypted at rest with AES-256 and
+              transmitted over TLS/HTTPS. Every login requires two-step verification (a time-based code from your
+              authenticator app), and Row-Level Security (RLS) rules in the database ensure that only you can read
+              or write your own records — no other user can ever access your data.
             </p>
             <p>
-              The application is hosted on <strong>Vercel</strong>, also SOC 2 Type II certified, with HTTPS
-              enforced on all pages and DDoS protection at the edge.
+              The application is hosted on <strong>Vercel</strong>, with HTTPS enforced on all pages and DDoS
+              protection at the edge.
             </p>
             <p>
               Your most sensitive fields — Social Security Number and bank account numbers — are encrypted with

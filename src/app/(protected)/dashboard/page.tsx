@@ -31,8 +31,8 @@ const GOAL_ICONS: Record<string, LucideIcon> = {
 const ACCENTS: Record<string, { tile: string; panelBorder: string; panelBg: string; iconBg: string }> = {
   education:      { tile: 'bg-blue-600 hover:bg-blue-700',       panelBorder: 'border-blue-200',    panelBg: 'bg-blue-50/40',    iconBg: 'bg-blue-600' },
   certifications: { tile: 'bg-emerald-600 hover:bg-emerald-700', panelBorder: 'border-emerald-200', panelBg: 'bg-emerald-50/40', iconBg: 'bg-emerald-600' },
-  home:           { tile: 'bg-amber-500 hover:bg-amber-600',     panelBorder: 'border-amber-200',   panelBg: 'bg-amber-50/40',   iconBg: 'bg-amber-500' },
-  healthcare:     { tile: 'bg-blue-900 hover:bg-blue-950',       panelBorder: 'border-blue-200',    panelBg: 'bg-blue-50/40',    iconBg: 'bg-blue-900' },
+  home:           { tile: 'bg-blue-900 hover:bg-blue-950',       panelBorder: 'border-blue-200',    panelBg: 'bg-blue-50/40',    iconBg: 'bg-blue-900' },
+  healthcare:     { tile: 'bg-green-800 hover:bg-green-900',     panelBorder: 'border-green-200',   panelBg: 'bg-green-50/40',   iconBg: 'bg-green-800' },
 };
 
 const COMPLETENESS_FIELDS: Array<keyof NonNullable<ReturnType<typeof useProfile>['profile']>['profile']> = [

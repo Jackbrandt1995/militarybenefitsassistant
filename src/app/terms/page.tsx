@@ -88,9 +88,12 @@ export default function TermsPage() {
 
             <SubHeading>Supabase (Database &amp; Authentication)</SubHeading>
             <ul className="mt-2 space-y-1 list-disc list-inside text-gray-700">
-              <li><strong>SOC 2 Type II certified</strong> — independently audited security controls</li>
               <li><strong>AES-256 encryption at rest</strong> — all stored data is encrypted</li>
               <li><strong>TLS 1.2 / 1.3 in transit</strong> — all data travels over HTTPS</li>
+              <li>
+                <strong>Mandatory two-step verification (MFA)</strong> — every login requires a
+                time-based code from your authenticator app, so a stolen password alone cannot reach your data
+              </li>
               <li>
                 <strong>Row-Level Security (RLS)</strong> — database rules enforce that you can only
                 read or write your own data; no other user can access your records
@@ -100,7 +103,6 @@ export default function TermsPage() {
 
             <SubHeading>Vercel (Application Hosting)</SubHeading>
             <ul className="mt-2 space-y-1 list-disc list-inside text-gray-700">
-              <li><strong>SOC 2 Type II certified</strong> — independently audited security controls</li>
               <li><strong>HTTPS everywhere</strong> — all pages and API routes served over encrypted HTTPS</li>
               <li><strong>Global CDN with DDoS protection</strong></li>
             </ul>

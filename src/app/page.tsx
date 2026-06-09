@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { FileText, UserCheck, Send, Shield, Lock, Database, EyeOff, Mail } from 'lucide-react';
+import { createClient } from '@/lib/supabase/server';
 
 const forms = [
   { number: '22-1990',  title: 'Application for VA Education Benefits' },
@@ -20,7 +21,12 @@ const forms = [
   { number: '21-22A',   title: 'Appointment of Individual as Claimant\'s Representative' },
 ];
 
-export default function Home() {
+export default async function Home() {
+  // Send logged-in users straight to their dashboard; everyone else to sign-up.
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const ctaHref = user ? '/dashboard' : '/signup';
+
   return (
     <div>
       {/* Stats bar */}
@@ -56,7 +62,7 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/signup"
+              href={ctaHref}
               className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-md text-lg font-medium transition-colors"
             >
               Get Started Free
@@ -177,10 +183,10 @@ export default function Home() {
                 <Shield className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900 text-sm">SOC 2 Certified Infrastructure</h3>
+                <h3 className="font-semibold text-gray-900 text-sm">Mandatory Two-Step Verification</h3>
                 <p className="text-gray-500 text-xs mt-1 leading-relaxed">
-                  Hosted on Vercel and Supabase, both independently audited and SOC 2 Type II certified
-                  for security, availability, and confidentiality.
+                  Every account is protected by an authenticator-app code (TOTP) required at each login,
+                  so a stolen password alone can never reach your data. Hosted on Vercel and Supabase.
                 </p>
               </div>
             </div>
@@ -238,7 +244,7 @@ export default function Home() {
           <h2 className="text-3xl sm:text-4xl font-bold mb-4">Ready to get started?</h2>
           <p className="text-gray-300 mb-8 text-lg">Create your free account in under a minute.</p>
           <Link
-            href="/signup"
+            href={ctaHref}
             className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-10 py-3 rounded-md text-lg font-medium transition-colors"
           >
             Get Started Free
