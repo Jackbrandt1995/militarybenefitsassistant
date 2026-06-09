@@ -31,7 +31,7 @@ export async function GET() {
     }
   }
 
-  return NextResponse.json(data || null);
+  return NextResponse.json(data || null, { headers: { 'Cache-Control': 'no-store' } });
 }
 
 export async function PUT(request: NextRequest) {

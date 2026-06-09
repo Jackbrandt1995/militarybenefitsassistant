@@ -31,7 +31,7 @@ export async function GET() {
     }
   }
 
-  return NextResponse.json(profile);
+  return NextResponse.json(profile, { headers: { 'Cache-Control': 'no-store' } });
 }
 
 export async function PUT(request: NextRequest) {

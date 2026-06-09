@@ -100,7 +100,10 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
           clearFormFiles();
         }
 
-        // Scrub sensitive fields before storing
+        // Scrub sensitive data before storing answers_json. `answers` here is the
+        // COMPUTED set, so this must also catch derived keys (ssnFormatted,
+        // spouseSsnFormatted) — not just the raw field ids — plus a value-level
+        // net for any stray dashed SSN. The stored history must never hold PII.
         const sensitiveFieldIds = new Set<string>();
         for (const step of form!.steps) {
           for (const field of step.fields) {
@@ -109,9 +112,14 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
             }
           }
         }
+        const isSensitiveKey = (k: string) =>
+          sensitiveFieldIds.has(k) || /ssn|routing|account|bank/i.test(k);
+        const looksLikeSSN = (v: unknown) =>
+          typeof v === 'string' && /^\d{3}-\d{2}-\d{4}$/.test(v.trim());
         const safe: Record<string, string | boolean> = {};
         for (const [k, v] of Object.entries(answers)) {
-          if (!sensitiveFieldIds.has(k)) safe[k] = v as string | boolean;
+          if (isSensitiveKey(k) || looksLikeSSN(v)) continue;
+          safe[k] = v as string | boolean;
         }
 
         localStorage.removeItem(`form-wizard-${formId}`);

@@ -16,6 +16,22 @@ export function useFormWizard(form: FormDefinition | undefined, preFilledAnswers
   const totalStepCount = form?.steps.length ?? 0;
   const formVersion = form?.version ?? 1;
 
+  // Sensitive answers (SSN, bank, anything flagged) must NEVER be written to
+  // localStorage — they live only in React memory and re-populate from the
+  // (decrypted) profile pre-fill each session.
+  const sensitiveIds = new Set<string>();
+  for (const step of form?.steps ?? []) {
+    for (const f of step.fields) {
+      if (f.type === 'ssn' || f.sensitive === true) sensitiveIds.add(f.id);
+    }
+  }
+  const isSensitiveKey = (k: string) => sensitiveIds.has(k) || /ssn|routing|account|bank/i.test(k);
+  const stripSensitive = (a: Record<string, string | boolean> = {}) => {
+    const out: Record<string, string | boolean> = {};
+    for (const [k, v] of Object.entries(a)) if (!isSensitiveKey(k)) out[k] = v;
+    return out;
+  };
+
   const [state, setState] = useState<WizardState>(() => {
     // Try to restore from localStorage
     if (storageKey && typeof window !== 'undefined') {
@@ -32,6 +48,8 @@ export function useFormWizard(form: FormDefinition | undefined, preFilledAnswers
           } else {
             return {
               ...parsed,
+              // Drop any sensitive values an older build may have persisted.
+              answers: stripSensitive(parsed.answers),
               touched: new Set(parsed.touched || []),
             };
           }
@@ -72,6 +90,7 @@ export function useFormWizard(form: FormDefinition | undefined, preFilledAnswers
     if (storageKey && typeof window !== 'undefined') {
       const toSave = {
         ...state,
+        answers: stripSensitive(state.answers),
         touched: Array.from(state.touched),
         totalStepCount,
         formVersion,
