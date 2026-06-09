@@ -1,0 +1,20 @@
+version: 2
+updates:
+  # Flag vulnerable / outdated npm dependencies weekly.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      # Bundle minor/patch bumps into one PR to cut noise.
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Keep GitHub Actions versions current (they can carry CVEs too).
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
