@@ -1,23 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
+import { getAuthedUser, escapeHtml, safeSubject, rateLimit, sendMail } from '@/lib/server/notify';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req: NextRequest) {
   try {
-    const { userEmail, userName, formName, formId, returnReason } = await req.json();
+    const user = await getAuthedUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    // Returning a submission to a client is an admin action.
+    if (!user.user_metadata?.is_admin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    if (!rateLimit(`notify-return:${user.id}`)) {
+      return NextResponse.json({ error: 'Too many requests. Please wait a moment.' }, { status: 429 });
+    }
+
+    const raw = await req.json();
+    const userEmail = String(raw.userEmail ?? '');
+    const userName = escapeHtml(raw.userName);
+    const formName = escapeHtml(raw.formName);
+    const formId = escapeHtml(raw.formId);
+    const returnReason = escapeHtml(raw.returnReason);
 
     if (!userEmail || !formName || !returnReason) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
     }
+    if (!EMAIL_RE.test(userEmail)) {
+      return NextResponse.json({ error: 'Invalid recipient email.' }, { status: 400 });
+    }
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
-    });
-
-    const subject = `Action Required: Your ${formId?.toUpperCase() ?? 'VA'} Form Needs Updates`;
+    const subject = safeSubject(`Action Required: Your ${formId ? formId.toUpperCase() : 'VA'} Form Needs Updates`);
 
     const html = `
 <!DOCTYPE html>
@@ -45,7 +59,7 @@ export async function POST(req: NextRequest) {
       <p>Our team reviewed your submission and needs a few updates before mailing.</p>
     </div>
     <div class="body">
-      <p style="font-size:15px;color:#0f172a;margin:0 0 4px;">Hi ${userName ?? 'there'},</p>
+      <p style="font-size:15px;color:#0f172a;margin:0 0 4px;">Hi ${userName || 'there'},</p>
       <p style="font-size:14px;color:#475569;margin:8px 0 16px;">
         We reviewed your <strong>${formName}</strong> (${formId?.toUpperCase() ?? ''}) submission and have a few items
         that need to be corrected or completed before we can mail it to the VA.
@@ -72,12 +86,7 @@ export async function POST(req: NextRequest) {
 </body>
 </html>`;
 
-    await transporter.sendMail({
-      from: `"Military Benefits Assistant" <${process.env.GMAIL_USER}>`,
-      to: userEmail,
-      subject,
-      html,
-    });
+    await sendMail({ to: userEmail, subject, html });
 
     return NextResponse.json({ ok: true });
   } catch (err: any) {

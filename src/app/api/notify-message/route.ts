@@ -1,32 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
+import { getAuthedUser, escapeHtml, safeSubject, rateLimit, sendMail } from '@/lib/server/notify';
 
 const ADMIN_EMAIL = 'info@militarybenefitsassistant.com';
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(req: NextRequest) {
   try {
-    const { direction, userEmail, userName, formName, message, submissionId } = await req.json();
-    // direction: 'client_to_admin' | 'admin_to_client'
+    const user = await getAuthedUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!rateLimit(`notify-message:${user.id}`)) {
+      return NextResponse.json({ error: 'Too many requests. Please wait a moment.' }, { status: 429 });
+    }
+
+    const raw = await req.json();
+    const direction = raw.direction;
+    const message  = escapeHtml(raw.message);
+    const userName = escapeHtml(raw.userName);
+    const formName = escapeHtml(raw.formName);
 
     if (!direction || !message) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
     }
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
-    });
-
     const isClientToAdmin = direction === 'client_to_admin';
-    const to      = isClientToAdmin ? ADMIN_EMAIL : userEmail;
-    const subject = isClientToAdmin
-      ? `New Message from ${userName ?? 'Client'} — ${formName ?? 'VA Form'}`
-      : `Reply from MBA — ${formName ?? 'Your VA Form'}`;
 
-    const senderLabel  = isClientToAdmin ? (userName ?? 'Client') : 'Military Benefits Assistant';
+    // Only an admin may send TO a client at an arbitrary address. Anyone else can
+    // only message the admin inbox — this closes the open relay / spam vector.
+    if (!isClientToAdmin && !user.user_metadata?.is_admin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const recipient = isClientToAdmin ? ADMIN_EMAIL : String(raw.userEmail ?? '');
+    if (!isClientToAdmin && !EMAIL_RE.test(recipient)) {
+      return NextResponse.json({ error: 'Invalid recipient email.' }, { status: 400 });
+    }
+
+    const to      = recipient;
+    const subject = safeSubject(isClientToAdmin
+      ? `New Message from ${userName || 'Client'} — ${formName || 'VA Form'}`
+      : `Reply from MBA — ${formName || 'Your VA Form'}`);
+
+    const senderLabel  = isClientToAdmin ? (userName || 'Client') : 'Military Benefits Assistant';
     const contextLabel = isClientToAdmin ? 'has sent you a message' : 'has replied to your message';
     const ctaUrl       = isClientToAdmin
       ? 'https://militarybenefitsassistant.vercel.app/admin'
@@ -65,16 +81,7 @@ export async function POST(req: NextRequest) {
 </body>
 </html>`;
 
-    if (!to) {
-      return NextResponse.json({ error: 'No recipient email.' }, { status: 400 });
-    }
-
-    await transporter.sendMail({
-      from: `"Military Benefits Assistant" <${process.env.GMAIL_USER}>`,
-      to,
-      subject,
-      html,
-    });
+    await sendMail({ to, subject, html });
 
     return NextResponse.json({ ok: true });
   } catch (err: any) {

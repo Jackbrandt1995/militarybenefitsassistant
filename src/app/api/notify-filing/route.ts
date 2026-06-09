@@ -1,26 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
+import { getAuthedUser, escapeHtml, safeSubject, rateLimit, sendMail } from '@/lib/server/notify';
 
 const ADMIN_EMAIL = 'info@militarybenefitsassistant.com';
 
 export async function POST(req: NextRequest) {
   try {
-    const { userName, formName, formId, userEmail, submissionId, submittedAt } = await req.json();
+    const user = await getAuthedUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!rateLimit(`notify-filing:${user.id}`)) {
+      return NextResponse.json({ error: 'Too many requests. Please wait a moment.' }, { status: 429 });
+    }
+
+    const raw = await req.json();
+    const userName = escapeHtml(raw.userName);
+    const formName = escapeHtml(raw.formName);
+    const formId = escapeHtml(raw.formId);
+    const userEmail = escapeHtml(raw.userEmail);
+    const submissionId = escapeHtml(raw.submissionId);
+    const submittedAt = raw.submittedAt;
 
     if (!userName || !formName || !formId) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
     }
 
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
-    });
-
     // Subject format: {User_Name}_{Benefit}_{Application}
-    const subject = `${userName}_${formName}_${formId.toUpperCase()}`;
+    const subject = safeSubject(`${userName}_${formName}_${formId.toUpperCase()}`);
 
     const html = `
 <!DOCTYPE html>
@@ -56,7 +62,7 @@ export async function POST(req: NextRequest) {
       </div>
       <div class="row">
         <span class="label">Email</span>
-        <span class="value">${userEmail ?? '—'}</span>
+        <span class="value">${userEmail || '—'}</span>
       </div>
       <hr class="divider" />
       <div class="row">
@@ -69,7 +75,7 @@ export async function POST(req: NextRequest) {
       </div>
       <div class="row">
         <span class="label">Submission ID</span>
-        <span class="value" style="font-family:monospace;font-size:12px;">${submissionId ?? '—'}</span>
+        <span class="value" style="font-family:monospace;font-size:12px;">${submissionId || '—'}</span>
       </div>
       <div class="row">
         <span class="label">Received</span>
@@ -92,7 +98,7 @@ export async function POST(req: NextRequest) {
 </body>
 </html>`;
 
-    await transporter.sendMail({
+    await sendMail({
       from: `"MBA Notifications" <${process.env.GMAIL_USER}>`,
       to: ADMIN_EMAIL,
       subject,
