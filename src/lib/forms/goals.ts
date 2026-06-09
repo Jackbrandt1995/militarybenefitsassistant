@@ -6,8 +6,10 @@
  * it to fill the screen and lists its forms with plain-language action labels.
  *
  * `icon` is a string key resolved to a lucide-react component in the dashboard.
- * Every public (non-hidden) form should appear under exactly one category so the
- * grid stays a complete, non-overlapping map of what the app can do.
+ * Every public (non-hidden) form should appear under at least one category so the
+ * grid stays a complete map of what the app can do. A form may appear under more
+ * than one category when it genuinely fits both (e.g. VR&E under Education and
+ * Certifications).
  */
 
 export interface GoalForm {
@@ -50,11 +52,12 @@ export const goals: Goal[] = [
   {
     id: 'certifications',
     label: 'Certifications',
-    tagline: 'Reimburse licensing, certification, and exam fees',
+    tagline: 'Test-fee reimbursement and career readiness (VR&E)',
     icon: 'BadgeCheck',
     forms: [
       { formId: 'va-22-0803', actionLabel: 'Reimburse a licensing or certification test fee' },
       { formId: 'va-22-0810', actionLabel: 'Reimburse a national exam fee (SAT, CLEP, GRE, AP)' },
+      { formId: 'va-28-1900', actionLabel: 'Apply for Veteran Readiness & Employment (VR&E)' },
     ],
   },
   {

@@ -175,7 +175,7 @@ export default function DashboardPage() {
                 className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-700 hover:text-blue-900 hover:underline"
               >
                 <Compass className="w-4 h-4" />
-                Not sure? Take the guided benefits finder
+                Not sure? Learn more here
               </a>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
