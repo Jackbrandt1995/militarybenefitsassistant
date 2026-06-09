@@ -14,7 +14,6 @@ import {
   Briefcase,
   Home,
   HeartPulse,
-  UserCheck,
   Receipt,
   Compass,
   ArrowLeft,
@@ -31,7 +30,6 @@ const GOAL_ICONS: Record<string, LucideIcon> = {
   Briefcase,
   Home,
   HeartPulse,
-  UserCheck,
   Receipt,
 };
 

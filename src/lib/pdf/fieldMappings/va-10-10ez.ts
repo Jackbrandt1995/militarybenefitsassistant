@@ -75,7 +75,6 @@ export const va1010ezMapping: FieldMapping = {
   city:   { pdfFieldName: 'F[0].P4[0].MailingAddress_City[0]',    type: 'text' },
   state:  { pdfFieldName: 'F[0].P4[0].MailingAddress_State[0]',   type: 'text' },
   zip:    { pdfFieldName: 'F[0].P4[0].MailingAddress_ZipCode[0]', type: 'text' },
-  addressType: [],   // no permanent/temporary control on this form revision
   phoneHome:   { pdfFieldName: 'F[0].P4[0].HOMEPhone[0]',    type: 'text' },
   phoneMobile: { pdfFieldName: 'F[0].P4[0].MOBILEPhone[0]',  type: 'text' },
   email:       { pdfFieldName: 'F[0].P4[0].EmailAddress[0]', type: 'text' },
@@ -182,7 +181,6 @@ export const va1010ezMapping: FieldMapping = {
   insurancePolicyholderName: { pdfFieldName: 'F[0].P5[0].NameOfPolicyHodler[0]',         type: 'text' },  // PDF typo: "Hodler"
   insurancePolicyNumber:     { pdfFieldName: 'F[0].P5[0].PolicyNumber[0]',                type: 'text' },
   insuranceGroupNumber:      { pdfFieldName: 'F[0].P5[0].GroupCode[0]',                   type: 'text' },
-  insurancePolicyholderDob:  [],
 
   // Section III Item 5 — Medicaid eligible? (YES cx=37.3 / NO cx=79.3, cy=312, p=4)
   eligibleForMedicaid: [
@@ -214,8 +212,6 @@ export const va1010ezMapping: FieldMapping = {
     { pdfFieldName: 'F[0].P5[0].DidYouProvideSupportToChildNotLivingWithYou[0]', type: 'draw-check', checkPage: 4, checkCX: 37.3, checkCY: 60.0, transform: yes },
     { pdfFieldName: 'F[0].P5[0].DidYouProvideSupportToChildNotLivingWithYou[0]', type: 'draw-check', checkPage: 4, checkCX: 85.3, checkCY: 60.0, transform: no  },
   ],
-  spouseLivedWithYou: [],   // form asks "provide support" (above), not "lived with you"
-  numberOfDependentChildren: [],   // no count field — dependents are itemized individually
 
   // ── Section V — Employment (p=5). cy=690: FULL/PART/NOT/RETIRED. ──────────
   employmentStatus: [
