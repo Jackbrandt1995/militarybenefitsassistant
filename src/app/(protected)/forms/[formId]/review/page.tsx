@@ -14,7 +14,7 @@ export default function ReviewPage({ params }: { params: Promise<{ formId: strin
   const [answers, setAnswers] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    const stored = localStorage.getItem(`form-wizard-${formId}`);
+    const stored = sessionStorage.getItem(`form-wizard-${formId}`);
     if (stored) {
       try {
         const parsed = JSON.parse(stored);

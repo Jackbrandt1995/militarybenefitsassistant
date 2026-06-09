@@ -108,6 +108,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (err: any) {
     console.error('[notify-filing]', err);
-    return NextResponse.json({ error: err.message ?? 'Failed to send email.' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to send email.' }, { status: 500 });
   }
 }

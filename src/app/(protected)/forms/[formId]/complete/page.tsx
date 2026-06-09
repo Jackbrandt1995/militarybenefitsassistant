@@ -63,7 +63,7 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
 
     async function generate() {
       try {
-        const stored = localStorage.getItem(`form-wizard-${formId}`);
+        const stored = sessionStorage.getItem(`form-wizard-${formId}`);
         if (!stored) {
           setErrorMsg('No form data found. Please go back and complete the form.');
           setStatus('error');
@@ -122,7 +122,7 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
           safe[k] = v as string | boolean;
         }
 
-        localStorage.removeItem(`form-wizard-${formId}`);
+        sessionStorage.removeItem(`form-wizard-${formId}`);
         setPdfBytes(bytes);
         setSafeAnswers(safe);
         setStatus('ready');

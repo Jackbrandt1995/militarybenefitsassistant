@@ -6,25 +6,47 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Button from '@/components/ui/Button';
+import CaptchaField from '@/components/CaptchaField';
+
+// CAPTCHA is active only when a Turnstile site key is configured (and CAPTCHA is
+// enabled in the Supabase dashboard). Until then this is a no-op.
+const CAPTCHA_REQUIRED = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState('');
+  // Bump to force the Turnstile widget to re-mount and issue a fresh token after
+  // a failed attempt (tokens are single-use).
+  const [captchaKey, setCaptchaKey] = useState(0);
   const router = useRouter();
   const supabase = createClient();
+
+  function resetCaptcha() {
+    setCaptchaToken('');
+    setCaptchaKey(k => k + 1);
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    // Brute-force protection is enforced server-side by the Supabase password-
+    // verification auth hook (migration 015) — unbypassable and auto-expiring.
+    // Its rejection message surfaces here as a normal auth error.
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+      options: captchaToken ? { captchaToken } : undefined,
+    });
 
     if (error) {
       setError(error.message);
       setLoading(false);
+      resetCaptcha();
     } else {
       router.push('/dashboard');
     }
@@ -49,16 +71,23 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     const { email: demoEmail, password: demoPassword } = demoCreds[role];
-    const { error } = await supabase.auth.signInWithPassword({ email: demoEmail, password: demoPassword });
+    const { error } = await supabase.auth.signInWithPassword({
+      email: demoEmail,
+      password: demoPassword,
+      options: captchaToken ? { captchaToken } : undefined,
+    });
     if (error) {
       setError(
         `Demo ${role} sign-in failed: ${error.message}. Make sure the demo accounts have been seeded (supabase/seed_demo_accounts.sql).`,
       );
       setLoading(false);
+      resetCaptcha();
     } else {
       router.push(role === 'admin' ? '/admin' : '/dashboard');
     }
   };
+
+  const blockSubmit = loading || (CAPTCHA_REQUIRED && !captchaToken);
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
@@ -103,7 +132,9 @@ export default function LoginPage() {
             />
           </div>
 
-          <Button type="submit" loading={loading} className="w-full">
+          <CaptchaField key={captchaKey} onToken={setCaptchaToken} />
+
+          <Button type="submit" loading={loading} disabled={blockSubmit} className="w-full">
             Sign In
           </Button>
         </form>
@@ -129,7 +160,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => handleDemo('user')}
-                disabled={loading}
+                disabled={blockSubmit}
                 className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-slate-50 disabled:opacity-60"
               >
                 Demo as User
@@ -137,7 +168,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => handleDemo('admin')}
-                disabled={loading}
+                disabled={blockSubmit}
                 className="rounded-md border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100 disabled:opacity-60"
               >
                 Demo as Admin

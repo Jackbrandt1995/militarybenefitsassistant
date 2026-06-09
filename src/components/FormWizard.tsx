@@ -133,7 +133,11 @@ export default function FormWizard({ form }: FormWizardProps) {
         if (digits2.length === 0) { finalAnswers[none2Key] = 'true'; } else { delete finalAnswers[none2Key]; }
       }
 
-      localStorage.setItem(`form-wizard-${form.id}`, JSON.stringify({ answers: finalAnswers }));
+      // sessionStorage (NOT localStorage): the draft carries sensitive answers
+      // (SSN, bank, VA#, DOB) between the wizard → review → complete pages. Using
+      // sessionStorage scopes it to the tab session so an abandoned form can't be
+      // harvested later from a shared machine or by an infostealer.
+      sessionStorage.setItem(`form-wizard-${form.id}`, JSON.stringify({ answers: finalAnswers }));
       router.push(`/forms/${form.id}/review`);
     } else {
       goNext();

@@ -5,6 +5,9 @@ import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import Image from 'next/image';
 import Button from '@/components/ui/Button';
+import CaptchaField from '@/components/CaptchaField';
+
+const CAPTCHA_REQUIRED = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -13,7 +16,14 @@ export default function SignupPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState('');
+  const [captchaKey, setCaptchaKey] = useState(0);
   const supabase = createClient();
+
+  function resetCaptcha() {
+    setCaptchaToken('');
+    setCaptchaKey(k => k + 1);
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,12 +42,16 @@ export default function SignupPage() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${window.location.origin}/callback` },
+      options: {
+        emailRedirectTo: `${window.location.origin}/callback`,
+        captchaToken: captchaToken || undefined,
+      },
     });
 
     if (error) {
       setError(error.message);
       setLoading(false);
+      resetCaptcha();
     } else {
       setSuccess(true);
       setLoading(false);
@@ -115,7 +129,9 @@ export default function SignupPage() {
             />
           </div>
 
-          <Button type="submit" loading={loading} className="w-full">
+          <CaptchaField key={captchaKey} onToken={setCaptchaToken} />
+
+          <Button type="submit" loading={loading} disabled={loading || (CAPTCHA_REQUIRED && !captchaToken)} className="w-full">
             Create Account
           </Button>
 

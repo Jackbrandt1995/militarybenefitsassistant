@@ -128,7 +128,7 @@ export default function HistoryPage() {
   useEffect(() => {
     const allForms = getAllForms();
     const inProgress = allForms.filter(f =>
-      localStorage.getItem(`form-wizard-${f.id}`) !== null
+      sessionStorage.getItem(`form-wizard-${f.id}`) !== null
     );
     setInProgressForms(inProgress.map(f => ({
       id: f.id,

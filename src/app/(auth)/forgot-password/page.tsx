@@ -5,12 +5,17 @@ import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { Shield, Mail } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import CaptchaField from '@/components/CaptchaField';
+
+const CAPTCHA_REQUIRED = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
+  const [captchaKey, setCaptchaKey] = useState(0);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -20,11 +25,14 @@ export default function ForgotPasswordPage() {
     const supabase = createClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/callback?next=/reset-password`,
+      captchaToken: captchaToken || undefined,
     });
 
     if (error) {
       setError(error.message);
       setLoading(false);
+      setCaptchaToken('');
+      setCaptchaKey(k => k + 1);
     } else {
       setSent(true);
       setLoading(false);
@@ -85,7 +93,9 @@ export default function ForgotPasswordPage() {
             />
           </div>
 
-          <Button type="submit" loading={loading} className="w-full">
+          <CaptchaField key={captchaKey} onToken={setCaptchaToken} />
+
+          <Button type="submit" loading={loading} disabled={loading || (CAPTCHA_REQUIRED && !captchaToken)} className="w-full">
             Send Reset Link
           </Button>
         </form>
