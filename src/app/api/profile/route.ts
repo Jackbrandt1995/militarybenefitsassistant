@@ -13,19 +13,21 @@ export async function GET() {
   const { data: profile, error } = await supabase
     .from('profiles')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('id', user.id)
     .single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Decrypt SSN for the client
+  // Decrypt SSN for the client. During the plaintext→ciphertext transition some
+  // rows may still be plaintext; if decrypt fails, treat the stored value as the
+  // plaintext so the user never sees a blank/garbled SSN.
   if (profile.ssn_encrypted) {
     try {
       profile.ssn_decrypted = decrypt(profile.ssn_encrypted);
     } catch {
-      profile.ssn_decrypted = '';
+      profile.ssn_decrypted = profile.ssn_encrypted;
     }
   }
 
@@ -57,7 +59,7 @@ export async function PUT(request: NextRequest) {
   const { data, error } = await supabase
     .from('profiles')
     .update(body)
-    .eq('user_id', user.id)
+    .eq('id', user.id)
     .select()
     .single();
 

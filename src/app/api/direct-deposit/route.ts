@@ -21,11 +21,13 @@ export async function GET() {
   }
 
   if (data) {
+    // Decrypt for the client; if a value is still plaintext (pre-backfill), fall
+    // back to the stored value so nothing shows blank during the transition.
     if (data.routing_number_encrypted) {
-      try { data.routing_number = decrypt(data.routing_number_encrypted); } catch { data.routing_number = ''; }
+      try { data.routing_number = decrypt(data.routing_number_encrypted); } catch { data.routing_number = data.routing_number_encrypted; }
     }
     if (data.account_number_encrypted) {
-      try { data.account_number = decrypt(data.account_number_encrypted); } catch { data.account_number = ''; }
+      try { data.account_number = decrypt(data.account_number_encrypted); } catch { data.account_number = data.account_number_encrypted; }
     }
   }
 

@@ -15,21 +15,40 @@ export function useProfile() {
     if (!user) return;
     setLoading(true);
 
-    const [profileRes, serviceRes, educationRes, employmentRes, depositRes, dependentsRes] = await Promise.all([
+    // The 6 direct table reads come back with the *_encrypted columns as stored
+    // (ciphertext after the PII backfill, plaintext before). The two API reads
+    // return those sensitive values DECRYPTED (server-side, where the key lives),
+    // with a plaintext fallback during the transition. We overwrite the in-memory
+    // *_encrypted fields with the decrypted plaintext so the profile page and form
+    // pre-fill keep working unchanged.
+    const [profileRes, serviceRes, educationRes, employmentRes, depositRes, dependentsRes, piiProfile, piiDeposit] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', user.id).single(),
       supabase.from('service_periods').select('*').eq('user_id', user.id).order('sort_order'),
       supabase.from('education_history').select('*').eq('user_id', user.id).order('sort_order'),
       supabase.from('employment_history').select('*').eq('user_id', user.id).order('sort_order'),
       supabase.from('direct_deposit').select('*').eq('user_id', user.id).maybeSingle(),
       supabase.from('dependents').select('*').eq('user_id', user.id).order('sort_order'),
+      fetch('/api/profile').then(r => (r.ok ? r.json() : null)).catch(() => null),
+      fetch('/api/direct-deposit').then(r => (r.ok ? r.json() : null)).catch(() => null),
     ]);
 
+    const profileRow = profileRes.data as Profile | null;
+    if (profileRow && piiProfile?.ssn_decrypted != null) {
+      profileRow.ssn_encrypted = piiProfile.ssn_decrypted;
+    }
+
+    const directDeposit = (depositRes.data as DirectDeposit) || null;
+    if (directDeposit && piiDeposit) {
+      if (piiDeposit.routing_number != null) directDeposit.routing_number_encrypted = piiDeposit.routing_number;
+      if (piiDeposit.account_number != null) directDeposit.account_number_encrypted = piiDeposit.account_number;
+    }
+
     setProfile({
-      profile: profileRes.data as Profile,
+      profile: profileRow as Profile,
       servicePeriods: (serviceRes.data || []) as ServicePeriod[],
       educationHistory: (educationRes.data || []) as EducationRecord[],
       employmentHistory: (employmentRes.data || []) as EmploymentRecord[],
-      directDeposit: (depositRes.data as DirectDeposit) || null,
+      directDeposit,
       dependents: (dependentsRes.data || []) as Dependent[],
     });
 

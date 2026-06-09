@@ -32,7 +32,6 @@ export default function ProfilePage() {
     addServicePeriod, deleteServicePeriod, updateServicePeriod,
     addEducation, deleteEducation, updateEducation,
     addEmployment, deleteEmployment, updateEmployment,
-    updateDirectDeposit,
   } = useProfile();
 
   // Local state for editable fields
@@ -73,6 +72,20 @@ export default function ProfilePage() {
     setSaving(false);
   };
 
+  // SSN is sensitive — save through the encrypting API route, never a direct write.
+  const saveSSN = async (value: string) => {
+    setSaving(true);
+    try {
+      await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ssn: value }),
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // Service period helpers
   const setSPField = (id: string, field: string, value: string) => {
     setLsp(prev => prev.map(sp => sp.id === id ? { ...sp, [field]: value } : sp));
@@ -105,8 +118,34 @@ export default function ProfilePage() {
     setLdd(prev => ({ ...prev, [field]: value }));
   };
 
+  // All direct-deposit writes go through the encrypting API route (single write
+  // path; routing/account are encrypted server-side, the rest upserted as-is).
   const saveDDField = async (field: string, value: string) => {
-    await updateDirectDeposit({ [field]: value } as Partial<DirectDeposit>);
+    setSaving(true);
+    try {
+      await fetch('/api/direct-deposit', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: value }),
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Routing/account numbers are sensitive — send the plain field names so the API
+  // route encrypts them (the inputs display the decrypted value in *_encrypted).
+  const saveBank = async (field: 'routing_number' | 'account_number', value: string) => {
+    setSaving(true);
+    try {
+      await fetch('/api/direct-deposit', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: value }),
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Calculate completeness
@@ -158,7 +197,7 @@ export default function ProfilePage() {
             <Input label="SSN" id="ssn" type="password" placeholder="XXX-XX-XXXX"
               value={lp.ssn_encrypted || ''}
               onChange={e => setField('ssn_encrypted', e.target.value)}
-              onBlur={e => saveField('ssn_encrypted', e.target.value)}
+              onBlur={e => saveSSN(e.target.value)}
               helpText="Encrypted at rest" />
             <Input label="VA File Number" id="va_file_number" value={lp.va_file_number || ''}
               onChange={e => setField('va_file_number', e.target.value)}
@@ -309,12 +348,12 @@ export default function ProfilePage() {
             <Input label="Routing Number" id="routing" type="password"
               value={ldd.routing_number_encrypted || ''}
               onChange={e => setDDField('routing_number_encrypted', e.target.value)}
-              onBlur={e => saveDDField('routing_number_encrypted', e.target.value)}
+              onBlur={e => saveBank('routing_number', e.target.value)}
               helpText="9 digits" />
             <Input label="Account Number" id="account" type="password"
               value={ldd.account_number_encrypted || ''}
               onChange={e => setDDField('account_number_encrypted', e.target.value)}
-              onBlur={e => saveDDField('account_number_encrypted', e.target.value)} />
+              onBlur={e => saveBank('account_number', e.target.value)} />
           </div>
         </Section>
       </div>
