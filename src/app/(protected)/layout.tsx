@@ -1,47 +1,103 @@
 'use client';
 
 import { useAuth } from '@/components/AuthProvider';
+import { createClient } from '@/lib/supabase/client';
 import { useRouter, usePathname } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+// Demo accounts are exempt from mandatory MFA so the one-click demo still works.
+// They have no TOTP factor, so the AAL2 gate on the PII APIs naturally lets them
+// through (their nextLevel is aal1).
+const DEMO_EMAILS = new Set(
+  [
+    process.env.NEXT_PUBLIC_DEMO_USER_EMAIL || 'demo.user@militarybenefitsassistant.com',
+    process.env.NEXT_PUBLIC_DEMO_ADMIN_EMAIL || 'demo.admin@militarybenefitsassistant.com',
+  ].map(e => e.toLowerCase())
+);
+
+function Spinner() {
+  return (
+    <div className="min-h-[80vh] flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-700" />
+    </div>
+  );
+}
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [ready, setReady] = useState(false);
+  // Once a user passes all gates this session, don't re-check on every navigation.
+  const validatedFor = useRef<string | null>(null);
 
   useEffect(() => {
     if (loading) return;
 
-    // Not logged in → go to login
     if (!user) {
+      validatedFor.current = null;
       router.push('/login');
       return;
     }
 
-    // Already on the acceptance page — don't redirect in a loop
-    if (pathname === '/terms/accept') return;
-
-    // New user hasn't accepted terms yet → gate them
-    const termsAccepted = user.user_metadata?.terms_accepted_at;
-    if (!termsAccepted) {
-      router.push('/terms/accept');
+    // The MFA pages are part of the gating flow itself — always allow them.
+    if (pathname.startsWith('/mfa')) {
+      setReady(true);
+      return;
     }
-  }, [user, loading, router, pathname]);
 
-  if (loading) {
-    return (
-      <div className="min-h-[80vh] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-700" />
-      </div>
-    );
-  }
+    // Terms gate (unchanged).
+    if (pathname === '/terms/accept') {
+      setReady(true);
+      return;
+    }
+    if (!user.user_metadata?.terms_accepted_at) {
+      router.push('/terms/accept');
+      return;
+    }
 
-  if (!user) return null;
+    // Already fully validated this session → render immediately (no flicker).
+    if (validatedFor.current === user.id) {
+      setReady(true);
+      return;
+    }
 
-  // Render children while the terms redirect (if any) is processing,
-  // but suppress content on protected pages until accepted.
-  const termsAccepted = user.user_metadata?.terms_accepted_at;
-  if (!termsAccepted && pathname !== '/terms/accept') return null;
+    // Demo accounts skip MFA.
+    if (user.email && DEMO_EMAILS.has(user.email.toLowerCase())) {
+      validatedFor.current = user.id;
+      setReady(true);
+      return;
+    }
 
+    // MFA gate — mandatory TOTP; a fresh login is aal1 until the code is entered.
+    let cancelled = false;
+    setReady(false);
+    (async () => {
+      const supabase = createClient();
+      const [{ data: aal }, { data: factors }] = await Promise.all([
+        supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+        supabase.auth.mfa.listFactors(),
+      ]);
+      if (cancelled) return;
+
+      const hasVerifiedTotp = (factors?.totp ?? []).some(f => f.status === 'verified');
+      if (!hasVerifiedTotp) {
+        router.push('/mfa/setup');
+        return;
+      }
+      if (aal?.nextLevel === 'aal2' && aal?.currentLevel !== 'aal2') {
+        router.push('/mfa');
+        return;
+      }
+      validatedFor.current = user.id;
+      setReady(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, loading, pathname, router]);
+
+  if (loading || !user || !ready) return <Spinner />;
   return <>{children}</>;
 }
