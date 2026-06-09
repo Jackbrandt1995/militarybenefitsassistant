@@ -10,11 +10,8 @@ import {
   AlertCircle,
   GraduationCap,
   BadgeCheck,
-  Users,
-  Briefcase,
   Home,
   HeartPulse,
-  Receipt,
   Compass,
   ArrowLeft,
   type LucideIcon,
@@ -26,11 +23,16 @@ const GUIDED_FINDER_URL = 'https://www.militarybenefitsassistant.com/education-b
 const GOAL_ICONS: Record<string, LucideIcon> = {
   GraduationCap,
   BadgeCheck,
-  Users,
-  Briefcase,
   Home,
   HeartPulse,
-  Receipt,
+};
+
+/** Per-category accent classes (literal strings so Tailwind keeps them). */
+const ACCENTS: Record<string, { tile: string; panelBorder: string; panelBg: string; iconBg: string }> = {
+  education:      { tile: 'bg-blue-600 hover:bg-blue-700',       panelBorder: 'border-blue-200',    panelBg: 'bg-blue-50/40',    iconBg: 'bg-blue-600' },
+  certifications: { tile: 'bg-emerald-600 hover:bg-emerald-700', panelBorder: 'border-emerald-200', panelBg: 'bg-emerald-50/40', iconBg: 'bg-emerald-600' },
+  home:           { tile: 'bg-amber-500 hover:bg-amber-600',     panelBorder: 'border-amber-200',   panelBg: 'bg-amber-50/40',   iconBg: 'bg-amber-500' },
+  healthcare:     { tile: 'bg-teal-600 hover:bg-teal-700',       panelBorder: 'border-teal-200',    panelBg: 'bg-teal-50/40',    iconBg: 'bg-teal-600' },
 };
 
 const COMPLETENESS_FIELDS: Array<keyof NonNullable<ReturnType<typeof useProfile>['profile']>['profile']> = [
@@ -63,6 +65,8 @@ export default function DashboardPage() {
 
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const selectedGoal = goals.find(g => g.id === selectedGoalId) ?? null;
+  const accent = selectedGoal ? (ACCENTS[selectedGoal.id] ?? ACCENTS.education) : null;
+  const SelectedIcon = selectedGoal ? (GOAL_ICONS[selectedGoal.icon] ?? Compass) : Compass;
 
   const firstName = profile?.profile?.first_name?.trim() || '';
   const pct = getCompleteness(profile);
@@ -118,109 +122,89 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ── Goal finder ──────────────────────────────────────────────────── */}
+      {/* ── Category finder ──────────────────────────────────────────────── */}
       <section className="mb-12">
-        {/* Header — hidden on mobile once a goal is chosen (results screen has its own header) */}
-        <div
-          className={`flex-wrap items-end justify-between gap-3 mb-5 ${
-            selectedGoalId ? 'hidden lg:flex' : 'flex'
-          }`}
-        >
-          <h2 className="text-lg font-semibold text-gray-800">What do you want to do?</h2>
-          {/* Guided finder for users who aren't sure */}
-          <a
-            href={GUIDED_FINDER_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-700 hover:text-blue-900 hover:underline"
-          >
-            <Compass className="w-4 h-4" />
-            Not sure? Take the guided benefits finder
-          </a>
-        </div>
-
-        <div className="lg:grid lg:grid-cols-[20rem_1fr] lg:gap-8 lg:items-start">
-          {/* LEFT — goal cards. On mobile, hidden once a goal is selected (results take over). */}
-          <div className={selectedGoalId ? 'hidden lg:block' : 'block'}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
+        {selectedGoal && accent ? (
+          /* Selected category takes over the screen and lists its forms */
+          <div className={`rounded-2xl border ${accent.panelBorder} ${accent.panelBg} p-5 sm:p-8 min-h-[70vh]`}>
+            <button
+              type="button"
+              onClick={() => setSelectedGoalId(null)}
+              className="inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900 mb-6"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              All categories
+            </button>
+            <div className="flex items-center gap-4">
+              <span className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl ${accent.iconBg} text-white shrink-0`}>
+                <SelectedIcon className="w-7 h-7" />
+              </span>
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">{selectedGoal.label}</h2>
+                <p className="text-gray-500">{selectedGoal.tagline}</p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-500 mt-5 mb-6">Choose the form that fits your situation.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {selectedGoal.forms.map(gf => {
+                const form = getFormById(gf.formId);
+                if (!form) return null;
+                return (
+                  <FormCard
+                    key={form.id}
+                    formId={form.id}
+                    formNumber={form.formNumber}
+                    title={form.title}
+                    description={form.description}
+                    category={form.category}
+                    actionLabel={gf.actionLabel}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          /* Four big category tiles filling the screen in quarters */
+          <>
+            <div className="flex flex-wrap items-end justify-between gap-3 mb-5">
+              <h2 className="text-lg font-semibold text-gray-800">What can we help you with?</h2>
+              <a
+                href={GUIDED_FINDER_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-700 hover:text-blue-900 hover:underline"
+              >
+                <Compass className="w-4 h-4" />
+                Not sure? Take the guided benefits finder
+              </a>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
               {goals.map(goal => {
                 const Icon = GOAL_ICONS[goal.icon] ?? Compass;
-                const isSelected = goal.id === selectedGoalId;
+                const a = ACCENTS[goal.id] ?? ACCENTS.education;
                 return (
                   <button
                     key={goal.id}
                     type="button"
                     onClick={() => setSelectedGoalId(goal.id)}
-                    aria-pressed={isSelected}
-                    className={`flex items-start gap-3 text-left rounded-xl border p-4 transition-all ${
-                      isSelected
-                        ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-200'
-                        : 'border-gray-200 bg-white hover:border-blue-300 hover:shadow-md'
-                    }`}
+                    className={`flex flex-col justify-between text-left rounded-2xl text-white p-6 sm:p-8 min-h-[13rem] sm:min-h-[15rem] lg:min-h-[17rem] shadow-sm hover:shadow-xl transition-all ${a.tile}`}
                   >
-                    <span
-                      className={`inline-flex items-center justify-center w-10 h-10 rounded-lg shrink-0 ${
-                        isSelected ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-700'
-                      }`}
-                    >
-                      <Icon className="w-5 h-5" />
+                    <span className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white/20">
+                      <Icon className="w-6 h-6" />
                     </span>
-                    <span className="min-w-0">
-                      <span className="block text-sm font-semibold text-gray-900 leading-snug">{goal.label}</span>
-                      <span className="block text-xs text-gray-500 mt-0.5">{goal.tagline}</span>
-                      <span className="block text-xs font-medium text-blue-700 mt-1.5">
-                        {goal.forms.length === 1 ? '1 form' : `${goal.forms.length} forms`}
+                    <span className="mt-6">
+                      <span className="block text-2xl sm:text-3xl font-bold leading-tight">{goal.label}</span>
+                      <span className="block text-sm text-white/85 mt-1.5">{goal.tagline}</span>
+                      <span className="block text-xs font-semibold text-white/80 mt-4">
+                        {goal.forms.length === 1 ? '1 form' : `${goal.forms.length} forms`} →
                       </span>
                     </span>
                   </button>
                 );
               })}
             </div>
-          </div>
-
-          {/* RIGHT — results. On mobile this is a separate screen; on desktop it's the right pane. */}
-          <div className={selectedGoal ? 'block' : 'hidden lg:block'}>
-            {selectedGoal ? (
-              <div className="rounded-2xl border border-blue-100 bg-blue-50/40 p-5 sm:p-6">
-                {/* Mobile back button → returns to the goal list */}
-                <button
-                  type="button"
-                  onClick={() => setSelectedGoalId(null)}
-                  className="lg:hidden inline-flex items-center gap-1 text-sm font-medium text-blue-700 hover:text-blue-900 mb-4"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  All goals
-                </button>
-                <h3 className="text-base font-semibold text-gray-900 mb-1">{selectedGoal.label}</h3>
-                <p className="text-sm text-gray-500 mb-5">Choose the form that fits.</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {selectedGoal.forms.map(gf => {
-                    const form = getFormById(gf.formId);
-                    if (!form) return null;
-                    return (
-                      <FormCard
-                        key={form.id}
-                        formId={form.id}
-                        formNumber={form.formNumber}
-                        title={form.title}
-                        description={form.description}
-                        category={form.category}
-                        actionLabel={gf.actionLabel}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            ) : (
-              /* Desktop empty state (mobile never reaches here — the list shows instead) */
-              <div className="hidden lg:flex flex-col items-center justify-center text-center rounded-2xl border border-dashed border-gray-200 bg-gray-50/60 px-6 py-16 h-full">
-                <Compass className="w-8 h-8 text-gray-400 mb-3" />
-                <p className="text-sm font-medium text-gray-600">Select what you want to do</p>
-                <p className="text-sm text-gray-400 mt-1">The matching forms will appear here.</p>
-              </div>
-            )}
-          </div>
-        </div>
+          </>
+        )}
       </section>
 
       {/* ── Browse all forms ─────────────────────────────────────────────── */}

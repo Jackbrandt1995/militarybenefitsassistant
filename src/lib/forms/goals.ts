@@ -1,12 +1,12 @@
 /**
- * Goal-based form finder configuration.
+ * Top-level benefit categories for the dashboard finder.
  *
- * The dashboard presents these goals as clickable cards ("What do you want to
- * do?"). Selecting a goal reveals the matching VA forms with plain-language
- * action labels, so a veteran picks by intent rather than by form number.
+ * The dashboard shows these four categories as full-screen quadrant tiles
+ * (Education · Certifications · Home Loan · Healthcare). Selecting one expands
+ * it to fill the screen and lists its forms with plain-language action labels.
  *
  * `icon` is a string key resolved to a lucide-react component in the dashboard.
- * Every form in the registry should appear under exactly one goal so the goal
+ * Every public (non-hidden) form should appear under exactly one category so the
  * grid stays a complete, non-overlapping map of what the app can do.
  */
 
@@ -19,9 +19,9 @@ export interface GoalForm {
 
 export interface Goal {
   id: string;
-  /** Short, intent-first label shown on the goal card */
+  /** Big category title shown on the quadrant tile */
   label: string;
-  /** One-line helper under the label */
+  /** One-line helper under the title */
   tagline: string;
   /** lucide-react icon name (mapped to a component in the dashboard) */
   icon: string;
@@ -30,20 +30,26 @@ export interface Goal {
 
 export const goals: Goal[] = [
   {
-    id: 'school',
-    label: 'Go to school or use the GI Bill',
-    tagline: 'Degrees, certificates, tutoring, and work-study',
+    id: 'education',
+    label: 'Education',
+    tagline: 'GI Bill, VR&E, dependents, work-study, and more',
     icon: 'GraduationCap',
     forms: [
       { formId: 'va-22-1990',  actionLabel: 'Apply for education benefits (GI Bill)' },
+      { formId: 'va-22-1990e', actionLabel: 'Use transferred Post-9/11 GI Bill benefits' },
       { formId: 'va-22-1990t', actionLabel: 'Apply for tutorial assistance' },
       { formId: 'va-22-8691',  actionLabel: 'Apply for a work-study allowance' },
       { formId: 'va-22-1995',  actionLabel: 'Change your school or training program' },
+      { formId: 'va-22-5490',  actionLabel: "Survivors' & dependents' education (DEA / Fry)" },
+      { formId: 'va-22-5495',  actionLabel: 'Change school or program (dependents)' },
+      { formId: 'va-28-1900',  actionLabel: 'Apply for Veteran Readiness & Employment (VR&E)' },
+      { formId: 'va-22-5281',  actionLabel: 'Request a refund of VEAP contributions' },
+      { formId: 'va-22-1999c', actionLabel: 'Affirm correspondence course enrollment' },
     ],
   },
   {
-    id: 'certification',
-    label: 'Get a license or certification',
+    id: 'certifications',
+    label: 'Certifications',
     tagline: 'Reimburse licensing, certification, and exam fees',
     icon: 'BadgeCheck',
     forms: [
@@ -52,28 +58,8 @@ export const goals: Goal[] = [
     ],
   },
   {
-    id: 'dependents',
-    label: 'Use benefits as a spouse or child',
-    tagline: 'Transferred, survivor, and dependent education benefits',
-    icon: 'Users',
-    forms: [
-      { formId: 'va-22-1990e', actionLabel: 'Apply to use transferred Post-9/11 GI Bill benefits' },
-      { formId: 'va-22-5490',  actionLabel: "Apply for survivors' & dependents' education (DEA / Fry)" },
-      { formId: 'va-22-5495',  actionLabel: 'Change your school or program (dependents)' },
-    ],
-  },
-  {
-    id: 'vre',
-    label: 'Get disability-related career help',
-    tagline: 'Veteran Readiness & Employment (VR&E, Chapter 31)',
-    icon: 'Briefcase',
-    forms: [
-      { formId: 'va-28-1900', actionLabel: 'Apply for Veteran Readiness & Employment (VR&E)' },
-    ],
-  },
-  {
     id: 'home',
-    label: 'Buy or refinance a home',
+    label: 'Home Loan',
     tagline: 'VA home loan Certificate of Eligibility',
     icon: 'Home',
     forms: [
@@ -82,25 +68,12 @@ export const goals: Goal[] = [
   },
   {
     id: 'healthcare',
-    label: 'Enroll in or update VA health care',
+    label: 'Healthcare',
     tagline: 'Apply for or update VA medical benefits',
     icon: 'HeartPulse',
     forms: [
       { formId: 'va-10-10ez',  actionLabel: 'Apply for VA health care' },
       { formId: 'va-10-10ezr', actionLabel: 'Update your VA health benefits information' },
-    ],
-  },
-  // NOTE: VA 21-22A (Appointment of Representative) is intentionally NOT a public
-  // goal. It is surfaced only from the "Have MBA file for me" agent-filing flow,
-  // where the veteran appoints MBA as their representative before we can file.
-  {
-    id: 'refunds',
-    label: 'Refunds & other forms',
-    tagline: 'VEAP refunds and course enrollment affirmations',
-    icon: 'Receipt',
-    forms: [
-      { formId: 'va-22-5281',  actionLabel: 'Request a refund of VEAP (Chapter 32) contributions' },
-      { formId: 'va-22-1999c', actionLabel: 'Affirm correspondence course enrollment' },
     ],
   },
 ];
