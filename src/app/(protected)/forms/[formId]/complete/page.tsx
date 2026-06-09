@@ -144,19 +144,15 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
 
     async function record() {
       try {
-        const supabase = createClient();
-        const { data } = await supabase
-          .from('form_submissions')
-          .insert({
-            user_id: user!.id,
-            form_id: formId,
-            form_name: form!.title,
-            answers_json: safeAnswers,
-            // submission_status defaults to 'downloaded' at the DB level
-          })
-          .select('id')
-          .single();
-        setSubmissionId(data?.id ?? null);
+        // Server route encrypts the answers at rest (keeps only name + email
+        // plaintext) and returns the new submission id.
+        const res = await fetch('/api/submissions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ formId, formName: form!.title, answers: safeAnswers }),
+        });
+        const json = await res.json().catch(() => null);
+        setSubmissionId(json?.id ?? null);
       } catch (dbErr) {
         console.warn('Submission record error (non-fatal):', dbErr);
       }
