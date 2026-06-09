@@ -32,7 +32,7 @@ const ACCENTS: Record<string, { tile: string; panelBorder: string; panelBg: stri
   education:      { tile: 'bg-blue-600 hover:bg-blue-700',       panelBorder: 'border-blue-200',    panelBg: 'bg-blue-50/40',    iconBg: 'bg-blue-600' },
   certifications: { tile: 'bg-emerald-600 hover:bg-emerald-700', panelBorder: 'border-emerald-200', panelBg: 'bg-emerald-50/40', iconBg: 'bg-emerald-600' },
   home:           { tile: 'bg-amber-500 hover:bg-amber-600',     panelBorder: 'border-amber-200',   panelBg: 'bg-amber-50/40',   iconBg: 'bg-amber-500' },
-  healthcare:     { tile: 'bg-teal-600 hover:bg-teal-700',       panelBorder: 'border-teal-200',    panelBg: 'bg-teal-50/40',    iconBg: 'bg-teal-600' },
+  healthcare:     { tile: 'bg-blue-900 hover:bg-blue-950',       panelBorder: 'border-blue-200',    panelBg: 'bg-blue-50/40',    iconBg: 'bg-blue-900' },
 };
 
 const COMPLETENESS_FIELDS: Array<keyof NonNullable<ReturnType<typeof useProfile>['profile']>['profile']> = [
@@ -166,8 +166,7 @@ export default function DashboardPage() {
         ) : (
           /* Four big category tiles filling the screen in quarters */
           <>
-            <div className="flex flex-wrap items-end justify-between gap-3 mb-5">
-              <h2 className="text-lg font-semibold text-gray-800">What can we help you with?</h2>
+            <div className="flex flex-wrap items-end justify-end gap-3 mb-5">
               <a
                 href={GUIDED_FINDER_URL}
                 target="_blank"
