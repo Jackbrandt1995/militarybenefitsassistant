@@ -13,7 +13,8 @@
 -- Apply with `supabase db push` or by running this file in the SQL editor.
 -- ============================================================================
 
-create or replace function public.record_agent_filing(
+drop function if exists public.record_agent_filing(uuid, uuid, text, text);
+create function public.record_agent_filing(
   p_submission_id        uuid,
   p_user_id              uuid,   -- accepted for call-signature compatibility; NOT trusted
   p_agent_auth_signature text,

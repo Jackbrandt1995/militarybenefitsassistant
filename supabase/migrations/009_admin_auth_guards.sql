@@ -8,7 +8,15 @@
 -- messages as "admin", etc. The admin gate was client-side only.
 --
 -- This migration adds a server-side is_admin() check to every admin RPC.
--- Apply with `supabase db push` or by running this file in the SQL editor.
+--
+-- We DROP then CREATE each function (rather than CREATE OR REPLACE) because the
+-- live database may hold a version whose return type differs from the repo, and
+-- Postgres refuses to change a return type in place ("cannot change return type
+-- of existing function"). DROP IF EXISTS + CREATE is safe and idempotent here —
+-- nothing else depends on these functions, and Postgres re-grants EXECUTE to
+-- PUBLIC on the new ones (the in-function is_admin() check is the real gate).
+--
+-- Apply by running this file in the Supabase SQL editor (or `supabase db push`).
 -- ============================================================================
 
 -- Admin flag lives in auth.users.raw_user_meta_data->>'is_admin'.
@@ -28,7 +36,8 @@ as $$
 $$;
 
 -- ── get_agent_submissions() ─────────────────────────────────────────────────
-create or replace function public.get_agent_submissions()
+drop function if exists public.get_agent_submissions();
+create function public.get_agent_submissions()
 returns table (
   id                   uuid,
   user_id              uuid,
@@ -69,7 +78,8 @@ end;
 $$;
 
 -- ── mark_submission_mailed() ────────────────────────────────────────────────
-create or replace function public.mark_submission_mailed(p_submission_id uuid)
+drop function if exists public.mark_submission_mailed(uuid);
+create function public.mark_submission_mailed(p_submission_id uuid)
 returns void
 language plpgsql
 security definer
@@ -87,7 +97,8 @@ end;
 $$;
 
 -- ── set_tracking_number() ───────────────────────────────────────────────────
-create or replace function public.set_tracking_number(
+drop function if exists public.set_tracking_number(uuid, text);
+create function public.set_tracking_number(
   p_submission_id uuid,
   p_tracking_number text
 )
@@ -108,7 +119,8 @@ end;
 $$;
 
 -- ── return_submission_for_edits() ───────────────────────────────────────────
-create or replace function public.return_submission_for_edits(
+drop function if exists public.return_submission_for_edits(uuid, text);
+create function public.return_submission_for_edits(
   p_submission_id uuid,
   p_return_reason text
 )
@@ -131,7 +143,8 @@ end;
 $$;
 
 -- ── admin_get_messages() ────────────────────────────────────────────────────
-create or replace function public.admin_get_messages(p_submission_id uuid)
+drop function if exists public.admin_get_messages(uuid);
+create function public.admin_get_messages(p_submission_id uuid)
 returns table (
   id            uuid,
   submission_id uuid,
@@ -159,7 +172,8 @@ end;
 $$;
 
 -- ── admin_send_message() ────────────────────────────────────────────────────
-create or replace function public.admin_send_message(
+drop function if exists public.admin_send_message(uuid, text);
+create function public.admin_send_message(
   p_submission_id uuid,
   p_message       text
 )
@@ -179,7 +193,8 @@ end;
 $$;
 
 -- ── get_unread_message_counts() ─────────────────────────────────────────────
-create or replace function public.get_unread_message_counts()
+drop function if exists public.get_unread_message_counts();
+create function public.get_unread_message_counts()
 returns table (submission_id uuid, unread_count bigint)
 language plpgsql security definer set search_path = public as $$
 begin
