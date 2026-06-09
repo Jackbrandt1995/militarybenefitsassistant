@@ -20,15 +20,17 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Decrypt SSN for the client. During the plaintext→ciphertext transition some
-  // rows may still be plaintext; if decrypt fails, treat the stored value as the
-  // plaintext so the user never sees a blank/garbled SSN.
+  // Decrypt sensitive values for the client. If decrypt fails (a still-plaintext
+  // row during transition), fall back to the stored value so nothing renders blank.
   if (profile.ssn_encrypted) {
-    try {
-      profile.ssn_decrypted = decrypt(profile.ssn_encrypted);
-    } catch {
-      profile.ssn_decrypted = profile.ssn_encrypted;
-    }
+    try { profile.ssn_decrypted = decrypt(profile.ssn_encrypted); }
+    catch { profile.ssn_decrypted = profile.ssn_encrypted; }
+  }
+  // VA file number is often the veteran's SSN, so it's encrypted at rest too
+  // (stored as ciphertext in the va_file_number column).
+  if (profile.va_file_number) {
+    try { profile.va_file_number_decrypted = decrypt(profile.va_file_number); }
+    catch { profile.va_file_number_decrypted = profile.va_file_number; }
   }
 
   return NextResponse.json(profile, { headers: { 'Cache-Control': 'no-store' } });
@@ -44,10 +46,14 @@ export async function PUT(request: NextRequest) {
 
   const body = await request.json();
 
-  // If SSN is provided, encrypt it before storing
+  // Encrypt sensitive fields before storing.
   if (body.ssn) {
     body.ssn_encrypted = encrypt(body.ssn);
     delete body.ssn;
+  }
+  // VA file number is stored encrypted (in the va_file_number column).
+  if (body.va_file_number) {
+    body.va_file_number = encrypt(body.va_file_number);
   }
 
   // Remove fields that shouldn't be directly updated
@@ -55,6 +61,7 @@ export async function PUT(request: NextRequest) {
   delete body.id;
   delete body.created_at;
   delete body.ssn_decrypted;
+  delete body.va_file_number_decrypted;
 
   const { data, error } = await supabase
     .from('profiles')

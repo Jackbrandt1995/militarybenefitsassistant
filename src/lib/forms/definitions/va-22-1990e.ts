@@ -52,7 +52,7 @@ export const va221990e: FormDefinition = {
         { id: 'accountType', label: 'Account Type', type: 'radio', required: true, profilePath: 'directDeposit.account_type', options: [
           { label: 'Checking', value: 'Checking' }, { label: 'Savings', value: 'Savings' },
         ]},
-        { id: 'routingNumber', label: 'Routing Number', type: 'text', profilePath: 'directDeposit.routing_number_encrypted', maxLength: 9, helpText: '9-digit ABA routing number found at the bottom-left of a check.' },
+        { id: 'routingNumber', label: 'Routing Number', type: 'text', profilePath: 'directDeposit.routing_number_encrypted', maxLength: 9, sensitive: true, helpText: '9-digit ABA routing number found at the bottom-left of a check.' },
         { id: 'accountNumber', label: 'Account Number', type: 'text', profilePath: 'directDeposit.account_number_encrypted', maxLength: 13, sensitive: true, helpText: 'Your checking or savings account number (up to 13 digits).' },
         { id: 'bankName', label: 'Bank / Financial Institution Name', type: 'text', profilePath: 'directDeposit.bank_name' },
       ],

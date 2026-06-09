@@ -72,7 +72,8 @@ export default function ProfilePage() {
     setSaving(false);
   };
 
-  // SSN is sensitive — save through the encrypting API route, never a direct write.
+  // SSN and VA file number are sensitive — saved through the encrypting API
+  // route (which encrypts them), never a direct plaintext write.
   const saveSSN = async (value: string) => {
     setSaving(true);
     try {
@@ -80,6 +81,19 @@ export default function ProfilePage() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ssn: value }),
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveVAFile = async (value: string) => {
+    setSaving(true);
+    try {
+      await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ va_file_number: value }),
       });
     } finally {
       setSaving(false);
@@ -201,7 +215,7 @@ export default function ProfilePage() {
               helpText="Encrypted at rest" />
             <Input label="VA File Number" id="va_file_number" value={lp.va_file_number || ''}
               onChange={e => setField('va_file_number', e.target.value)}
-              onBlur={e => saveField('va_file_number', e.target.value)} />
+              onBlur={e => saveVAFile(e.target.value)} />
           </div>
         </Section>
 

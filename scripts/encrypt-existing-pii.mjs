@@ -72,7 +72,7 @@ function isEncrypted(value) {
 const db = createClient(URL, SERVICE_KEY, { auth: { persistSession: false } });
 
 const TARGETS = [
-  { table: 'profiles',       cols: ['ssn_encrypted'] },
+  { table: 'profiles',       cols: ['ssn_encrypted', 'va_file_number'] },
   { table: 'direct_deposit', cols: ['routing_number_encrypted', 'account_number_encrypted'] },
   { table: 'dependents',     cols: ['ssn_encrypted'] },
 ];

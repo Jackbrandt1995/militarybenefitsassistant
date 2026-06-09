@@ -36,6 +36,9 @@ export function useProfile() {
     if (profileRow && piiProfile?.ssn_decrypted != null) {
       profileRow.ssn_encrypted = piiProfile.ssn_decrypted;
     }
+    if (profileRow && piiProfile?.va_file_number_decrypted != null) {
+      profileRow.va_file_number = piiProfile.va_file_number_decrypted;
+    }
 
     const directDeposit = (depositRes.data as DirectDeposit) || null;
     if (directDeposit && piiDeposit) {
