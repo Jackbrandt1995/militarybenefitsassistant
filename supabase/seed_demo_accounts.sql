@@ -49,14 +49,17 @@ begin
   (
     '00000000-0000-0000-0000-000000000000', demo_admin_id, 'authenticated', 'authenticated',
     admin_email, extensions.crypt(admin_pw, extensions.gen_salt('bf')),
-    now(), '{"provider":"email","providers":["email"]}'::jsonb,
-    jsonb_build_object('is_admin', true, 'terms_accepted_at', now()::text),
+    now(),
+    -- is_admin lives in app_metadata (service-role-only; NOT user-writable)
+    '{"provider":"email","providers":["email"],"is_admin":true}'::jsonb,
+    jsonb_build_object('terms_accepted_at', now()::text),
     now(), now(), '', '', '', ''
   )
   on conflict (id) do update
     set encrypted_password = excluded.encrypted_password,
         email_confirmed_at = excluded.email_confirmed_at,
-        raw_user_meta_data = excluded.raw_user_meta_data;
+        raw_user_meta_data = excluded.raw_user_meta_data,
+        raw_app_meta_data  = excluded.raw_app_meta_data;
 
   -- ── auth.identities (required for email/password sign-in) ─────────────────
   insert into auth.identities (

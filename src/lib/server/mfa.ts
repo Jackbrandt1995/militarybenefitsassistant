@@ -18,6 +18,13 @@ type MfaCapable = {
 };
 
 export async function aal2Satisfied(supabase: MfaCapable): Promise<boolean> {
-  const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-  return !(data?.nextLevel === 'aal2' && data.currentLevel !== 'aal2');
+  try {
+    const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (!data) return false; // can't determine the level → deny (fail closed)
+    // Allow if the session is stepped up, OR the user has no factor to step up to
+    // (demo / not-yet-enrolled — those are gated at the layout instead).
+    return data.currentLevel === 'aal2' || data.nextLevel !== 'aal2';
+  } catch {
+    return false; // fail closed on any error
+  }
 }

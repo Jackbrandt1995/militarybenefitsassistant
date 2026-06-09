@@ -73,24 +73,29 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
     let cancelled = false;
     setReady(false);
     (async () => {
-      const supabase = createClient();
-      const [{ data: aal }, { data: factors }] = await Promise.all([
-        supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
-        supabase.auth.mfa.listFactors(),
-      ]);
-      if (cancelled) return;
+      try {
+        const supabase = createClient();
+        const [{ data: aal }, { data: factors }] = await Promise.all([
+          supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+          supabase.auth.mfa.listFactors(),
+        ]);
+        if (cancelled) return;
 
-      const hasVerifiedTotp = (factors?.totp ?? []).some(f => f.status === 'verified');
-      if (!hasVerifiedTotp) {
-        router.push('/mfa/setup');
-        return;
+        const hasVerifiedTotp = (factors?.totp ?? []).some(f => f.status === 'verified');
+        if (!hasVerifiedTotp) {
+          router.push('/mfa/setup');
+          return;
+        }
+        if (aal?.nextLevel === 'aal2' && aal?.currentLevel !== 'aal2') {
+          router.push('/mfa');
+          return;
+        }
+        validatedFor.current = user.id;
+        setReady(true);
+      } catch {
+        // Couldn't determine MFA state → fail closed: send to the challenge page.
+        if (!cancelled) router.push('/mfa');
       }
-      if (aal?.nextLevel === 'aal2' && aal?.currentLevel !== 'aal2') {
-        router.push('/mfa');
-        return;
-      }
-      validatedFor.current = user.id;
-      setReady(true);
     })();
 
     return () => {

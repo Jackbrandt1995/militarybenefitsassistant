@@ -113,7 +113,7 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
           }
         }
         const isSensitiveKey = (k: string) =>
-          sensitiveFieldIds.has(k) || /ssn|routing|account|bank/i.test(k);
+          sensitiveFieldIds.has(k) || /ssn|routing|account|bank|vafile|filenumber/i.test(k);
         const looksLikeSSN = (v: unknown) =>
           typeof v === 'string' && /^\d{3}-\d{2}-\d{4}$/.test(v.trim());
         const safe: Record<string, string | boolean> = {};

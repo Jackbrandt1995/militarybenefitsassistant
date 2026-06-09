@@ -25,7 +25,7 @@ export function useFormWizard(form: FormDefinition | undefined, preFilledAnswers
       if (f.type === 'ssn' || f.sensitive === true) sensitiveIds.add(f.id);
     }
   }
-  const isSensitiveKey = (k: string) => sensitiveIds.has(k) || /ssn|routing|account|bank/i.test(k);
+  const isSensitiveKey = (k: string) => sensitiveIds.has(k) || /ssn|routing|account|bank|vafile|filenumber/i.test(k);
   const stripSensitive = (a: Record<string, string | boolean> = {}) => {
     const out: Record<string, string | boolean> = {};
     for (const [k, v] of Object.entries(a)) if (!isSensitiveKey(k)) out[k] = v;

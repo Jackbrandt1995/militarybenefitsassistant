@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     // Returning a submission to a client is an admin action.
-    if (!user.user_metadata?.is_admin) {
+    if (!user.app_metadata?.is_admin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     if (!rateLimit(`notify-return:${user.id}`)) {

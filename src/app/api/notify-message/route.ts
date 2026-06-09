@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
 
     // Only an admin may send TO a client at an arbitrary address. Anyone else can
     // only message the admin inbox — this closes the open relay / spam vector.
-    if (!isClientToAdmin && !user.user_metadata?.is_admin) {
+    if (!isClientToAdmin && !user.app_metadata?.is_admin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
