@@ -28,6 +28,16 @@
       ⚠ Enable both together — turning on Supabase CAPTCHA without the site key
       set makes every login/signup/reset fail.
 
+## 🟠 REQUIRED — transactional email
+- [ ] **Replace Supabase's built-in auth email sender with a real SMTP provider**
+      (Resend or SendGrid on a verified sending domain). The default sender is
+      testing-grade — rate-limited to ~a few emails/hour and frequently spam-
+      filtered — so confirmation and password-reset emails will fail for real
+      users at volume. Set it in Supabase → Authentication → Emails → SMTP.
+      (Note: Wix DNS can't add the subdomain MX Resend's custom return-path wants
+      — either verify with DKIM only, move DNS to Cloudflare, or use SendGrid's
+      all-CNAME domain auth.)
+
 ## 🟠 REQUIRED — app hardening
 - [ ] **Flip CSP from report-only to enforcing.** In `src/lib/supabase/middleware.ts`
       rename `Content-Security-Policy-Report-Only` → `Content-Security-Policy`

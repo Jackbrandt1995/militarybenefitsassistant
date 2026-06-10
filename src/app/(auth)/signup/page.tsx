@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -18,6 +19,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState('');
   const [captchaKey, setCaptchaKey] = useState(0);
+  const router = useRouter();
   const supabase = createClient();
 
   function resetCaptcha() {
@@ -39,7 +41,7 @@ export default function SignupPage() {
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -52,7 +54,14 @@ export default function SignupPage() {
       setError(error.message);
       setLoading(false);
       resetCaptcha();
+    } else if (data.session) {
+      // Email confirmation is OFF in Supabase -> the account is created and the
+      // user is already signed in. Skip the "check your email" screen and go
+      // straight into the app (which then routes them through MFA setup).
+      router.push('/dashboard');
     } else {
+      // Confirmation required -> the default Supabase email was sent; tell them
+      // to check their inbox.
       setSuccess(true);
       setLoading(false);
     }
