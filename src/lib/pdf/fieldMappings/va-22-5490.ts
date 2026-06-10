@@ -7,10 +7,8 @@ export const va225490Mapping: FieldMapping = {
   fullName: { pdfFieldName: 'form1[0].Page_1[0].NAME[0]', type: 'text' },
   ssn: { pdfFieldName: 'form1[0].Page_1[0].SSN[0]', type: 'text' , transform: (v: string) => v.replace(/\D/g, '')},
   dob: { pdfFieldName: 'form1[0].Page_1[0].DOB[0]', type: 'text', transform: formatDateString },
-  sex: [
-    { pdfFieldName: 'form1[0].Page_1[0].MALE[0]', type: 'checkbox', transform: v => v === 'Male' ? 'true' : 'false' },
-    { pdfFieldName: 'form1[0].Page_1[0].FEMALE[0]', type: 'checkbox', transform: v => v === 'Female' ? 'true' : 'false' },
-  ],
+  // GENDER (Q2) is a single radio group with export options MALE | FEMALE.
+  sex: { pdfFieldName: 'form1[0].Page_1[0].RadioButtonList[0]', type: 'radio', transform: v => v === 'Male' ? 'MALE' : 'FEMALE' },
   fullAddress: { pdfFieldName: 'form1[0].Page_1[0].address[0]', type: 'text' },
   homePhone: { pdfFieldName: 'form1[0].Page_1[0].PrimaryTelephone[0]', type: 'text' },
   mobilePhone: { pdfFieldName: 'form1[0].Page_1[0].SecondaryTelephone[0]', type: 'text' },
@@ -18,13 +16,12 @@ export const va225490Mapping: FieldMapping = {
   mobilePhoneNone: { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 0, checkCX: 43, checkCY: 493, checkSize: 6 },
   email: { pdfFieldName: 'form1[0].Page_1[0].EMAIL[0]', type: 'text' },
 
-  // Direct Deposit
-  accountType: [
-    { pdfFieldName: 'form1[0].Page_1[0].CheckBoxChecking[0]', type: 'checkbox', transform: v => v === 'Checking' ? 'true' : 'false' },
-    { pdfFieldName: 'form1[0].Page_1[0].CheckBoxSavings[0]', type: 'checkbox', transform: v => v === 'Savings' ? 'true' : 'false' },
-  ],
-  routingNumber: { pdfFieldName: 'form1[0].Page_1[0].RoutingNumber[0]', type: 'text' },
-  accountNumber: { pdfFieldName: 'form1[0].Page_1[0].AccountNumber[0]', type: 'text' },
+  // Direct Deposit (Q8). ACCOUNT TYPE is a single radio group: CHECKING | SAVINGS.
+  accountType: { pdfFieldName: 'form1[0].Page_1[0].RadioButtonList[1]', type: 'radio', transform: v => v === 'Savings' ? 'SAVINGS' : 'CHECKING' },
+  // Routing/account number text fields are (mis)named SocialSecurityNumber[2]/[3] in the real PDF.
+  // Confirmed via tooltip: [2]="ROUTING OR TRANSIT NUMBER", [3]="ACCOUNT NUMBER".
+  routingNumber: { pdfFieldName: 'form1[0].Page_1[0].SocialSecurityNumber[2]', type: 'text', transform: (v: string) => v.replace(/\D/g, '') },
+  accountNumber: { pdfFieldName: 'form1[0].Page_1[0].SocialSecurityNumber[3]', type: 'text' },
 
   // Qualifying Individual (updated field IDs to match new definition)
   qiFirstName: { pdfFieldName: 'form1[0].Page_1[0].Name[1]', type: 'text' },
@@ -33,10 +30,9 @@ export const va225490Mapping: FieldMapping = {
   qiDOB: { pdfFieldName: 'form1[0].Page_1[0].DOB2[0]', type: 'text', transform: formatDateString },
   qiDateMIA: { pdfFieldName: 'form1[0].Page_1[0].DateListed[0]', type: 'text', transform: formatDateString },
   qiDateOfDeath: { pdfFieldName: 'form1[0].Page_1[0].DateofDeath[0]', type: 'text', transform: formatDateString },
-  qiOnActiveDuty: [
-    { pdfFieldName: 'form1[0].Page_1[0].ActiveDutyYes[0]', type: 'checkbox', transform: v => v === 'Yes' ? 'true' : 'false' },
-    { pdfFieldName: 'form1[0].Page_1[0].ActiveDutyNo[0]', type: 'checkbox', transform: v => v === 'No' ? 'true' : 'false' },
-  ],
+  // Q14 "IS QUALIFYING INDIVIDUAL CURRENTLY ON ACTIVE DUTY?" — left column YES/NO group
+  // on page 1 (RadioButtonList[3], rect y=229 x=36). Options: YES | NO.
+  qiOnActiveDuty: { pdfFieldName: 'form1[0].Page_1[0].RadioButtonList[3]', type: 'radio', transform: v => v === 'Yes' ? 'YES' : 'NO' },
 
   // Benefit type – Page 2
   benefitType: [
@@ -44,12 +40,17 @@ export const va225490Mapping: FieldMapping = {
     { pdfFieldName: 'form1[0].Page_2[0].CheckBox_Chapter33_FRYScholarship[0]', type: 'checkbox', transform: v => v === 'Fry' ? 'true' : 'false' },
   ],
 
-  // Education info – Page 2
-  hsGraduated: [
-    { pdfFieldName: 'form1[0].Page_2[0].HSYes[0]', type: 'checkbox', transform: v => v === 'Yes' ? 'true' : 'false' },
-    { pdfFieldName: 'form1[0].Page_2[0].HSNo[0]', type: 'checkbox', transform: v => v === 'No' ? 'true' : 'false' },
-  ],
-  hsGradDate: { pdfFieldName: 'form1[0].Page_2[0].HSDate[0]', type: 'text' },
+  // Education info – Page 2. Q23 "HAS THE APPLICANT GRADUATED HIGH SCHOOL OR RECEIVED A GED?"
+  // is a single radio group (Page_2 RadioButtonList[3]) whose export options are long strings.
+  hsGraduated: {
+    pdfFieldName: 'form1[0].Page_2[0].RadioButtonList[3]',
+    type: 'radio',
+    transform: v => v === 'Yes'
+      ? 'YES (If "YES," please provide the date of graduation or the date you received GED) (MM/DD/YYYY)'
+      : 'NO (If "NO," please provide the expected date of graduation or GED) (MM/DD/YYYY)',
+  },
+  // hsGradDate removed: orphan key — no matching wizard question (the definition only
+  // collects hsGraduated Yes/No) and computeAnswers never produces it, so it was always blank.
 
   // Service Periods – Page 3
   sp1Entered: { pdfFieldName: 'form1[0].Page_3[0].#subform[0].#subform[2].DateEntered[0]', type: 'text', transform: formatDateString },

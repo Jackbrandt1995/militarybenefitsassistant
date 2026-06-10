@@ -95,7 +95,8 @@ export const va221990eMapping: FieldMapping = {
   edu1Name: { pdfFieldName: 'F[0].Page_4[0].nameloc2[0]', type: 'text' },
   edu2Name: { pdfFieldName: 'F[0].Page_4[0].nameloc1[0]', type: 'text' },
   edu1Hours: { pdfFieldName: 'F[0].Page_4[0].numberandtype1[0]', type: 'text' },
-  edu2Hours: { pdfFieldName: 'F[0].Page_4[0].numberandtype1[1]', type: 'text' },
+  // NOTE: removed dead key "edu2Hours" -> numberandtype1[1]: Institution 2 has no
+  // "Credit Hours / Type" question in the definition, so it was always blank.
   edu1Degree: { pdfFieldName: 'F[0].Page_4[0].degree1[0]', type: 'text' },
   edu2Degree: { pdfFieldName: 'F[0].Page_4[0].degree2[0]', type: 'text' },
   edu1Major: { pdfFieldName: 'F[0].Page_4[0].majorfield1[0]', type: 'text' },
@@ -110,7 +111,8 @@ export const va221990eMapping: FieldMapping = {
   smSSN: { pdfFieldName: 'F[0].Page_4[0].SSN2[0]', type: 'text', transform: v => v.replace(/\D/g, '') },
   smFullName: { pdfFieldName: 'F[0].Page_4[0].Service_Members_Name2[0]', type: 'text' },
   smStreet: { pdfFieldName: 'F[0].Page_4[0].NumberandStreet2[0]', type: 'text' },
-  smApt: { pdfFieldName: 'F[0].Page_4[0].AptUnitNumber2[0]', type: 'text' },
+  // NOTE: removed dead key "smApt" -> AptUnitNumber2[0]: the Service Member step has no
+  // apartment/unit question in the definition, so it was always blank.
   smCityStateZip: { pdfFieldName: 'F[0].Page_4[0].CityStateZIPCode2[0]', type: 'text' },
 
   // Signer type (Q16A) — RadioButtonList[3] on page 3 (cy=59, APPLICANT=left cx=40, PARENT/GUARDIAN=right cx=119)

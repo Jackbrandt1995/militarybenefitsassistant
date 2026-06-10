@@ -56,10 +56,12 @@ export const va221990tMapping: FieldMapping = {
 
   // School Certification
   schoolNameAddress: { pdfFieldName: 'form1[0].#subform[0].NAMEADDRESS15[0]', type: 'text' },
+  // Item 16 "INDICATE TYPE OF SCHOOL": three individually-named checkboxes, left→right:
+  //   SCHOOL1 = FOUR-YEAR COLLEGE, SCHOOL2 = TWO-YEAR COLLEGE, SCHOOL3 = OTHER THAN COLLEGE
   schoolType: [
-    { pdfFieldName: 'form1[0].#subform[0].FOURYR[0]', type: 'checkbox', transform: v => v === 'fourYear' ? 'true' : 'false' },
-    { pdfFieldName: 'form1[0].#subform[0].TWOYR[0]', type: 'checkbox', transform: v => v === 'twoYear' ? 'true' : 'false' },
-    { pdfFieldName: 'form1[0].#subform[0].OTHER[0]', type: 'checkbox', transform: v => v === 'other' ? 'true' : 'false' },
+    { pdfFieldName: 'form1[0].#subform[0].SCHOOL1[0]', type: 'checkbox', transform: v => v === 'fourYear' ? 'true' : 'false' },
+    { pdfFieldName: 'form1[0].#subform[0].SCHOOL2[0]', type: 'checkbox', transform: v => v === 'twoYear' ? 'true' : 'false' },
+    { pdfFieldName: 'form1[0].#subform[0].SCHOOL3[0]', type: 'checkbox', transform: v => v === 'other' ? 'true' : 'false' },
   ],
 
   // Section 13 is the student/veteran certification (applicant signature).

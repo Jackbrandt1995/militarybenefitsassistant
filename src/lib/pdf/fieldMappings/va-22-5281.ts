@@ -11,13 +11,21 @@ export const va225281Mapping: FieldMapping = {
   phone: { pdfFieldName: 'F[0].Page_1[0].PHONENUBMER[0]', type: 'text' },
   email: { pdfFieldName: 'F[0].Page_1[0].c\\.EMAILADDRESS[0]', type: 'text' },
 
-  // Refund reason checkboxes (driven by refundReason radio)
-  refundReason: [
-    { pdfFieldName: 'F[0].Page_1[0].A\\.PersonalHardship[0]', type: 'checkbox', transform: v => v === 'hardship' ? 'true' : 'false' },
-    { pdfFieldName: 'F[0].Page_1[0].B\\.EducationCompleted[0]', type: 'checkbox', transform: v => v === 'completed' ? 'true' : 'false' },
-    { pdfFieldName: 'F[0].Page_1[0].C\\.VocationObtained[0]', type: 'checkbox', transform: v => v === 'vocation' ? 'true' : 'false' },
-    { pdfFieldName: 'F[0].Page_1[0].D\\.OTHER[0]', type: 'checkbox', transform: v => v === 'other' ? 'true' : 'false' },
-  ],
+  // Refund reason — single radio group "Reason[0]" in the real PDF.
+  // Wizard values (hardship/completed/vocation/other) map to the exact export options.
+  refundReason: {
+    pdfFieldName: 'F[0].Page_1[0].Reason[0]',
+    type: 'radio',
+    transform: (v: string) => {
+      switch (v) {
+        case 'hardship': return 'A. PERSONAL HARDSHIP';
+        case 'completed': return 'B. EDUCATION COMPLETED';
+        case 'vocation': return 'C. VOCATION OBTAINED';
+        case 'other': return 'D. OTHER (Specify):';
+        default: return '';
+      }
+    },
+  },
   otherReason: { pdfFieldName: 'F[0].Page_1[0].D\\.OTHERSpecify[0]', type: 'text' },
 
   // AcroForm fields confirmed: SignatureField11[5] page=0 x=36 y=168 w=414 h=24 (applicant/claimant)
