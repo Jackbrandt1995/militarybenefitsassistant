@@ -52,6 +52,7 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
   const [agentAuthorized, setAgentAuthorized] = useState(false);
   const [isAuthorizingAgent, setIsAuthorizingAgent] = useState(false);
   const [agentError, setAgentError] = useState('');
+  const [submissionError, setSubmissionError] = useState('');
 
   const guide: SubmissionGuide | undefined = SUBMISSION_GUIDES[formId];
 
@@ -152,9 +153,23 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
           body: JSON.stringify({ formId, formName: form!.title, answers: safeAnswers }),
         });
         const json = await res.json().catch(() => null);
+        if (!res.ok) {
+          // Surface the real reason instead of leaving submissionId silently null
+          // (which later shows a misleading "Session error" on agent filing).
+          console.error('[submissions] failed', res.status, json);
+          setSubmissionError(
+            res.status === 403
+              ? "We couldn't save this submission because your account isn't verified for secure actions (two-step verification). You can still download the PDF."
+              : res.status === 401
+                ? 'Your session has expired — please sign in again to save this submission.'
+                : (json?.error || "We couldn't save this submission. Please try again."),
+          );
+          return;
+        }
         setSubmissionId(json?.id ?? null);
       } catch (dbErr) {
-        console.warn('Submission record error (non-fatal):', dbErr);
+        console.error('Submission record error:', dbErr);
+        setSubmissionError("We couldn't save this submission — please check your connection and try again.");
       }
     }
 
@@ -172,7 +187,10 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
   async function handleAgentAuthorize() {
     if (!agentSig) { setAgentError('Please draw your authorization signature above.'); return; }
     if (!user || !submissionId || !pdfBytes) {
-      setAgentError('Session error — please try refreshing the page.');
+      setAgentError(
+        submissionError ||
+        "We couldn't record your submission, so it can't be sent for filing yet. Please refresh and try again.",
+      );
       return;
     }
     setIsAuthorizingAgent(true);
