@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
 import Navbar from "@/components/Navbar";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import Link from "next/link";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -25,6 +26,7 @@ export default function RootLayout({
           <Navbar />
           <main className="flex-1">{children}</main>
           <Analytics />
+          <SpeedInsights />
           <footer className="bg-slate-900 text-gray-400 text-center py-6 text-sm">
             <p>Military Benefits Assistant is not affiliated with or endorsed by the U.S. Department of Veterans Affairs.</p>
             <p className="mt-1">This tool helps you fill out forms. Always verify information with your Education Services Officer (ESO).</p>
