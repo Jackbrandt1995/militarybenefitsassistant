@@ -19,6 +19,7 @@ import {
   RotateCcw,
   Send,
   MessageSquare,
+  UserCog,
 } from 'lucide-react';
 
 interface AgentSubmission {
@@ -371,14 +372,23 @@ export default function AdminPage() {
             <h1 className="text-2xl font-bold text-slate-900">Client Filings</h1>
             <p className="text-slate-500 mt-1 text-sm">Forms your clients have authorized you to print, sign, and mail to the VA.</p>
           </div>
-          <button
-            onClick={() => loadSubmissions(true)}
-            disabled={refreshing}
-            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 border border-slate-200 bg-white rounded-lg px-3 py-2 transition-colors"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              href="/admin/profile"
+              className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 border border-slate-200 bg-white rounded-lg px-3 py-2 transition-colors"
+            >
+              <UserCog className="w-3.5 h-3.5" />
+              My rep profile
+            </Link>
+            <button
+              onClick={() => loadSubmissions(true)}
+              disabled={refreshing}
+              className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 border border-slate-200 bg-white rounded-lg px-3 py-2 transition-colors"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          </div>
         </div>
 
         {/* Stats */}
