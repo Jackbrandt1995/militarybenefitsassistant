@@ -74,6 +74,16 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
       return;
     }
 
+    // MFA enforcement is currently OFF (NEXT_PUBLIC_REQUIRE_MFA !== 'true'). The
+    // whole TOTP flow (setup, challenge, reset) stays in the codebase — set the
+    // flag to 'true' to re-enable mandatory two-step verification. Until then no
+    // setup/challenge is required, so demos and signups go straight through.
+    if (process.env.NEXT_PUBLIC_REQUIRE_MFA !== 'true') {
+      validatedFor.current = user.id;
+      setReady(true);
+      return;
+    }
+
     // MFA gate — mandatory TOTP; a fresh login is aal1 until the code is entered.
     let cancelled = false;
     setReady(false);

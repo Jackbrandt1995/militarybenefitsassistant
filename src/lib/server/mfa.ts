@@ -25,6 +25,12 @@ export async function aal2Satisfied(supabase: SupabaseClient): Promise<boolean> 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
 
+    // MFA enforcement is currently OFF (NEXT_PUBLIC_REQUIRE_MFA !== 'true'). The
+    // route still requires a valid session, and RLS + field-level encryption still
+    // protect the data; this just drops the extra stepped-up-MFA requirement.
+    // Flip the flag to 'true' to require AAL2 again.
+    if (process.env.NEXT_PUBLIC_REQUIRE_MFA !== 'true') return true;
+
     if (
       process.env.NEXT_PUBLIC_ENABLE_DEMO === 'true' &&
       user.email &&

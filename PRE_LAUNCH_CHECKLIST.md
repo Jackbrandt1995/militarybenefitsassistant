@@ -44,9 +44,10 @@
       **after** confirming zero `[Report Only]` violations in Chrome DevTools
       across login → MFA → dashboard → forms → profile → admin. (Turnstile +
       Supabase are already allowlisted in the policy.)
-- [ ] Verify MFA is enforced end-to-end on a fresh real account (setup → login
-      step-up), and that an un-enrolled session is now **denied** PII API access
-      (the previously fail-open gate). Confirm demo accounts are still exempt.
+- [ ] **Re-enable mandatory MFA** — set `NEXT_PUBLIC_REQUIRE_MFA=true` (it's OFF
+      for now so demos are frictionless). Then verify it's enforced end-to-end on
+      a fresh real account (setup → login step-up) and that an un-enrolled session
+      is **denied** PII API access. Confirm demo accounts are still exempt.
 - [ ] Confirm the homepage "Get Started Free" routes logged-in users to /dashboard.
 
 ## 🟡 RECOMMENDED — operational
