@@ -11,7 +11,7 @@ export default function ReviewPage({ params }: { params: Promise<{ formId: strin
   const form = getFormById(formId);
   const router = useRouter();
   const { user } = useAuth();
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, string | boolean>>({});
 
   useEffect(() => {
     const stored = sessionStorage.getItem(`form-wizard-${formId}`);
@@ -60,7 +60,7 @@ export default function ReviewPage({ params }: { params: Promise<{ formId: strin
                       <dt className="text-xs text-slate-500">{field.label}</dt>
                       <dd className="text-sm text-slate-900 mt-0.5">
                         {field.type === 'checkbox'
-                          ? value === 'true' ? 'Yes' : 'No'
+                          ? (value ? 'Yes' : 'No')
                           : value || <span className="text-red-500 italic">Not provided</span>}
                       </dd>
                     </div>

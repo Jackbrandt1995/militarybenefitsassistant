@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { FormDefinition } from '@/lib/forms/types';
 import { useFormWizard } from '@/hooks/useFormWizard';
 import { useAutoFill } from '@/hooks/useAutoFill';
@@ -43,6 +43,16 @@ export default function FormWizard({ form }: FormWizardProps) {
   } = useFormWizard(form, preFilledAnswers);
 
   const stepDef = form.steps[currentStep];
+
+  // Honor ?step= deep-links from the review page's "Edit" buttons (once, on mount).
+  useEffect(() => {
+    const stepParam = new URLSearchParams(window.location.search).get('step');
+    if (stepParam !== null) {
+      const idx = parseInt(stepParam, 10);
+      if (!Number.isNaN(idx)) goToStep(idx);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Voided check is required whenever the user has entered routing or account number
   const voidedCheckRequired =

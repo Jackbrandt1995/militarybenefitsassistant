@@ -8,7 +8,7 @@ import Image from 'next/image';
 import Button from '@/components/ui/Button';
 import CaptchaField from '@/components/CaptchaField';
 
-// CAPTCHA is active only when a Turnstile site key is configured (and CAPTCHA is
+// CAPTCHA is active only when an hCaptcha site key is configured (and hCaptcha is
 // enabled in the Supabase dashboard). Until then this is a no-op.
 const CAPTCHA_REQUIRED = !!process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY;
 
@@ -18,7 +18,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState('');
-  // Bump to force the Turnstile widget to re-mount and issue a fresh token after
+  // Bump to force the hCaptcha widget to re-mount and issue a fresh token after
   // a failed attempt (tokens are single-use).
   const [captchaKey, setCaptchaKey] = useState(0);
   const router = useRouter();

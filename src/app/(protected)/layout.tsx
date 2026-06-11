@@ -62,8 +62,13 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
       return;
     }
 
-    // Demo accounts skip MFA.
-    if (user.email && DEMO_EMAILS.has(user.email.toLowerCase())) {
+    // Demo accounts skip MFA — but ONLY when demo mode is on. This must match the
+    // AAL2 gate in mfa.ts exactly; otherwise demo accounts get waved past MFA here
+    // yet 403'd on every PII route there (browse works, profile/submit hard-fail).
+    if (
+      process.env.NEXT_PUBLIC_ENABLE_DEMO === 'true' &&
+      user.email && DEMO_EMAILS.has(user.email.toLowerCase())
+    ) {
       validatedFor.current = user.id;
       setReady(true);
       return;

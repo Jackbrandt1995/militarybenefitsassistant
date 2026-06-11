@@ -127,9 +127,19 @@ export default function HistoryPage() {
 
   useEffect(() => {
     const allForms = getAllForms();
-    const inProgress = allForms.filter(f =>
-      sessionStorage.getItem(`form-wizard-${f.id}`) !== null
-    );
+    // The live wizard draft is persisted by useFormWizard to localStorage under
+    // `wizard-<id>`. Only count it as "in progress" if the user actually advanced
+    // past the first step or touched a field (the draft is written on mount).
+    const inProgress = allForms.filter(f => {
+      const raw = localStorage.getItem(`wizard-${f.id}`);
+      if (!raw) return false;
+      try {
+        const p = JSON.parse(raw);
+        return (p.currentStep ?? 0) > 0 || (Array.isArray(p.touched) && p.touched.length > 0);
+      } catch {
+        return false;
+      }
+    });
     setInProgressForms(inProgress.map(f => ({
       id: f.id,
       formNumber: f.formNumber,

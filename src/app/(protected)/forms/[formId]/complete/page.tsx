@@ -124,6 +124,7 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
         }
 
         sessionStorage.removeItem(`form-wizard-${formId}`);
+        localStorage.removeItem(`wizard-${formId}`); // clear the in-progress draft so it stops showing under "In Progress"
         setPdfBytes(bytes);
         setSafeAnswers(safe);
         setStatus('ready');
@@ -297,6 +298,19 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
                 Download Filled PDF
               </Button>
             </div>
+
+            {/* Submission save failed — the PDF is fine, but it wasn't recorded to history */}
+            {submissionError && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-amber-900">
+                    Your PDF is ready to download, but it wasn&apos;t saved to your history.
+                  </p>
+                  <p className="text-sm text-amber-800 mt-0.5">{submissionError}</p>
+                </div>
+              </div>
+            )}
 
             {/* ── Submission choice ─────────────────────────────────────────── */}
             {!agentAuthorized && (

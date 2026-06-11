@@ -30,7 +30,8 @@ function buildCsp(nonce: string): string {
 }
 
 export async function updateSession(request: NextRequest) {
-  const nonce = btoa(crypto.randomUUID());
+  // base64url-safe (no +, /, = — which are outside the CSP nonce grammar).
+  const nonce = btoa(crypto.randomUUID()).replace(/[+/=]/g, '');
   const csp = buildCsp(nonce);
 
   // Forward the nonce + CSP to the Next render so it nonces its inline scripts.

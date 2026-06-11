@@ -356,9 +356,12 @@ export default function AdminPage() {
   };
   const filtered = submissions.filter(s => inScope(s) && (filter === 'all' || s.submission_status === filter));
 
-  const pendingCount  = submissions.filter(s => s.submission_status === 'agent_pending').length;
-  const mailedCount   = submissions.filter(s => s.submission_status === 'agent_mailed').length;
-  const returnedCount = submissions.filter(s => s.submission_status === 'agent_returned').length;
+  // Status counts (stat cards + filter badges) reflect the active scope so the
+  // numbers always agree with the visible list.
+  const inScopeSubs   = submissions.filter(inScope);
+  const pendingCount  = inScopeSubs.filter(s => s.submission_status === 'agent_pending').length;
+  const mailedCount   = inScopeSubs.filter(s => s.submission_status === 'agent_mailed').length;
+  const returnedCount = inScopeSubs.filter(s => s.submission_status === 'agent_returned').length;
   const mineCount     = submissions.filter(s => assignments[s.user_id]?.adminId === myId).length;
   const poolCount     = submissions.filter(s => !assignments[s.user_id]).length;
 
