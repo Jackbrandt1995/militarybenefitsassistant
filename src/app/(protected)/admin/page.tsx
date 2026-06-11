@@ -91,6 +91,12 @@ export default function AdminPage() {
   const [sendingAdminMessage, setSendingAdminMessage] = useState<Record<string, boolean>>({});
   const [unreadCounts, setUnreadCounts]       = useState<Record<string, number>>({});
 
+  // Client assignment (self-claim from the shared pool)
+  const [assignments, setAssignments] = useState<Record<string, { adminId: string; email: string | null }>>({});
+  const [myId, setMyId]               = useState<string | null>(null);
+  const [scope, setScope]             = useState<'all' | 'mine' | 'pool'>('all');
+  const [claimingId, setClaimingId]   = useState<string | null>(null);
+
   // Reset-MFA panel
   const [mfaEmail, setMfaEmail]               = useState('');
   const [mfaResetting, setMfaResetting]       = useState(false);
@@ -149,7 +155,39 @@ export default function AdminPage() {
     }
   }, []);
 
-  useEffect(() => { loadSubmissions(); }, [loadSubmissions]);
+  const loadAssignments = useCallback(async () => {
+    const supabase = createClient();
+    const { data: { user: me } } = await supabase.auth.getUser();
+    setMyId(me?.id ?? null);
+    const { data, error: rpcErr } = await supabase.rpc('get_client_assignments');
+    if (!rpcErr && Array.isArray(data)) {
+      const map: Record<string, { adminId: string; email: string | null }> = {};
+      (data as { user_id: string; assigned_admin_id: string; assigned_admin_email: string | null }[])
+        .forEach(r => { map[r.user_id] = { adminId: r.assigned_admin_id, email: r.assigned_admin_email }; });
+      setAssignments(map);
+    }
+  }, []);
+
+  useEffect(() => { loadSubmissions(); loadAssignments(); }, [loadSubmissions, loadAssignments]);
+
+  async function handleClaim(userId: string) {
+    setClaimingId(userId);
+    const supabase = createClient();
+    const { data, error } = await supabase.rpc('claim_client', { p_user_id: userId });
+    setClaimingId(null);
+    if (error) { alert(error.message); return; }
+    if (data === 'taken') { alert('Another representative already has this client. Refresh to see who.'); }
+    await loadAssignments();
+  }
+
+  async function handleRelease(userId: string) {
+    setClaimingId(userId);
+    const supabase = createClient();
+    const { error } = await supabase.rpc('release_client', { p_user_id: userId });
+    setClaimingId(null);
+    if (error) { alert(error.message); return; }
+    await loadAssignments();
+  }
 
   async function loadAdminMessages(submissionId: string) {
     setLoadingMessages(prev => ({ ...prev, [submissionId]: true }));
@@ -308,13 +346,19 @@ export default function AdminPage() {
     }
   }
 
-  const filtered = submissions.filter(s =>
-    filter === 'all' || s.submission_status === filter
-  );
+  const inScope = (s: AgentSubmission) => {
+    const a = assignments[s.user_id];
+    if (scope === 'mine') return a?.adminId === myId;
+    if (scope === 'pool') return !a;
+    return true;
+  };
+  const filtered = submissions.filter(s => inScope(s) && (filter === 'all' || s.submission_status === filter));
 
   const pendingCount  = submissions.filter(s => s.submission_status === 'agent_pending').length;
   const mailedCount   = submissions.filter(s => s.submission_status === 'agent_mailed').length;
   const returnedCount = submissions.filter(s => s.submission_status === 'agent_returned').length;
+  const mineCount     = submissions.filter(s => assignments[s.user_id]?.adminId === myId).length;
+  const poolCount     = submissions.filter(s => !assignments[s.user_id]).length;
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4">
@@ -323,8 +367,8 @@ export default function AdminPage() {
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Agent Filing Queue</h1>
-            <p className="text-slate-500 mt-1 text-sm">Forms clients have authorized MBA to print and mail to VA.</p>
+            <h1 className="text-2xl font-bold text-slate-900">Client Filings</h1>
+            <p className="text-slate-500 mt-1 text-sm">Forms your clients have authorized you to print, sign, and mail to the VA.</p>
           </div>
           <button
             onClick={() => loadSubmissions(true)}
@@ -380,6 +424,27 @@ export default function AdminPage() {
           {mfaResult && (
             <p className={`mt-2 text-sm ${mfaResult.ok ? 'text-green-700' : 'text-red-700'}`}>{mfaResult.msg}</p>
           )}
+        </div>
+
+        {/* Assignment scope: My clients / Unassigned pool / All */}
+        <div className="flex gap-2 flex-wrap items-center">
+          <span className="text-xs font-semibold uppercase tracking-wide text-slate-400 mr-1">Show</span>
+          {([
+            { value: 'all',  label: 'All clients',     count: submissions.length },
+            { value: 'mine', label: 'My clients',      count: mineCount },
+            { value: 'pool', label: 'Unassigned pool', count: poolCount },
+          ] as { value: 'all' | 'mine' | 'pool'; label: string; count: number }[]).map(s => (
+            <button
+              key={s.value}
+              onClick={() => setScope(s.value)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                scope === s.value ? 'bg-slate-800 text-white shadow-sm' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              {s.label}
+              <span className={`ml-1.5 text-xs rounded-full px-1.5 py-0.5 ${scope === s.value ? 'bg-slate-600 text-white' : 'bg-slate-100 text-slate-500'}`}>{s.count}</span>
+            </button>
+          ))}
         </div>
 
         {/* Filter tabs */}
@@ -499,6 +564,34 @@ export default function AdminPage() {
                       </span>
                     )}
                   </div>
+
+                  {/* Assignment — self-claim from the shared pool */}
+                  {(() => {
+                    const a = assignments[sub.user_id];
+                    const mine = a?.adminId === myId;
+                    if (mine) {
+                      return (
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">Assigned to you</span>
+                          <button onClick={() => handleRelease(sub.user_id)} disabled={claimingId === sub.user_id} className="text-xs text-slate-400 hover:text-slate-600 hover:underline disabled:opacity-50">Release</button>
+                        </div>
+                      );
+                    }
+                    if (a) {
+                      return (
+                        <div className="mt-2">
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">Assigned to {a.email ?? 'another rep'}</span>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="mt-2">
+                        <button onClick={() => handleClaim(sub.user_id)} disabled={claimingId === sub.user_id} className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 px-2.5 py-1 rounded-full disabled:opacity-50">
+                          {claimingId === sub.user_id ? 'Assigning…' : '+ Assign to me'}
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Actions */}
@@ -577,7 +670,7 @@ export default function AdminPage() {
                             }`}>
                               <p className="leading-relaxed whitespace-pre-wrap">{msg.message}</p>
                               <p className={`text-[10px] mt-1.5 ${isAdminMsg ? 'text-slate-300' : 'text-blue-400'}`}>
-                                {isAdminMsg ? 'MBA' : 'Client'} · {msgDate}
+                                {isAdminMsg ? 'Representative' : 'Client'} · {msgDate}
                               </p>
                             </div>
                           </div>
