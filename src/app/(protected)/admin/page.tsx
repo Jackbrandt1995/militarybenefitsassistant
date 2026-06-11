@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import Button from '@/components/ui/Button';
 import {
@@ -556,6 +557,12 @@ export default function AdminPage() {
                     </div>
                     <span className="text-sm font-medium text-slate-700">{fullName}</span>
                     {sub.email && <span className="text-sm text-slate-400">· {sub.email}</span>}
+                    <Link
+                      href={`/admin/clients/${sub.user_id}`}
+                      className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline ml-1"
+                    >
+                      View client →
+                    </Link>
                     {/* Unread message badge */}
                     {unreadCount > 0 && (
                       <span className="inline-flex items-center gap-1 text-xs font-bold bg-red-500 text-white px-2 py-0.5 rounded-full ml-1">
