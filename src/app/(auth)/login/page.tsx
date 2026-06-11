@@ -10,7 +10,7 @@ import CaptchaField from '@/components/CaptchaField';
 
 // CAPTCHA is active only when a Turnstile site key is configured (and CAPTCHA is
 // enabled in the Supabase dashboard). Until then this is a no-op.
-const CAPTCHA_REQUIRED = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+const CAPTCHA_REQUIRED = !!process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY;
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');

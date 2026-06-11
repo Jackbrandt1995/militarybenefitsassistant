@@ -8,7 +8,7 @@ import Image from 'next/image';
 import Button from '@/components/ui/Button';
 import CaptchaField from '@/components/CaptchaField';
 
-const CAPTCHA_REQUIRED = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+const CAPTCHA_REQUIRED = !!process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY;
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
