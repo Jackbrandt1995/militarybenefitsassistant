@@ -122,10 +122,6 @@ export default function PrivacyPage() {
               <li><strong>AES-256 encryption at rest</strong> — all stored data is encrypted</li>
               <li><strong>TLS in transit</strong> — all data travels over TLS 1.2 / 1.3 (HTTPS)</li>
               <li>
-                <strong>Mandatory two-step verification (MFA)</strong> — every login requires a
-                time-based code from your authenticator app, so a stolen password alone cannot reach your data
-              </li>
-              <li>
                 <strong>Row-Level Security (RLS)</strong> — database rules enforce that you can only
                 ever read or write your own data; no other user can access your records
               </li>

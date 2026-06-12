@@ -51,35 +51,44 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'MFA required' }, { status: 403 });
   }
 
-  const body = await request.json();
+  try {
+    const body = await request.json();
 
-  // Encrypt sensitive fields before storing.
-  if (body.ssn) {
-    body.ssn_encrypted = encrypt(body.ssn);
-    delete body.ssn;
+    // Encrypt sensitive fields before storing.
+    if (body.ssn) {
+      body.ssn_encrypted = encrypt(body.ssn);
+      delete body.ssn;
+    }
+    // VA file number is stored encrypted (in the va_file_number column).
+    if (body.va_file_number) {
+      body.va_file_number = encrypt(body.va_file_number);
+    }
+
+    // Remove fields that shouldn't be directly updated
+    delete body.user_id;
+    delete body.id;
+    delete body.created_at;
+    delete body.ssn_decrypted;
+    delete body.va_file_number_decrypted;
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .update(body)
+      .eq('id', user.id)
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+  } catch (err) {
+    // Surface encryption-config failures as readable JSON instead of an opaque 500.
+    console.error('[profile PUT]', err);
+    const msg = err instanceof Error && err.message.includes('ENCRYPTION_KEY')
+      ? 'The server is missing its encryption configuration, so this could not be saved.'
+      : 'Something went wrong saving your profile. Please try again.';
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
-  // VA file number is stored encrypted (in the va_file_number column).
-  if (body.va_file_number) {
-    body.va_file_number = encrypt(body.va_file_number);
-  }
-
-  // Remove fields that shouldn't be directly updated
-  delete body.user_id;
-  delete body.id;
-  delete body.created_at;
-  delete body.ssn_decrypted;
-  delete body.va_file_number_decrypted;
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .update(body)
-    .eq('id', user.id)
-    .select()
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json(data);
 }

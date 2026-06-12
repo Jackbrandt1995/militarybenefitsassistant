@@ -26,37 +26,48 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'MFA required' }, { status: 403 });
   }
 
-  const { formId, formName, answers } = await req.json();
-  if (!formId || !answers || typeof answers !== 'object') {
-    return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
-  }
+  try {
+    const { formId, formName, answers } = await req.json();
+    if (!formId || !answers || typeof answers !== 'object') {
+      return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
+    }
 
-  const plaintext: Record<string, unknown> = {};
-  const encryptable: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(answers as Record<string, unknown>)) {
-    if (SENSITIVE_KEY.test(k) || looksLikeSSN(v)) continue; // drop SSN/bank/VA#
-    if (PLAINTEXT_KEY.test(k)) plaintext[k] = v;            // keep name + email readable
-    else encryptable[k] = v;                                // encrypt everything else
-  }
+    const plaintext: Record<string, unknown> = {};
+    const encryptable: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(answers as Record<string, unknown>)) {
+      if (SENSITIVE_KEY.test(k) || looksLikeSSN(v)) continue; // drop SSN/bank/VA#
+      if (PLAINTEXT_KEY.test(k)) plaintext[k] = v;            // keep name + email readable
+      else encryptable[k] = v;                                // encrypt everything else
+    }
 
-  const answers_json: Record<string, unknown> = { ...plaintext };
-  if (Object.keys(encryptable).length > 0) {
-    answers_json._enc = encrypt(JSON.stringify(encryptable));
-  }
+    const answers_json: Record<string, unknown> = { ...plaintext };
+    if (Object.keys(encryptable).length > 0) {
+      answers_json._enc = encrypt(JSON.stringify(encryptable));
+    }
 
-  const { data, error } = await supabase
-    .from('form_submissions')
-    .insert({
-      user_id: user.id,
-      form_id: String(formId),
-      form_name: String(formName ?? ''),
-      answers_json,
-    })
-    .select('id')
-    .single();
+    const { data, error } = await supabase
+      .from('form_submissions')
+      .insert({
+        user_id: user.id,
+        form_id: String(formId),
+        form_name: String(formName ?? ''),
+        answers_json,
+      })
+      .select('id')
+      .single();
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ id: data.id });
+  } catch (err) {
+    // Never let a thrown error escape as a non-JSON 500 — the client would only
+    // see a generic message. The most likely throw is encrypt() when
+    // ENCRYPTION_KEY isn't configured in this environment.
+    console.error('[submissions]', err);
+    const msg = err instanceof Error && err.message.includes('ENCRYPTION_KEY')
+      ? 'The server is missing its encryption configuration, so the submission could not be saved.'
+      : 'Something went wrong saving the submission. Please try again.';
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
-  return NextResponse.json({ id: data.id });
 }

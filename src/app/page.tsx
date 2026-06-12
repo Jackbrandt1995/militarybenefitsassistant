@@ -183,10 +183,10 @@ export default async function Home() {
                 <Shield className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900 text-sm">Mandatory Two-Step Verification</h3>
+                <h3 className="font-semibold text-gray-900 text-sm">Secure Cloud Infrastructure</h3>
                 <p className="text-gray-500 text-xs mt-1 leading-relaxed">
-                  Every account is protected by an authenticator-app code (TOTP) required at each login,
-                  so a stolen password alone can never reach your data. Hosted on Vercel and Supabase.
+                  Hosted on Vercel and Supabase with HTTPS enforced on every page,
+                  strict security headers, and DDoS protection at the edge.
                 </p>
               </div>
             </div>

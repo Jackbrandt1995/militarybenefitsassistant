@@ -49,31 +49,40 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'MFA required' }, { status: 403 });
   }
 
-  const body = await request.json();
+  try {
+    const body = await request.json();
 
-  // Encrypt sensitive fields
-  if (body.routing_number) {
-    body.routing_number_encrypted = encrypt(body.routing_number);
-    delete body.routing_number;
+    // Encrypt sensitive fields
+    if (body.routing_number) {
+      body.routing_number_encrypted = encrypt(body.routing_number);
+      delete body.routing_number;
+    }
+    if (body.account_number) {
+      body.account_number_encrypted = encrypt(body.account_number);
+      delete body.account_number;
+    }
+
+    delete body.user_id;
+    delete body.id;
+
+    // Upsert: insert if not exists, update if exists
+    const { data, error } = await supabase
+      .from('direct_deposit')
+      .upsert({ ...body, user_id: user.id }, { onConflict: 'user_id' })
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+  } catch (err) {
+    // Surface encryption-config failures as readable JSON instead of an opaque 500.
+    console.error('[direct-deposit PUT]', err);
+    const msg = err instanceof Error && err.message.includes('ENCRYPTION_KEY')
+      ? 'The server is missing its encryption configuration, so this could not be saved.'
+      : 'Something went wrong saving your banking info. Please try again.';
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
-  if (body.account_number) {
-    body.account_number_encrypted = encrypt(body.account_number);
-    delete body.account_number;
-  }
-
-  delete body.user_id;
-  delete body.id;
-
-  // Upsert: insert if not exists, update if exists
-  const { data, error } = await supabase
-    .from('direct_deposit')
-    .upsert({ ...body, user_id: user.id }, { onConflict: 'user_id' })
-    .select()
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json(data);
 }
