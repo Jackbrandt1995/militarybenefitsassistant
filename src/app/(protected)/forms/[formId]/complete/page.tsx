@@ -17,7 +17,6 @@ import {
 } from '@/lib/forms/submissionInstructions';
 import SignaturePad from '@/components/SignaturePad';
 import Button from '@/components/ui/Button';
-import Link from 'next/link';
 import {
   CheckCircle,
   Download,
@@ -26,7 +25,6 @@ import {
   AlertCircle,
   Mail,
   ClipboardList,
-  FileSignature,
 } from 'lucide-react';
 
 export default function CompletePage({ params }: { params: Promise<{ formId: string }> }) {
@@ -517,30 +515,6 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
                 {/* ── Agent authorization form ──────────────────────────────── */}
                 {submissionMode === 'agent' && (
                   <div className="mt-2 border-t border-gray-100 pt-4 space-y-4">
-                    {/* Appointment-of-representative gate (every form except 21-22A itself) */}
-                    {form.id !== 'va-21-22a' && (
-                      <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 space-y-3">
-                        <div className="flex gap-2">
-                          <FileSignature className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                          <div>
-                            <p className="font-semibold text-amber-900">First, appoint us as your representative</p>
-                            <p className="text-sm text-amber-800 mt-1">
-                              Before a Military Benefits Assistant representative can take any action on your
-                              behalf, you must legally appoint us by completing{' '}
-                              <strong>VA Form 21-22A — Appointment of Individual as Claimant&apos;s Representative</strong>.
-                              This is a one-time step: once it is on file, we can file this and future forms for you.
-                            </p>
-                          </div>
-                        </div>
-                        <Link
-                          href="/forms/va-21-22a"
-                          className="inline-flex items-center justify-center rounded-md bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 text-sm font-semibold transition-colors"
-                        >
-                          Complete VA Form 21-22A →
-                        </Link>
-                      </div>
-                    )}
-
                     {/* What we'll do */}
                     <div className="rounded-lg bg-indigo-50 border border-indigo-200 p-4 space-y-2">
                       <p className="font-semibold text-indigo-900">What happens next</p>

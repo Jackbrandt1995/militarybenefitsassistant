@@ -214,12 +214,17 @@ export const va221990Mapping: FieldMapping = {
     { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 114.0, checkSize: 6 },
   ],
 
-  // ── PRIOR BENEFITS ────────────────────────────────────────────────────────
-  // previousFederalBenefits and previousVABenefits have no confirmed yes/no checkbox positions
-  // in the VA 22-1990 PDF (page 5 checkboxes are fully accounted for above). These interview
-  // questions collect data for remarks but do not map to dedicated PDF checkboxes.
-  previousFederalBenefits: [],
-  previousVABenefits: [],
+  // ── ITEMS 19 & 20 (page 5) ────────────────────────────────────────────────
+  // Q19: currently in a Senior ROTC scholarship (10 U.S.C. §2107) — yes11/no11, cy=168.0
+  currentRotcScholarship: [
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 168.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 168.0, checkSize: 6 },
+  ],
+  // Q20: period of active duty DoD counts for education-loan repayment — yes12/no12, cy=144.0
+  activeDutyLoanRepayment: [
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'Yes' ? 'true' : '', checkPage: 5, checkCX: 450.3, checkCY: 144.0, checkSize: 6 },
+    { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'No'  ? 'true' : '', checkPage: 5, checkCX: 492.3, checkCY: 144.0, checkSize: 6 },
+  ],
 
   // ── FAMILY & DEPENDENTS (page 6) ─────────────────────────────────────────
   // Q22: married          — yes cx=43.5 no cx=85.5 cy=642.0

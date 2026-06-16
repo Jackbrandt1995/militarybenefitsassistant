@@ -337,6 +337,28 @@ export const va221990: FormDefinition = {
           ],
         },
         {
+          id: 'currentRotcScholarship',
+          label: 'Are you CURRENTLY in a Senior ROTC scholarship that pays your tuition, fees, and books (Section 2107, Title 10)?',
+          type: 'radio',
+          required: true,
+          helpText: 'Item 19 — different from the question above. Answer Yes only if you are right now receiving a Section 2107 Senior ROTC scholarship that pays your school costs. Otherwise select No.',
+          options: [
+            { label: 'Yes – I currently have a Section 2107 Senior ROTC scholarship', value: 'Yes' },
+            { label: 'No', value: 'No' },
+          ],
+        },
+        {
+          id: 'activeDutyLoanRepayment',
+          label: 'Did you have a period of active duty that the Department of Defense counts toward repaying an education loan?',
+          type: 'radio',
+          required: true,
+          helpText: 'Item 20. Answer Yes if a period of your active duty was used by the military for an education-loan repayment program. If Yes, describe that period in the Remarks section.',
+          options: [
+            { label: 'Yes – a period of my active duty was counted for loan repayment', value: 'Yes' },
+            { label: 'No', value: 'No' },
+          ],
+        },
+        {
           id: 'serviceAcademy',
           label: 'Did you graduate from a federal military service academy?',
           type: 'radio',
