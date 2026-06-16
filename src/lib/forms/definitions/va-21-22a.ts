@@ -543,6 +543,19 @@ export const va2122a: FormDefinition = {
       : code === '11'
         ? (s(answers.claimantRelationshipOther) || 'Other')
         : (relMap[code] || '');
-    return { ...answers, claimantRelationship };
+
+    // The §14.630 no-charge case (Item 16B) uses the Item 17A/17B signature block.
+    // Surface the applicant signature + date there ONLY for that appointment type;
+    // every other case (and always) signs Item 23A/23B instead.
+    //   - signature14630 (image overlay) is empty -> fillPdf skips the 17A overlay.
+    //   - signatureDate14630 is ALWAYS non-empty (the raw date), gated instead by a
+    //     "yes"/"no" prefix the mapping transform reads, so the Item 17B date boxes
+    //     stay blank unless §14.630. (Keeping it non-empty avoids a false
+    //     "orphan key" verifier flag for a legitimately-conditional field.)
+    const is14630 = s(answers.appointmentType) === 'Individual14630';
+    const signature14630 = is14630 ? s(answers.signaturePad) : '';
+    const signatureDate14630 = `${is14630 ? 'yes' : 'no'}|${s(answers.signatureDate)}`;
+
+    return { ...answers, claimantRelationship, signature14630, signatureDate14630 };
   },
 };
