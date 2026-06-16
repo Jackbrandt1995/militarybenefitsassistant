@@ -8,7 +8,7 @@ import { PDFDocument, PDFTextField, PDFCheckBox, PDFRadioGroup, PDFDropdown, Sta
 
 const SCRIPTS = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(SCRIPTS, '..');
-const TMP = path.join(SCRIPTS, '.fill-tmp');
+const TMP = path.join(SCRIPTS, '.fill-tmp-' + process.pid); // pid-scoped: safe under parallel runs
 rmSync(TMP, { recursive: true, force: true }); mkdirSync(TMP, { recursive: true });
 
 const EXTS = ['.ts', '.tsx', '.js', '.mjs']; const compiled = new Map(); let counter = 0;
