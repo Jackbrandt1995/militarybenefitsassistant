@@ -86,6 +86,21 @@ export const va225490Mapping: FieldMapping = {
   // hsGradDate removed: orphan key — no matching wizard question (the definition only
   // collects hsGraduated Yes/No) and computeAnswers never produces it, so it was always blank.
 
+  // educationType (type of training), schoolName (name/address of school) and
+  // educationObjective (educational/vocational objective) are INTENTIONALLY NOT MAPPED.
+  // The JAN 2024 edition of VA Form 22-5490 has no such data-entry cells: Part IV
+  // ("AGE AND HIGH SCHOOL INFORMATION", items 22-25) only collects under-18 status, HS/GED
+  // graduation, vocational-counseling interest, and special-training disability — there is
+  // no "TYPE OF TRAINING/EDUCATION", no "NAME AND LOCATION/ADDRESS OF SCHOOL", and no
+  // "EDUCATIONAL OR VOCATIONAL OBJECTIVE" field anywhere on the form (the only mentions of
+  // "vocational objective" / "courses" / "educational institutions" are in the prose
+  // instructions). On the modern form the applicant selects a school/program later via the
+  // va.gov enrollment flow, so these wizard fields have no destination cell here.
+
+  // bankName (wizard) is INTENTIONALLY NOT MAPPED. Item 8 DIRECT DEPOSIT has only
+  // ROUTING OR TRANSIT NUMBER, ACCOUNT TYPE (CHECKING|SAVINGS) and ACCOUNT NUMBER — no
+  // bank/financial-institution NAME cell (the bank is identified by the routing number).
+
   // previouslyReceivedVABenefits (wizard Yes/No) is INTENTIONALLY NOT MAPPED.
   // Item 26 on the PDF is not a single Yes/No control — it is a checkbox SET
   // (Page_3 A[0]/B[0]/C[0]/D[0]/E[0]/G[0]: "check all that apply" among disability

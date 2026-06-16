@@ -64,6 +64,21 @@ const ALL_FORMS = [
 const ONLY = process.argv[2];
 const FORM_FILES = ALL_FORMS.filter(f => !ONLY || f === ONLY);
 
+// Wizard fields collected but with NO destination cell on the PDF — each was verified
+// by inspecting the real AcroForm + printed labels and adversarially reviewed. The guard
+// skips these so its output stays actionable: anything unmapped that is NOT listed here
+// is a REAL regression (a collected answer that would silently print blank) and still fires.
+//   '*'          -> privacyAct: a UI-only "I have read the Privacy Act notice" consent gate
+//                   present on every form; no PDF acknowledgment field exists.
+const INTENTIONAL_UNMAPPED = {
+  '*': ['privacyAct'],
+  'va-22-0803': ['ssn'],                          // applicant is identified by VA File Number (VAFile[0]); no SSN cell
+  'va-22-1990': ['previousFederalBenefits', 'previousVABenefits'], // no matching Yes/No box on the form
+  'va-22-1990e': ['bankName'],                    // Item 8 direct deposit = routing# + account# only (no bank-name cell)
+  'va-22-5490': ['bankName', 'previouslyReceivedVABenefits', 'educationType', 'schoolName', 'educationObjective'], // see mapping comments: 22-5490 JAN-2024 has no school/objective/training cells; Item 26 is a check-all set, not Yes/No
+  'va-22-1999c': ['ssn', 'address', 'city', 'state', 'zip'], // 7-item form: Item 2 is VA File No. only; Item 5 is the SCHOOL address, not the applicant's
+};
+
 function genValue(field) {
   const id = (field.id || '').toLowerCase();
   const lbl = (field.label || '').toLowerCase();
@@ -183,17 +198,21 @@ for (const base of FORM_FILES) {
     try { return new RegExp('\\b' + id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(computeSrc); }
     catch { return computeSrc.includes(id); }
   };
+  const intentional = new Set([...(INTENTIONAL_UNMAPPED['*'] || []), ...(INTENTIONAL_UNMAPPED[base] || [])]);
+  let intentionalResiduals = 0;
   for (const step of def.steps || []) {
     for (const f of step.fields || []) {
       if (!f.id || f.type === 'document') continue; // attachments aren't PDF fields
       if (mappingKeys.has(f.id) || readByCompute(f.id)) continue;
+      if (intentional.has(f.id)) { intentionalResiduals++; continue; } // verified: no PDF cell (see INTENTIONAL_UNMAPPED)
       findings.push(`UNMAPPED QUESTION (collected but not on PDF -> blank): "${f.id}"${f.label ? ' — ' + String(f.label).slice(0, 55) : ''}`);
     }
   }
 
   total += findings.length;
   summary.push([base, findings.length]);
-  console.log(`\n### ${base}  (${findings.length} finding${findings.length === 1 ? '' : 's'})`);
+  const residualNote = intentionalResiduals ? `, ${intentionalResiduals} documented residual${intentionalResiduals === 1 ? '' : 's'}` : '';
+  console.log(`\n### ${base}  (${findings.length} finding${findings.length === 1 ? '' : 's'}${residualNote})`);
   for (const f of findings) console.log('   - ' + f);
 }
 
