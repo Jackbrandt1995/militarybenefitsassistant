@@ -1,23 +1,30 @@
 import type { FieldMapping } from '../fillPdf';
 import { formatDateString } from '../fillPdf';
 
+// Several AcroForm text fields carry a maxLength. pdf-lib's setText() THROWS when
+// the value exceeds it, and fillPdf.ts swallows that in try/catch -> the whole
+// field renders BLANK (not truncated). Clamp every overflow-prone value to the
+// real maxLength so long inputs degrade gracefully instead of vanishing.
+// (length === maxLength is allowed by setText.) Maxlengths confirmed via pdf-lib.
+const sl = (n: number) => (v: string) => String(v ?? '').slice(0, n);
+
 export const va228691Mapping: FieldMapping = {
   // fullName / fullAddress are computed by computeAnswers in the form definition
-  fullName: { pdfFieldName: 'form1[0].#subform[0].NameofApplicant[0]', type: 'text' },
-  fullAddress: { pdfFieldName: 'form1[0].#subform[0].AddressofApplicant[0]', type: 'text' },
-  vaFileNumber: { pdfFieldName: 'form1[0].#subform[0].VAFileNumber[0]', type: 'text' },
+  fullName: { pdfFieldName: 'form1[0].#subform[0].NameofApplicant[0]', type: 'text', transform: sl(101) }, // MAXLEN=101
+  fullAddress: { pdfFieldName: 'form1[0].#subform[0].AddressofApplicant[0]', type: 'text', transform: sl(306) }, // MAXLEN=306
+  vaFileNumber: { pdfFieldName: 'form1[0].#subform[0].VAFileNumber[0]', type: 'text', transform: sl(49) }, // MAXLEN=49
   ssn: { pdfFieldName: 'form1[0].#subform[0].SSN[0]', type: 'text' , transform: (v: string) => v.replace(/\D/g, '')},
   dob: { pdfFieldName: 'form1[0].#subform[0].DOB[0]', type: 'text', transform: formatDateString },
-  phone: { pdfFieldName: 'form1[0].#subform[0].Telephone[0]', type: 'text' },
-  email: { pdfFieldName: 'form1[0].#subform[0].Email[0]', type: 'text' },
+  phone: { pdfFieldName: 'form1[0].#subform[0].Telephone[0]', type: 'text', transform: sl(51) }, // MAXLEN=51
+  email: { pdfFieldName: 'form1[0].#subform[0].Email[0]', type: 'text', transform: sl(51) }, // MAXLEN=51
   sex: [
     { pdfFieldName: 'form1[0].#subform[0].MALE[0]', type: 'checkbox', transform: v => v === 'Male' ? 'true' : 'false' },
     { pdfFieldName: 'form1[0].#subform[0].FEMALE[0]', type: 'checkbox', transform: v => v === 'Female' ? 'true' : 'false' },
   ],
 
   // School & Enrollment
-  schoolName: { pdfFieldName: 'form1[0].#subform[0].AddressofSchool[0]', type: 'text' },
-  trainingProgram: { pdfFieldName: 'form1[0].#subform[0].TrainingProgram[0]', type: 'text' },
+  schoolName: { pdfFieldName: 'form1[0].#subform[0].AddressofSchool[0]', type: 'text', transform: sl(104) }, // MAXLEN=104 (textarea: name+street+city+state+zip)
+  trainingProgram: { pdfFieldName: 'form1[0].#subform[0].TrainingProgram[0]', type: 'text', transform: sl(96) }, // MAXLEN=96
   enrollBegin: { pdfFieldName: 'form1[0].#subform[0].ADate[0]', type: 'text', transform: formatDateString },
   enrollEnd: { pdfFieldName: 'form1[0].#subform[0].BDate[0]', type: 'text', transform: formatDateString },
   nextEnrollBegin: { pdfFieldName: 'form1[0].#subform[0].A8Date[0]', type: 'text', transform: formatDateString },
@@ -42,11 +49,11 @@ export const va228691Mapping: FieldMapping = {
     { pdfFieldName: 'form1[0].#subform[0].YES1[0]', type: 'checkbox', transform: v => v === 'Yes' ? 'true' : 'false' },
     { pdfFieldName: 'form1[0].#subform[0].NO1[0]', type: 'checkbox', transform: v => v === 'No' ? 'true' : 'false' },
   ],
-  priorWorkStudyWhere: { pdfFieldName: 'form1[0].#subform[0].IfYes[0]', type: 'text' },
-  // Limit long free-text fields to ~2 lines (~200 chars) so text fits in the PDF box
-  workSitePreference: { pdfFieldName: 'form1[0].#subform[0].WorkSiteReference[0]', type: 'text', transform: v => v ? v.slice(0, 200) : '' },
-  workExperience: { pdfFieldName: 'form1[0].#subform[0].WorkExperience[0]', type: 'text', transform: v => v ? v.slice(0, 200) : '' },
-  qualifications: { pdfFieldName: 'form1[0].#subform[0].Qualification[0]', type: 'text', transform: v => v ? v.slice(0, 200) : '' },
+  priorWorkStudyWhere: { pdfFieldName: 'form1[0].#subform[0].IfYes[0]', type: 'text', transform: sl(52) }, // MAXLEN=52
+  // Free-text fields: clamp to each box's actual maxLength (overflow throws -> blanks the whole field).
+  workSitePreference: { pdfFieldName: 'form1[0].#subform[0].WorkSiteReference[0]', type: 'text', transform: sl(118) }, // MAXLEN=118 (was slice 200 -> overflowed -> blank)
+  workExperience: { pdfFieldName: 'form1[0].#subform[0].WorkExperience[0]', type: 'text', transform: sl(205) }, // MAXLEN=205
+  qualifications: { pdfFieldName: 'form1[0].#subform[0].Qualification[0]', type: 'text', transform: sl(303) }, // MAXLEN=303
 
   // Availability Schedule
   availMonday: { pdfFieldName: 'form1[0].#subform[0].MONDAY[0]', type: 'checkbox' },

@@ -21,10 +21,21 @@ export const va221990tMapping: FieldMapping = {
     { pdfFieldName: 'form1[0].#subform[0].FEMALE[0]', type: 'checkbox', transform: v => v === 'Female' ? 'true' : 'false' },
   ],
   vaFileNumber: { pdfFieldName: 'form1[0].#subform[0].filenumber[0]', type: 'text' },
-  // Address: numberandstreet = street, apartment = apt/rural route, mailingaddress = city, state, zip5
-  address: { pdfFieldName: 'form1[0].#subform[0].numberandstreet[0]', type: 'text' },
-  apt: { pdfFieldName: 'form1[0].#subform[0].apartment[0]', type: 'text' },
-  city: { pdfFieldName: 'form1[0].#subform[0].mailingaddress[0]', type: 'text' },
+
+  // Item 2 – NAME OF VETERAN (if other than applicant): second name row (y=677).
+  veteranFirstName: { pdfFieldName: 'form1[0].#subform[0].firstname2[0]', type: 'text' },
+  veteranMI: { pdfFieldName: 'form1[0].#subform[0].mi2[0]', type: 'text' },
+  veteranLastName: { pdfFieldName: 'form1[0].#subform[0].lastname2[0]', type: 'text' },
+
+  // Item 3 – MAILING ADDRESS. NOTE: the PDF's internal field names are misleading;
+  // mapped here by the printed label each cell actually sits under (top→bottom):
+  //   mailingaddress[0] (y=636) = NUMBER AND STREET OR RURAL ROUTE -> street
+  //   numberandstreet[0] (y=606) = APARTMENT OR BOX NUMBER         -> apt
+  //   apartment[0]      (y=576) = CITY OR POST OFFICE              -> city
+  //   state[0]/zip5[0]  (y=548) = STATE / ZIP CODE                 -> state/zip
+  address: { pdfFieldName: 'form1[0].#subform[0].mailingaddress[0]', type: 'text' },
+  apt: { pdfFieldName: 'form1[0].#subform[0].numberandstreet[0]', type: 'text' },
+  city: { pdfFieldName: 'form1[0].#subform[0].apartment[0]', type: 'text' },
   stateField: { pdfFieldName: 'form1[0].#subform[0].state[0]', type: 'text' },
   zip: { pdfFieldName: 'form1[0].#subform[0].zip5[0]', type: 'text' },
   applicantEmail: { pdfFieldName: 'form1[0].#subform[0].EMAIL13c[0]', type: 'text' },

@@ -109,6 +109,9 @@ export const va220810: FormDefinition = {
       .map(v => String(v || '').trim()).filter(Boolean).join(' ');
     const cityStateZip = [answers.city, answers.state, answers.zip]
       .map(v => String(v || '').trim()).filter(Boolean).join(', ');
-    return { ...answers, fullName, cityStateZip };
+    // Item 2A is one multi-line cell: street on line 1, city/state/zip on line 2.
+    const fullAddress = [String(answers.address || '').trim(), cityStateZip]
+      .filter(Boolean).join('\n');
+    return { ...answers, fullName, cityStateZip, fullAddress };
   },
 };

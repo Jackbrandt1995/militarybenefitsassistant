@@ -50,32 +50,6 @@ export const va281900: FormDefinition = {
       ],
     },
     {
-      id: 'disability',
-      title: 'Disability & Service Information',
-      description: 'Provide information about your service-connected disability rating.',
-      fields: [
-        { id: 'disabilityRating', label: 'Current VA Disability Rating (%)', type: 'text', helpText: 'Enter your current combined VA disability rating (e.g., "70%"). You must have at least a 10% rating to be eligible for VR&E.' },
-        { id: 'disabilityDescription', label: 'Brief Description of Service-Connected Disabilities', type: 'textarea', helpText: 'Describe how your service-connected disabilities affect your ability to work or pursue employment.' },
-        { id: 'previousVRE', label: 'Have you previously participated in a VR&E program?', type: 'radio', required: true, options: [
-          { label: 'Yes', value: 'Yes' }, { label: 'No', value: 'No' },
-        ]},
-        { id: 'previousVREDates', label: 'If yes, approximate dates of VR&E participation', type: 'text', condition: { field: 'previousVRE', value: 'Yes' }, helpText: 'Enter approximate start and end dates of your prior VR&E program.' },
-      ],
-    },
-    {
-      id: 'employmentGoal',
-      title: 'Employment Goal',
-      description: 'Describe the type of employment or career you are seeking through VR&E.',
-      fields: [
-        { id: 'desiredOccupation', label: 'Desired Occupation or Career Field', type: 'text', helpText: 'Enter the type of job or career you want to pursue, e.g., "Software Developer", "Paralegal", "HVAC Technician".' },
-        { id: 'currentlyEmployed', label: 'Are you currently employed?', type: 'radio', required: true, options: [
-          { label: 'Yes', value: 'Yes' }, { label: 'No', value: 'No' },
-        ]},
-        { id: 'currentEmployer', label: 'If yes, current employer name', type: 'text', condition: { field: 'currentlyEmployed', value: 'Yes' } },
-        { id: 'remarks', label: 'Additional Remarks', type: 'textarea', helpText: 'Include any additional information relevant to your VR&E application.' },
-      ],
-    },
-    {
       id: 'requiredDocs',
       title: 'Required Documents — Upload Now',
       description: 'Upload the required documents before signing. VA needs these to verify your eligibility for VR&E benefits.',

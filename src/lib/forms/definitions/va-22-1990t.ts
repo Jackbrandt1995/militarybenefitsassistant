@@ -46,7 +46,8 @@ export const va221990t: FormDefinition = {
         { id: 'stateField', label: 'State', type: 'text', profilePath: 'profile.address_state' },
         { id: 'zip', label: 'ZIP Code', type: 'text', profilePath: 'profile.address_zip' },
         { id: 'applicantEmail', label: 'Email Address', type: 'email', profilePath: 'profile.email' },
-        { id: 'phone', label: 'Phone Number', type: 'phone', profilePath: 'profile.phone_mobile' },
+        // NOTE: VA Form 22-1990t has no phone/telephone cell (only an e-mail field at
+        // Item 13C). The phone question was removed because there is nowhere to place it.
       ],
     },
     {

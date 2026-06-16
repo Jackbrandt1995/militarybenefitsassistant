@@ -32,14 +32,56 @@ export const va225495Mapping: FieldMapping = {
   // Item 10C TELEPHONE NUMBER of someone who knows where you can be reached (TextField1[1], x=432 y=360)
   emergencyPhone: { pdfFieldName: 'form1[0].Page_1[0].TextField1[1]', type: 'text' },
 
-  // Qualifying Individual (updated field IDs)
-  qiFirstName: { pdfFieldName: 'form1[0].Page_1[0].NameofVeteran[0]', type: 'text' },
+  // Qualifying Individual (Part II)
+  // Item 11 NAME (TU="11. NAME OF INDIVIDUAL ... (First, Middle, Last)") is one combined
+  // text field. qiFullName is computed in the definition from qiFirstName + qiMiddleName +
+  // qiLastName so the middle and last name parts aren't dropped (previously only qiFirstName
+  // was mapped, leaving the middle/last blank).
+  qiFullName: { pdfFieldName: 'form1[0].Page_1[0].NameofVeteran[0]', type: 'text' },
   qiSSN: { pdfFieldName: 'form1[0].Page_1[0].SSN2[0]', type: 'text' , transform: (v: string) => v.replace(/\D/g, '')},
   qiBranch: { pdfFieldName: 'form1[0].Page_1[0].BRANCHOFSERVICE[0]', type: 'text' },
   // Item 14 DATE OF BIRTH of qualifying individual (DateSigned[1], x=432 y=300, same row as SSN2/branch)
   qiDOB: { pdfFieldName: 'form1[0].Page_1[0].DateSigned[1]', type: 'text', transform: formatDateString },
   // Item 15 DATE OF DEATH / MIA / POW (DateSigned[2], x=36 y=270, row below)
   qiDateOfDeath: { pdfFieldName: 'form1[0].Page_1[0].DateSigned[2]', type: 'text', transform: formatDateString },
+  // Item 16 IS QUALIFYING INDIVIDUAL CURRENTLY ON ACTIVE DUTY — right YES/NO group
+  // (RadioButtonList[3], widgets x=300/336 y=278, OPTS=[YES,NO]).
+  qiOnActiveDuty: { pdfFieldName: 'form1[0].Page_1[0].RadioButtonList[3]', type: 'radio', transform: v => v === 'Yes' ? 'YES' : 'NO' },
+
+  // Item 17 YOUR RELATIONSHIP TO QUALIFYING INDIVIDUAL — single radio group
+  // (RadioButtonList[6], y=248). Printed labels L->R: SPOUSE | SURVIVING SPOUSE | CHILD |
+  // STEPCHILD | ADOPTED CHILD. pdf-lib getOptions() returns 1-indexed export labels
+  // ["1".."5"] where select("N") ticks widget index N-1. Widget x-order maps to:
+  //   "1"=x36 SPOUSE, "2"=x186 CHILD, "3"=x90 SURVIVING SPOUSE, "4"=x234 STEPCHILD,
+  //   "5"=x300 ADOPTED CHILD (verified by selecting each value and reading /V).
+  relationship: {
+    pdfFieldName: 'form1[0].Page_1[0].RadioButtonList[6]',
+    type: 'radio',
+    transform: v =>
+      v === 'Spouse' ? '1'
+      : v === 'Child' ? '2'
+      : v === 'SurvivingSpouse' ? '3'
+      : v === 'Stepchild' ? '4'
+      : v === 'AdoptedChild' ? '5'
+      : '',
+  },
+
+  // Part III - Applicant's Military Service Information
+  // Item 18 OUTSTANDING FELONY AND/OR WARRANT — left YES/NO group (RadioButtonList[4],
+  // widgets x=36/72 y=218, OPTS=[YES,NO]).
+  felonyOrWarrant: { pdfFieldName: 'form1[0].Page_1[0].RadioButtonList[4]', type: 'radio', transform: v => v === 'Yes' ? 'YES' : 'NO' },
+  // Item 19 HAVE YOU EVER SERVED ON ACTIVE DUTY — left YES/NO group (RadioButtonList[5],
+  // widgets x=36/72 y=158, OPTS=[YES,NO]).
+  applicantServedActiveDuty: { pdfFieldName: 'form1[0].Page_1[0].RadioButtonList[5]', type: 'radio', transform: v => v === 'Yes' ? 'YES' : 'NO' },
+  // Item 20 PERIODS OF ACTIVE DUTY — first (Line 1 of 3) row, tooltips confirm columns:
+  //   A. DATE ENTERED = DateSigned[3] (x=54 y=90)
+  //   B. DATE SEPARATED = DateSigned[6] (x=186 y=90)
+  //   C. BRANCH OF SERVICE OR RESERVE/GUARD COMPONENT = Branch1[0] (x=300 y=91)
+  //   D. CHARACTER OF DISCHARGE = CharacterOfDischarge1[0] (x=456 y=91)
+  sp1Entered: { pdfFieldName: 'form1[0].Page_1[0].DateSigned[3]', type: 'text', transform: formatDateString },
+  sp1Separated: { pdfFieldName: 'form1[0].Page_1[0].DateSigned[6]', type: 'text', transform: formatDateString },
+  sp1Branch: { pdfFieldName: 'form1[0].Page_1[0].Branch1[0]', type: 'text' },
+  sp1Discharge: { pdfFieldName: 'form1[0].Page_1[0].CharacterOfDischarge1[0]', type: 'text' },
 
   // Benefit type — Page 2 RadioButtonList[0]
   // OPTS=[CHAPTER 33 ... FRY SCHOLARSHIP | CHAPTER 35 ... DEA]

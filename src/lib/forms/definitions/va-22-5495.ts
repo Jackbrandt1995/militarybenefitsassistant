@@ -1,5 +1,5 @@
 import type { FormDefinition } from '../types';
-import { branchOptions, stateOptions } from '@/lib/validation';
+import { branchOptions, dischargeOptions, stateOptions } from '@/lib/validation';
 
 export const va225495: FormDefinition = {
   id: 'va-22-5495',
@@ -65,6 +65,33 @@ export const va225495: FormDefinition = {
         { id: 'qiBranch', label: 'Branch of Service', type: 'select', required: true, options: branchOptions },
         { id: 'qiDOB', label: 'Date of Birth', type: 'date' },
         { id: 'qiDateOfDeath', label: 'Date of Death / MIA / POW (if applicable)', type: 'date', helpText: 'Leave blank if not applicable.' },
+        { id: 'qiOnActiveDuty', label: 'Is the qualifying individual currently on active duty?', type: 'radio', required: true, helpText: 'Item 16.', options: [
+          { label: 'Yes', value: 'Yes' }, { label: 'No', value: 'No' },
+        ]},
+      ],
+    },
+    {
+      id: 'relationship',
+      title: 'Relationship & Military Service',
+      description: 'Your relationship to the qualifying individual and your own active-duty service, if any.',
+      fields: [
+        { id: 'relationship', label: 'Your relationship to the qualifying individual', type: 'radio', required: true, helpText: 'Item 17. Check only one.', options: [
+          { label: 'Spouse', value: 'Spouse' },
+          { label: 'Surviving Spouse', value: 'SurvivingSpouse' },
+          { label: 'Child', value: 'Child' },
+          { label: 'Stepchild', value: 'Stepchild' },
+          { label: 'Adopted Child', value: 'AdoptedChild' },
+        ]},
+        { id: 'felonyOrWarrant', label: 'Do you or the qualifying individual have an outstanding felony and/or warrant?', type: 'radio', required: true, helpText: 'Item 18.', options: [
+          { label: 'Yes', value: 'Yes' }, { label: 'No', value: 'No' },
+        ]},
+        { id: 'applicantServedActiveDuty', label: 'Have you ever served on active duty in the Armed Forces?', type: 'radio', required: true, helpText: 'Item 19. If "No," you can leave the active-duty period fields below blank.', options: [
+          { label: 'Yes', value: 'Yes' }, { label: 'No', value: 'No' },
+        ]},
+        { id: 'sp1Entered', label: 'Active Duty Period — Date Entered', type: 'date', profilePath: 'servicePeriods[0].date_entered', helpText: 'Item 20A. Leave blank if you have not served.' },
+        { id: 'sp1Separated', label: 'Active Duty Period — Date Separated', type: 'date', profilePath: 'servicePeriods[0].date_separated', helpText: 'Item 20B.' },
+        { id: 'sp1Branch', label: 'Active Duty Period — Branch / Reserve or Guard Component', type: 'select', profilePath: 'servicePeriods[0].branch', options: branchOptions, helpText: 'Item 20C.' },
+        { id: 'sp1Discharge', label: 'Active Duty Period — Character of Discharge', type: 'select', profilePath: 'servicePeriods[0].character_of_discharge', options: dischargeOptions, helpText: 'Item 20D.' },
       ],
     },
     {
@@ -145,6 +172,11 @@ export const va225495: FormDefinition = {
       .map(v => String(v || '').trim()).filter(Boolean).join(' ');
     const fullAddress = [answers.address, answers.city, stateZip]
       .map(v => String(v || '').trim()).filter(Boolean).join(', ');
-    return { ...answers, fullName, fullAddress };
+    // Item 11 wants the qualifying individual as "First, Middle, Last" in one field.
+    // Compose it from the three separately-collected name parts so the middle name and
+    // last name aren't dropped (only qiFirstName was mapped before).
+    const qiFullName = [answers.qiFirstName, answers.qiMiddleName, answers.qiLastName]
+      .map(v => String(v || '').trim()).filter(Boolean).join(' ');
+    return { ...answers, fullName, fullAddress, qiFullName };
   },
 };

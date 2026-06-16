@@ -2,11 +2,14 @@ import type { FieldMapping } from '../fillPdf';
 import { formatDateString } from '../fillPdf';
 
 export const va220810Mapping: FieldMapping = {
-  // fullName / cityStateZip are computed by computeAnswers in the form definition
+  // fullName / fullAddress are computed by computeAnswers in the form definition
   fullName: { pdfFieldName: 'F[0].Page_1[0].ApplicantsName[0]', type: 'text' },
-  address: { pdfFieldName: 'F[0].Page_1[0].Address[0]', type: 'text' },
-  // Address[1] is the city/state/zip line directly below the street address
-  cityStateZip: { pdfFieldName: 'F[0].Page_1[0].Address[1]', type: 'text' },
+  // Item 2A is a single multi-line cell (Address[0], h=24): street on line 1,
+  // city/state/zip on line 2. fullAddress joins them with a newline.
+  fullAddress: { pdfFieldName: 'F[0].Page_1[0].Address[0]', type: 'text' },
+  // Item 2B "APPLICANT'S EMAIL ADDRESS" is the AcroForm field Address[1]
+  // (x=36 y=588 w=540 h=12) — confirmed by render; not a city/state/zip line.
+  emailAddress: { pdfFieldName: 'F[0].Page_1[0].Address[1]', type: 'text' },
   ssn: { pdfFieldName: 'F[0].Page_1[0].SSN[0]', type: 'text' , transform: (v: string) => v.replace(/\D/g, '')},
   daytimePhone: { pdfFieldName: 'F[0].Page_1[0].DaytimePhone[0]', type: 'text' },
   eveningPhone: { pdfFieldName: 'F[0].Page_1[0].EveningPhone[0]', type: 'text' },
