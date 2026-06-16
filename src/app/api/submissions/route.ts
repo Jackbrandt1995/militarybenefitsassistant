@@ -42,7 +42,15 @@ export async function POST(req: NextRequest) {
 
     const answers_json: Record<string, unknown> = { ...plaintext };
     if (Object.keys(encryptable).length > 0) {
-      answers_json._enc = encrypt(JSON.stringify(encryptable));
+      try {
+        answers_json._enc = encrypt(JSON.stringify(encryptable));
+      } catch (encErr) {
+        // No ENCRYPTION_KEY configured in this environment → still SAVE the
+        // submission, storing these answers (already SSN/bank/VA#-free) in
+        // plaintext. Set ENCRYPTION_KEY to encrypt them at rest.
+        console.warn('[submissions] encryption unavailable; storing answers unencrypted:', encErr instanceof Error ? encErr.message : encErr);
+        Object.assign(answers_json, encryptable);
+      }
     }
 
     const { data, error } = await supabase
