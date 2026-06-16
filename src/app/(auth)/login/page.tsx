@@ -174,6 +174,11 @@ export default function LoginPage() {
                 Demo as Admin
               </button>
             </div>
+            {CAPTCHA_REQUIRED && !captchaToken && (
+              <p className="mt-3 text-center text-xs font-medium text-amber-600">
+                Complete the hCaptcha above to use a demo.
+              </p>
+            )}
             <p className="mt-2 text-center text-xs text-gray-400">
               Demo accounts are pre-filled and shared. Don&apos;t enter real personal information.
             </p>
