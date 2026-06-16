@@ -42,3 +42,8 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# form render-verification scratch
+scripts/.fill-tmp/
+scripts/.render-out/
+scripts/.verify-tmp-*/
