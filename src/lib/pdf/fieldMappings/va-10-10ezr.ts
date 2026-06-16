@@ -173,13 +173,16 @@ export const va1010ezrMapping: FieldMapping = {
     { pdfFieldName: 'F[0].P4[0].YesNo5[0]', type: 'draw-check', checkPage: 3, checkCX: 475.5, checkCY: 62.8, transform: no  },
   ],
 
-  // ── Section V — Income (P5, page 4). subform[1]=veteran [2]=spouse [3]=child.
+  // ── Section V — Income (P5, page 4). ROWS = income types, COLUMNS = persons.
+  //   subform[1] = Row 1 employment (cy=676); subform[2] = Row 2 farm/business (cy=651);
+  //   subform[3] = Row 3 other (cy=630). Columns: Veteran=Amount[0]/[3]/[6] (cx=333),
+  //   Spouse=Amount[1]/[4]/[7] (cx=435), Child 1=Amount[2]/[5]/[8] (cx=537).
   grossEmploymentIncome: { pdfFieldName: 'F[0].P5[0].Table1[0].#subform[1].Amount[0]', type: 'text' },
-  netFarmBusinessIncome: { pdfFieldName: 'F[0].P5[0].Table1[0].#subform[1].Amount[1]', type: 'text' },
-  otherIncome:           { pdfFieldName: 'F[0].P5[0].Table1[0].#subform[1].Amount[2]', type: 'text' },
-  spouseGrossIncome:     { pdfFieldName: 'F[0].P5[0].Table1[0].#subform[2].Amount[3]', type: 'text' },
+  spouseGrossIncome:     { pdfFieldName: 'F[0].P5[0].Table1[0].#subform[1].Amount[1]', type: 'text' },
+  netFarmBusinessIncome: { pdfFieldName: 'F[0].P5[0].Table1[0].#subform[2].Amount[3]', type: 'text' },
   spouseFarmIncome:      { pdfFieldName: 'F[0].P5[0].Table1[0].#subform[2].Amount[4]', type: 'text' },
-  spouseOtherIncome:     { pdfFieldName: 'F[0].P5[0].Table1[0].#subform[2].Amount[5]', type: 'text' },
+  otherIncome:           { pdfFieldName: 'F[0].P5[0].Table1[0].#subform[3].Amount[6]', type: 'text' },
+  spouseOtherIncome:     { pdfFieldName: 'F[0].P5[0].Table1[0].#subform[3].Amount[7]', type: 'text' },
 
   // ── Section VI — Deductible expenses (P5). Standalone Amount[0..2].
   unreimbursedMedicalExpenses: { pdfFieldName: 'F[0].P5[0].Amount[0]', type: 'text' },

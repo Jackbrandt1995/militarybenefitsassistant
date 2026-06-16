@@ -46,7 +46,7 @@ export const va221995: FormDefinition = {
           { label: 'Chapter 30 – MGIB (Active Duty)', value: 'chapter30' },
           { label: 'Chapter 32 – VEAP', value: 'chapter32' },
           { label: 'Chapter 1606 – MGIB (Selected Reserve)', value: 'chapter1606' },
-          { label: 'Chapter 1607 – REAP', value: 'chapter1607' },
+          { label: 'Transfer of Entitlement Program', value: 'transfer' },
         ]},
       ],
     },

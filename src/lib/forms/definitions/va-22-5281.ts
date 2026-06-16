@@ -84,4 +84,23 @@ export const va225281: FormDefinition = {
       ],
     },
   ],
+  computeAnswers: (answers) => {
+    // Item 1 "NAME OF APPLICANT" in VA style: LAST, FIRST MIDDLE.
+    const first = String(answers.firstName || '').trim();
+    const middle = String(answers.middleName || '').trim();
+    const last = String(answers.lastName || '').trim();
+    const firstMiddle = [first, middle].filter(Boolean).join(' ');
+    const applicantName = last && firstMiddle
+      ? `${last}, ${firstMiddle}`
+      : last || firstMiddle;
+    // Item 5A "MAILING ADDRESS" — multi-line field: street on line 1,
+    // city, state zip on line 2.
+    const stateZip = [answers.state, answers.zip]
+      .map(v => String(v || '').trim()).filter(Boolean).join(' ');
+    const cityStateZip = [String(answers.city || '').trim(), stateZip]
+      .filter(Boolean).join(', ');
+    const fullAddress = [String(answers.address || '').trim(), cityStateZip]
+      .filter(Boolean).join('\n');
+    return { ...answers, applicantName, fullAddress };
+  },
 };

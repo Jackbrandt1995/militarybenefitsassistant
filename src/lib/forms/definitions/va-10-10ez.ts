@@ -887,6 +887,25 @@ export const va1010ez: FormDefinition = {
       ? `${rawSpouseSsn.slice(0, 3)}-${rawSpouseSsn.slice(3, 5)}-${rawSpouseSsn.slice(5)}`
       : s(answers.spouseSsn);
 
-    return { ...answers, fullName, ssnFormatted, placeOfBirth, spouseFullName, spouseSsnFormatted };
+    // Spouse income (Section VII spouse column) is collected on the spouse step,
+    // gated only on married==='Yes'. Also gate on the Section VI financial
+    // disclosure opt-in: if the veteran declined (provideFinancialInfo !== 'Yes')
+    // do not print any household income, including the spouse column.
+    const disclosed = s(answers.provideFinancialInfo) === 'Yes';
+    const spouseGrossIncome = disclosed ? answers.spouseGrossIncome : '';
+    const spouseFarmIncome  = disclosed ? answers.spouseFarmIncome  : '';
+    const spouseOtherIncome = disclosed ? answers.spouseOtherIncome : '';
+
+    return {
+      ...answers,
+      fullName,
+      ssnFormatted,
+      placeOfBirth,
+      spouseFullName,
+      spouseSsnFormatted,
+      spouseGrossIncome,
+      spouseFarmIncome,
+      spouseOtherIncome,
+    };
   },
 };

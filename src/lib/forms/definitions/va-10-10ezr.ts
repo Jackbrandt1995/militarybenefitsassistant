@@ -267,6 +267,12 @@ export const va1010ezr: FormDefinition = {
   computeAnswers: (answers) => {
     const s = (v: unknown) => String(v ?? '').trim();
 
+    // The wizard collects marital status twice (the `maritalStatus` select and the
+    // `married` Yes/No radio), which can desync. Derive `married` from `maritalStatus`
+    // so the MARRIED box (driven by maritalStatus) and the spouse fields (gated by
+    // `married`) can never disagree.
+    const married = s(answers.maritalStatus) === 'Married' ? 'Yes' : 'No';
+
     // Veteran name "Last, First Middle" (form field label is "Last, First, Middle Name")
     const last = s(answers.lastName);
     const first = s(answers.firstName);
@@ -293,6 +299,6 @@ export const va1010ezr: FormDefinition = {
       ? `${rawSpouseSsn.slice(0, 3)}-${rawSpouseSsn.slice(3, 5)}-${rawSpouseSsn.slice(5)}`
       : s(answers.spouseSsn);
 
-    return { ...answers, fullName, ssnFormatted, spouseFullName, spouseSsnFormatted };
+    return { ...answers, married, fullName, ssnFormatted, spouseFullName, spouseSsnFormatted };
   },
 };

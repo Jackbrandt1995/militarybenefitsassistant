@@ -67,7 +67,7 @@ export const va225490: FormDefinition = {
           { label: 'Yes', value: 'Yes' }, { label: 'No', value: 'No' },
         ]},
         { id: 'qiDateMIA', label: 'Date Listed as MIA / POW (if applicable)', type: 'date', helpText: 'Leave blank if not applicable.' },
-        { id: 'qiServiceConnectedDisability', label: 'Does the veteran have a service-connected disability?', type: 'radio', required: true, options: [
+        { id: 'qiServiceConnectedDisability', label: 'Did the qualifying individual die from a service-connected disability while a member of the Selected Reserve?', type: 'radio', required: true, helpText: 'Item 13C. Answer Yes only if the parent or spouse died from a service-connected disability while a member of the Selected Reserve.', options: [
           { label: 'Yes', value: 'Yes' }, { label: 'No', value: 'No' },
         ]},
         { id: 'qiDateOfDeath', label: 'Date of Death (if applicable)', type: 'date', helpText: 'Leave blank if not applicable.' },
@@ -182,6 +182,38 @@ export const va225490: FormDefinition = {
       .map(v => String(v || '').trim()).filter(Boolean).join(' ');
     const fullAddress = [answers.address, answers.city, stateZip]
       .map(v => String(v || '').trim()).filter(Boolean).join(', ');
-    return { ...answers, fullName, fullAddress };
+
+    // Item 9 wants the qualifying individual as "First name, middle initial, last name"
+    // in a single field. Reduce the middle name to its initial (with a trailing period).
+    const qiMiddle = String(answers.qiMiddleName || '').trim();
+    const qiInitial = qiMiddle ? qiMiddle.charAt(0).toUpperCase() + '.' : '';
+    const qiFullName = [answers.qiFirstName, qiInitial, answers.qiLastName]
+      .map(v => String(v || '').trim()).filter(Boolean).join(' ');
+
+    // Benefit election (items 19/20) depends on relationship AND benefit type.
+    // Resolve the relationship+benefitType combination into the four checkbox booleans
+    // the mapping ticks: spouse -> A[0]/B[0], any child -> A[1]/B[1].
+    // Strings 'true'/'false' (not '' ) so the verifier doesn't treat them as orphan keys.
+    const isSpouse = answers.relationship === 'Spouse';
+    const isChild = answers.relationship === 'BiologicalChild'
+      || answers.relationship === 'Stepchild'
+      || answers.relationship === 'AdoptedChild';
+    const isDEA = answers.benefitType === 'DEA';
+    const isFry = answers.benefitType === 'Fry';
+    const benefitSpouseDEA = isSpouse && isDEA ? 'true' : 'false';
+    const benefitSpouseFry = isSpouse && isFry ? 'true' : 'false';
+    const benefitChildDEA = isChild && isDEA ? 'true' : 'false';
+    const benefitChildFry = isChild && isFry ? 'true' : 'false';
+
+    return {
+      ...answers,
+      fullName,
+      fullAddress,
+      qiFullName,
+      benefitSpouseDEA,
+      benefitSpouseFry,
+      benefitChildDEA,
+      benefitChildFry,
+    };
   },
 };

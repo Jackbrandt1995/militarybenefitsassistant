@@ -7,29 +7,33 @@ export const va221995Mapping: FieldMapping = {
   fullAddress: { pdfFieldName: 'form1[0].#subform[0].EnterMailingAddress[0]', type: 'text' },
   homePhone: { pdfFieldName: 'form1[0].#subform[0].Enter_Home_Telephone_Number[0]', type: 'text' },
   mobilePhone: { pdfFieldName: 'form1[0].#subform[0].Enter_Mobile_Telephone_Number[0]', type: 'text' },
-  homePhoneNone:   { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 0, checkCX: 43, checkCY: 510, checkSize: 6 },
-  mobilePhoneNone: { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 0, checkCX: 43, checkCY: 493, checkSize: 6 },
   email: { pdfFieldName: 'form1[0].#subform[0].EnterApplicantsE-mailAddress[0]', type: 'text' },
   vaFileNumber: { pdfFieldName: 'form1[0].#subform[0].Enter_V_A_File_Number[0]', type: 'text' },
   ssn: { pdfFieldName: 'form1[0].#subform[0].Enter_Applicants_Social_Security_Number[0]', type: 'text' , transform: (v: string) => v.replace(/\D/g, '')},
 
   // Benefit chapter checkboxes (driven by benefitChapter radio)
+  // Printed letters: A=CHAPTER 33, B=CHAPTER 30, C=CHAPTER 32, D=CHAPTER 1606, E=TRANSFER OF ENTITLEMENT.
+  // chapter1607/REAP has no box on this form, so that wizard option is not represented here.
   benefitChapter: [
-    { pdfFieldName: 'form1[0].#subform[0].CheckBoxA[0]', type: 'checkbox', transform: v => v === 'chapter30' ? 'true' : 'false' },
-    { pdfFieldName: 'form1[0].#subform[0].CheckBoxB[0]', type: 'checkbox', transform: v => v === 'chapter33' ? 'true' : 'false' },
-    { pdfFieldName: 'form1[0].#subform[0].CheckBoxC[0]', type: 'checkbox', transform: v => v === 'chapter1606' ? 'true' : 'false' },
-    { pdfFieldName: 'form1[0].#subform[0].CheckBoxD[0]', type: 'checkbox', transform: v => v === 'chapter1607' ? 'true' : 'false' },
+    { pdfFieldName: 'form1[0].#subform[0].CheckBoxA[0]', type: 'checkbox', transform: v => v === 'chapter33' ? 'true' : 'false' },
+    { pdfFieldName: 'form1[0].#subform[0].CheckBoxB[0]', type: 'checkbox', transform: v => v === 'chapter30' ? 'true' : 'false' },
+    { pdfFieldName: 'form1[0].#subform[0].CheckBoxC[0]', type: 'checkbox', transform: v => v === 'chapter32' ? 'true' : 'false' },
+    { pdfFieldName: 'form1[0].#subform[0].CheckBoxD[0]', type: 'checkbox', transform: v => v === 'chapter1606' ? 'true' : 'false' },
+    { pdfFieldName: 'form1[0].#subform[0].CheckBoxE[0]', type: 'checkbox', transform: v => v === 'transfer' ? 'true' : 'false' },
   ],
 
   // Training type checkboxes (driven by trainingType radio)
+  // Printed letters: 3A=School, 3B=Correspondence, 3C=Apprenticeship/OJT, 3D=Cooperative,
+  // 3E=Tuition-Assistance-Top-Up, 3F=Flight, 3G=Licensing & Certification, 3H=National-Admissions-Exams.
   trainingType: [
     { pdfFieldName: 'form1[0].#subform[0].CheckBox3A[0]', type: 'checkbox', transform: v => v === 'school' ? 'true' : 'false' },
     { pdfFieldName: 'form1[0].#subform[0].CheckBox3B[0]', type: 'checkbox', transform: v => v === 'correspondence' ? 'true' : 'false' },
     { pdfFieldName: 'form1[0].#subform[0].CheckBox3C[0]', type: 'checkbox', transform: v => v === 'apprenticeship' ? 'true' : 'false' },
-    { pdfFieldName: 'form1[0].#subform[0].CheckBox3D[0]', type: 'checkbox', transform: v => v === 'flight' ? 'true' : 'false' },
-    { pdfFieldName: 'form1[0].#subform[0].CheckBox3E[0]', type: 'checkbox', transform: v => v === 'nationalExam' ? 'true' : 'false' },
-    { pdfFieldName: 'form1[0].#subform[0].CheckBox3F[0]', type: 'checkbox', transform: v => v === 'licensing' ? 'true' : 'false' },
-    { pdfFieldName: 'form1[0].#subform[0].CheckBox3H[0]', type: 'checkbox', transform: v => v === 'topUp' ? 'true' : 'false' },
+    { pdfFieldName: 'form1[0].#subform[0].CheckBox3D[0]', type: 'checkbox', transform: v => v === 'cooperative' ? 'true' : 'false' },
+    { pdfFieldName: 'form1[0].#subform[0].CheckBox3E[0]', type: 'checkbox', transform: v => v === 'topUp' ? 'true' : 'false' },
+    { pdfFieldName: 'form1[0].#subform[0].CheckBox3F[0]', type: 'checkbox', transform: v => v === 'flight' ? 'true' : 'false' },
+    { pdfFieldName: 'form1[0].#subform[0].CheckBox3G[0]', type: 'checkbox', transform: v => v === 'licensing' ? 'true' : 'false' },
+    { pdfFieldName: 'form1[0].#subform[0].CheckBox3H[0]', type: 'checkbox', transform: v => v === 'nationalExam' ? 'true' : 'false' },
   ],
 
   // Program Change
@@ -46,6 +50,8 @@ export const va221995Mapping: FieldMapping = {
   ],
   routingNumber: { pdfFieldName: 'form1[0].#subform[1].TextField1[0]', type: 'text' },
   accountNumber: { pdfFieldName: 'form1[0].#subform[1].EnterACCOUNTNUMBER[0]', type: 'text' },
+  // 5D – NAME OF FINANCIAL INSTITUTION
+  bankName: { pdfFieldName: 'form1[0].#subform[1].TextField2[0]', type: 'text' },
 
   // Service Periods – Page 2
   service1Branch: { pdfFieldName: 'form1[0].#subform[1].EnterBranchOfService1[0]', type: 'text' },

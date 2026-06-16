@@ -33,6 +33,14 @@ const zip4 = (v: string) => {
 };
 const mi = (v: string) => (v ? v.charAt(0).toUpperCase() : '');
 const truthy = (v: string | boolean) => (v === true || v === 'true' ? 'true' : '');
+// computeAnswers emits the §14.630 date as "yes|YYYY-MM-DD" (use it) or
+// "no|YYYY-MM-DD" (suppress it). Returns the bare date only when the gate is "yes".
+const gate14630 = (v: string) => {
+  const str = String(v ?? '');
+  const sep = str.indexOf('|');
+  if (sep === -1) return str; // no gate prefix — treat as a plain date
+  return str.slice(0, sep) === 'yes' ? str.slice(sep + 1) : '';
+};
 
 export const va2122aMapping: FieldMapping = {
 
@@ -200,9 +208,26 @@ export const va2122aMapping: FieldMapping = {
   // ── Item 24: LIMITATIONS ON REPRESENTATION (page 2) ──────────────────────
   limitations: { pdfFieldName: 'form1[0].#subform[2].LIMITATIONS[0]', type: 'text' },
 
-  // ── SIGNATURE & DATE (page 1 — Item 23A/23B) ─────────────────────────────
+  // ── SIGNATURE & DATE ─────────────────────────────────────────────────────
   privacyAct: [],   // wizard-only certification — no PDF field
+
+  // Item 23A — applicant (veteran/claimant) signature. SignatureField1[3] on PDF
+  // page index 2, rect x=35.1 y=623.0 (cy~635). This is the UNIVERSALLY-required
+  // signature, ABOVE the Item 24 LIMITATIONS box. Always drawn.
+  // (Do NOT confuse with SignatureField1[2]=Item 25A representative @ cy~534.)
   signaturePad: {
+    pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY',
+    type: 'image',
+    imagePage: 2,
+    imageX: 35.6,
+    imageY: 623,
+    imageWidth: 200,
+    imageHeight: 22,
+  },
+  // Item 17A — §14.630-only signature block. SignatureField1[0] on PDF page
+  // index 1, rect x=35.7 y=510.2. Only drawn when the appointment is the no-charge
+  // §14.630 individual case (gated by computeAnswers -> signature14630).
+  signature14630: {
     pdfFieldName: 'SIGNATURE_IMAGE_OVERLAY',
     type: 'image',
     imagePage: 1,
@@ -211,12 +236,22 @@ export const va2122aMapping: FieldMapping = {
     imageWidth: 200,
     imageHeight: 17,
   },
+
+  // Item 23B — applicant date signed. Date_Signed[3] on subform[2] (page index 2,
+  // cy~627), the date line beside Item 23A. (Date_Signed[2] @ cy~526 is the
+  // REPRESENTATIVE's Item 25B date — must stay blank for their countersignature.)
   signatureDate: [
-    { pdfFieldName: 'form1[0].#subform[1].Date_Signed_Month[0]', type: 'text', transform: v => formatDateForPdf(v).month },
-    { pdfFieldName: 'form1[0].#subform[1].Date_Signed_Day[0]',   type: 'text', transform: v => formatDateForPdf(v).day },
-    { pdfFieldName: 'form1[0].#subform[1].Date_Signed_Year[0]',  type: 'text', transform: v => formatDateForPdf(v).year },
-    { pdfFieldName: 'form1[0].#subform[2].Date_Signed_Month[2]', type: 'text', transform: v => formatDateForPdf(v).month },
-    { pdfFieldName: 'form1[0].#subform[2].Date_Signed_Day[2]',   type: 'text', transform: v => formatDateForPdf(v).day },
-    { pdfFieldName: 'form1[0].#subform[2].Date_Signed_Year[2]',  type: 'text', transform: v => formatDateForPdf(v).year },
+    { pdfFieldName: 'form1[0].#subform[2].Date_Signed_Month[3]', type: 'text', transform: v => formatDateForPdf(v).month },
+    { pdfFieldName: 'form1[0].#subform[2].Date_Signed_Day[3]',   type: 'text', transform: v => formatDateForPdf(v).day },
+    { pdfFieldName: 'form1[0].#subform[2].Date_Signed_Year[3]',  type: 'text', transform: v => formatDateForPdf(v).year },
+  ],
+  // Item 17B — §14.630-only date signed (Date_Signed[0], page index 1, cy~516).
+  // computeAnswers emits "yes|YYYY-MM-DD" for the §14.630 case and "no|YYYY-MM-DD"
+  // otherwise; gate14630 returns the date only when the "yes" gate is set so the
+  // 17B boxes stay blank for every other appointment type.
+  signatureDate14630: [
+    { pdfFieldName: 'form1[0].#subform[1].Date_Signed_Month[0]', type: 'text', transform: v => formatDateForPdf(gate14630(v)).month },
+    { pdfFieldName: 'form1[0].#subform[1].Date_Signed_Day[0]',   type: 'text', transform: v => formatDateForPdf(gate14630(v)).day },
+    { pdfFieldName: 'form1[0].#subform[1].Date_Signed_Year[0]',  type: 'text', transform: v => formatDateForPdf(gate14630(v)).year },
   ],
 };
