@@ -111,37 +111,11 @@ export default function FormWizard({ form }: FormWizardProps) {
       // Build final answers, applying any form-specific computed fields
       const finalAnswers = { ...answers };
 
-      // VA 22-1990: auto-check the "None" telephone checkbox when both phone
-      // fields were left blank, as required by the PDF form instructions.
-      if (form.id === 'va-22-1990') {
-        const primaryDigits  = String(finalAnswers.phonePrimary  || '').replace(/\D/g, '');
-        const secondaryDigits = String(finalAnswers.phoneSecondary || '').replace(/\D/g, '');
-        if (primaryDigits.length === 0 && secondaryDigits.length === 0) {
-          finalAnswers.phoneNone = 'true';
-        } else {
-          delete finalAnswers.phoneNone;
-        }
-      }
-
-      // Per-form phone "None" injection — checked independently per phone row
-      // when that specific phone field is left blank.
-      const dualPhoneFormConfigs: Record<string, [string, string, string, string]> = {
-        'va-28-1900':  ['mainPhone',      'cellPhone',       'mainPhoneNone',       'cellPhoneNone'],
-        'va-22-0803':  ['homePhone',      'mobilePhone',     'homePhoneNone',       'mobilePhoneNone'],
-        'va-22-0810':  ['daytimePhone',   'eveningPhone',    'daytimePhoneNone',    'eveningPhoneNone'],
-        'va-22-1990e': ['homePhone',      'mobilePhone',     'homePhoneNone',       'mobilePhoneNone'],
-        'va-22-1995':  ['homePhone',      'mobilePhone',     'homePhoneNone',       'mobilePhoneNone'],
-        'va-22-5490':  ['homePhone',      'mobilePhone',     'homePhoneNone',       'mobilePhoneNone'],
-        'va-22-5495':  ['primaryPhone',   'secondaryPhone',  'primaryPhoneNone',    'secondaryPhoneNone'],
-      };
-      const phoneConfig = dualPhoneFormConfigs[form.id];
-      if (phoneConfig) {
-        const [phone1Field, phone2Field, none1Key, none2Key] = phoneConfig;
-        const digits1 = String(finalAnswers[phone1Field] || '').replace(/\D/g, '');
-        const digits2 = String(finalAnswers[phone2Field] || '').replace(/\D/g, '');
-        if (digits1.length === 0) { finalAnswers[none1Key] = 'true'; } else { delete finalAnswers[none1Key]; }
-        if (digits2.length === 0) { finalAnswers[none2Key] = 'true'; } else { delete finalAnswers[none2Key]; }
-      }
+      // NOTE: Removed the phone "None" auto-checkbox injection. These VA forms have
+      // no "I have no telephone number" checkbox; the guessed draw-check coordinates
+      // drew a stray black square over real content (the 1990 "6A" label, 1990e's
+      // instructions text, 28-1900's SSN field, 5495's email line) whenever a phone
+      // was left blank. A blank phone now simply renders blank, which is correct.
 
       // sessionStorage (NOT localStorage): the draft carries sensitive answers
       // (SSN, bank, VA#, DOB) between the wizard → review → complete pages. Using

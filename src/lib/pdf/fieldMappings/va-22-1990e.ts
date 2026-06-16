@@ -11,8 +11,6 @@ export const va221990eMapping: FieldMapping = {
   cityStateZip: { pdfFieldName: 'F[0].Page_3[0].CityStateZIPCode[0]', type: 'text' },
   homePhone: { pdfFieldName: 'F[0].Page_3[0].Home_Phone[0]', type: 'text' },
   mobilePhone: { pdfFieldName: 'F[0].Page_3[0].Mobile_Phone[0]', type: 'text' },
-  homePhoneNone:   { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 0, checkCX: 43, checkCY: 510, checkSize: 6 },
-  mobilePhoneNone: { pdfFieldName: 'DRAW_CHECK', type: 'draw-check', transform: v => v === 'true' ? 'true' : '', checkPage: 0, checkCX: 43, checkCY: 493, checkSize: 6 },
   email: { pdfFieldName: 'F[0].Page_3[0].Email[0]', type: 'text' },
 
   // Date of Birth — split into three separate comb fields
