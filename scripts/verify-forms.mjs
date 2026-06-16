@@ -173,6 +173,24 @@ for (const base of FORM_FILES) {
     else checkEntry(wizardId, m);
   }
 
+  // ── Regression guard: a wizard field collected but never mapped prints BLANK ──
+  // (Covers verify-forms' biggest blind spot — the class that caused 1990 items
+  //  19/20 and most blank-item bugs. A field is "covered" if it's a mapping key
+  //  OR it's read by computeAnswers, e.g. firstName feeding a derived fullName.)
+  const mappingKeys = new Set(Object.keys(mapping));
+  const computeSrc = typeof def.computeAnswers === 'function' ? def.computeAnswers.toString() : '';
+  const readByCompute = id => {
+    try { return new RegExp('\\b' + id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(computeSrc); }
+    catch { return computeSrc.includes(id); }
+  };
+  for (const step of def.steps || []) {
+    for (const f of step.fields || []) {
+      if (!f.id || f.type === 'document') continue; // attachments aren't PDF fields
+      if (mappingKeys.has(f.id) || readByCompute(f.id)) continue;
+      findings.push(`UNMAPPED QUESTION (collected but not on PDF -> blank): "${f.id}"${f.label ? ' — ' + String(f.label).slice(0, 55) : ''}`);
+    }
+  }
+
   total += findings.length;
   summary.push([base, findings.length]);
   console.log(`\n### ${base}  (${findings.length} finding${findings.length === 1 ? '' : 's'})`);
