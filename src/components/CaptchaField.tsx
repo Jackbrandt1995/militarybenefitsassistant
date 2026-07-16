@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 declare global {
   interface Window {
@@ -28,12 +28,30 @@ export default function CaptchaField({ onToken }: { onToken: (token: string) => 
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
   const onTokenRef = useRef(onToken);
-  onTokenRef.current = onToken;
+  const [loadFailed, setLoadFailed] = useState(false);
+
+  // Keep the latest callback without re-rendering the widget (refs must not be
+  // written during render).
+  useEffect(() => {
+    onTokenRef.current = onToken;
+  }, [onToken]);
 
   useEffect(() => {
     if (!siteKey) return;
     let cancelled = false;
     let pollId: ReturnType<typeof setInterval> | undefined;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    function stopWaiting() {
+      if (pollId) clearInterval(pollId);
+      if (timeoutId) clearTimeout(timeoutId);
+    }
+
+    function fail() {
+      if (cancelled) return;
+      stopWaiting();
+      setLoadFailed(true);
+    }
 
     function renderWidget() {
       if (cancelled || !window.hcaptcha?.render || !containerRef.current || widgetIdRef.current) return;
@@ -53,11 +71,14 @@ export default function CaptchaField({ onToken }: { onToken: (token: string) => 
         s.src = SCRIPT_SRC;
         s.async = true;
         s.defer = true;
+        s.onerror = fail;
         document.head.appendChild(s);
       }
+      // Blocked script (ad blocker, offline, CSP) → give up after 10s and explain.
+      timeoutId = setTimeout(fail, 10000);
       pollId = setInterval(() => {
         if (window.hcaptcha?.render) {
-          if (pollId) clearInterval(pollId);
+          stopWaiting();
           renderWidget();
         }
       }, 200);
@@ -65,7 +86,7 @@ export default function CaptchaField({ onToken }: { onToken: (token: string) => 
 
     return () => {
       cancelled = true;
-      if (pollId) clearInterval(pollId);
+      stopWaiting();
       const id = widgetIdRef.current;
       if (id && window.hcaptcha) {
         try { window.hcaptcha.remove(id); } catch { /* already gone */ }
@@ -75,5 +96,12 @@ export default function CaptchaField({ onToken }: { onToken: (token: string) => 
   }, [siteKey]);
 
   if (!siteKey) return null;
+  if (loadFailed) {
+    return (
+      <p role="alert" className="text-sm text-red-600 text-center">
+        The security check could not load. Please turn off your ad blocker for this site and reload the page.
+      </p>
+    );
+  }
   return <div ref={containerRef} className="flex justify-center" />;
 }

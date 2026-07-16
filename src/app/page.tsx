@@ -26,6 +26,7 @@ export default async function Home() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const ctaHref = user ? '/dashboard' : '/signup';
+  const ctaLabel = user ? 'Go to Your Dashboard' : 'Get Started Free';
 
   return (
     <div>
@@ -65,7 +66,7 @@ export default async function Home() {
               href={ctaHref}
               className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-md text-lg font-medium transition-colors"
             >
-              Get Started Free
+              {ctaLabel}
             </Link>
             <a
               href="#forms"
@@ -241,13 +242,17 @@ export default async function Home() {
       {/* Final CTA */}
       <section className="bg-slate-900 text-white py-20">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4">Ready to get started?</h2>
-          <p className="text-gray-300 mb-8 text-lg">Create your free account in under a minute.</p>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+            {user ? 'Welcome back' : 'Ready to get started?'}
+          </h2>
+          <p className="text-gray-300 mb-8 text-lg">
+            {user ? 'Pick up where you left off.' : 'Create your free account in under a minute.'}
+          </p>
           <Link
             href={ctaHref}
             className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-10 py-3 rounded-md text-lg font-medium transition-colors"
           >
-            Get Started Free
+            {ctaLabel}
           </Link>
         </div>
       </section>

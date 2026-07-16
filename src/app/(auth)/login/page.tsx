@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Button from '@/components/ui/Button';
 import CaptchaField from '@/components/CaptchaField';
@@ -12,10 +12,17 @@ import CaptchaField from '@/components/CaptchaField';
 // enabled in the Supabase dashboard). Until then this is a no-op.
 const CAPTCHA_REQUIRED = !!process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY;
 
-export default function LoginPage() {
+function LoginForm() {
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  // The auth callback redirects here with ?error=auth when an email link could
+  // not be verified (expired, already used, or opened in a different browser).
+  const [error, setError] = useState(
+    searchParams.get('error') === 'auth'
+      ? 'That link is invalid or has expired. Sign in below, or use "Forgot password?" to request a new reset link.'
+      : ''
+  );
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState('');
   // Bump to force the hCaptcha widget to re-mount and issue a fresh token after
@@ -23,6 +30,14 @@ export default function LoginPage() {
   const [captchaKey, setCaptchaKey] = useState(0);
   const router = useRouter();
   const supabase = createClient();
+
+  // Already-signed-in users (bookmark, back button) go straight to their dashboard.
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) router.replace('/dashboard');
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function resetCaptcha() {
     setCaptchaToken('');
@@ -77,8 +92,10 @@ export default function LoginPage() {
       options: captchaToken ? { captchaToken } : undefined,
     });
     if (error) {
+      // Most likely cause: the demo accounts haven't been seeded — run
+      // supabase/seed_demo_accounts.sql. Users just get plain language.
       setError(
-        `Demo ${role} sign-in failed: ${error.message}. Make sure the demo accounts have been seeded (supabase/seed_demo_accounts.sql).`,
+        "Demo sign-in isn't available right now. Please try again later or create a free account.",
       );
       setLoading(false);
       resetCaptcha();
@@ -186,5 +203,14 @@ export default function LoginPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  // useSearchParams requires a Suspense boundary in the App Router.
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }

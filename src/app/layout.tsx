@@ -22,9 +22,15 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className={`${inter.className} min-h-full flex flex-col bg-gray-50`}>
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-white focus:text-blue-900 focus:px-4 focus:py-2"
+        >
+          Skip to main content
+        </a>
         <AuthProvider>
           <Navbar />
-          <main className="flex-1">{children}</main>
+          <main id="main" className="flex-1">{children}</main>
           <Analytics />
           <SpeedInsights />
           <footer className="bg-slate-900 text-gray-400 text-center py-6 text-sm">

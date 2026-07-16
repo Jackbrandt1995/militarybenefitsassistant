@@ -9,6 +9,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export default function Input({ label, error, helpText, id, className = '', ...props }: InputProps) {
+  const describedBy = id ? (error ? `${id}-error` : helpText ? `${id}-help` : undefined) : undefined;
   return (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
@@ -17,13 +18,15 @@ export default function Input({ label, error, helpText, id, className = '', ...p
       </label>
       <input
         id={id}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy}
         className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
           error ? 'border-red-500' : 'border-gray-300'
         } ${className}`}
         {...props}
       />
-      {helpText && !error && <p className="mt-1 text-xs text-gray-500">{helpText}</p>}
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+      {helpText && !error && <p id={id ? `${id}-help` : undefined} className="mt-1 text-xs text-gray-500">{helpText}</p>}
+      {error && <p id={id ? `${id}-error` : undefined} className="mt-1 text-xs text-red-600">{error}</p>}
     </div>
   );
 }

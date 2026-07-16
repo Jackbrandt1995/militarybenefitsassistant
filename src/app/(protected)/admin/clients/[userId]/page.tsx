@@ -100,12 +100,17 @@ export default function ClientCaseViewPage() {
   // Notes compose state
   const [noteBody, setNoteBody]   = useState('');
   const [savingNote, setSavingNote] = useState(false);
+  const [notesError, setNotesError] = useState('');
 
   const loadNotes = useCallback(async () => {
     if (!userId) return;
+    setNotesError('');
     const supabase = createClient();
     const { data, error: rpcErr } = await supabase.rpc('get_client_notes', { p_user_id: userId });
-    if (!rpcErr && Array.isArray(data)) {
+    if (rpcErr) {
+      console.error('[get_client_notes]', rpcErr);
+      setNotesError(rpcErr.message ?? 'Failed to load notes.');
+    } else if (Array.isArray(data)) {
       setNotes(data as ClientNote[]);
     }
   }, [userId]);
@@ -144,14 +149,18 @@ export default function ClientCaseViewPage() {
   async function handleDownload(sub: AgentSubmission) {
     if (!sub.pdf_storage_path) { alert('No PDF path on file for this submission.'); return; }
     setDownloadingId(sub.id);
+    // Open the tab synchronously within the click gesture so popup blockers allow it.
+    const pdfWindow = window.open('', '_blank');
     try {
       const supabase = createClient();
       const { data, error: urlErr } = await supabase.storage
         .from('form_submissions')
         .createSignedUrl(sub.pdf_storage_path, 3600);
       if (urlErr || !data?.signedUrl) throw urlErr ?? new Error('No signed URL returned');
-      window.open(data.signedUrl, '_blank');
+      if (pdfWindow) pdfWindow.location.href = data.signedUrl;
+      else window.open(data.signedUrl, '_blank');
     } catch (err: any) {
+      pdfWindow?.close();
       alert('Download failed: ' + (err.message ?? 'Unknown error'));
     } finally {
       setDownloadingId(null);
@@ -159,6 +168,7 @@ export default function ClientCaseViewPage() {
   }
 
   async function handleAddNote() {
+    if (savingNote) return;
     const body = noteBody.trim();
     if (!body) return;
     setSavingNote(true);
@@ -221,13 +231,31 @@ export default function ClientCaseViewPage() {
 
         {/* Loading */}
         {loading && (
-          <div className="text-center py-16">
+          <div className="text-center py-16" role="status">
             <div className="animate-spin w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full mx-auto mb-3" />
             <p className="text-sm text-slate-500">Loading client case…</p>
           </div>
         )}
 
-        {!loading && (
+        {/* Client not found — bad or stale link */}
+        {!loading && !error && !detail && submissions.length === 0 && (
+          <div className="bg-white rounded-xl border border-slate-200 p-14 text-center">
+            <User className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+            <p className="font-medium text-slate-500">Client not found</p>
+            <p className="text-sm text-slate-400 mt-1">
+              We couldn&apos;t find a client with this ID. The link may be out of date.
+            </p>
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline mt-4"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to queue
+            </Link>
+          </div>
+        )}
+
+        {!loading && (detail || submissions.length > 0) && (
           <>
             {/* ── Contact block ── */}
             <div className="bg-white rounded-xl border border-slate-200 p-6">
@@ -362,7 +390,7 @@ export default function ClientCaseViewPage() {
                               {downloadingId === sub.id ? 'Opening…' : 'PDF'}
                             </Button>
                             <Link
-                              href="/admin"
+                              href={`/admin?status=${sub.submission_status}`}
                               className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
                             >
                               Manage in queue →
@@ -412,7 +440,17 @@ export default function ClientCaseViewPage() {
               </div>
 
               {/* Thread */}
-              {notes.length === 0 ? (
+              {notesError ? (
+                <p className="text-xs text-red-600 text-center py-4">
+                  Couldn&apos;t load notes.{' '}
+                  <button
+                    onClick={() => loadNotes()}
+                    className="font-medium text-blue-600 hover:underline"
+                  >
+                    Retry
+                  </button>
+                </p>
+              ) : notes.length === 0 ? (
                 <p className="text-xs text-slate-400 text-center py-4">No notes yet.</p>
               ) : (
                 <div className="space-y-2">

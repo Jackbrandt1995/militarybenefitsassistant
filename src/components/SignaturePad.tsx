@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState } from 'react';
 
 interface SignaturePadProps {
   value?: string; // stored as data URL
@@ -11,6 +11,9 @@ export default function SignaturePad({ value, onChange }: SignaturePadProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasSig, setHasSig] = useState(!!value);
+  // Snapshots taken before each stroke so a single bad stroke can be undone
+  // without redrawing the whole signature. Capped to bound memory use.
+  const [history, setHistory] = useState<{ snapshot: ImageData; hadSig: boolean }[]>([]);
   const lastPos = useRef<{ x: number; y: number } | null>(null);
 
   // Initialize canvas background + restore saved signature
@@ -52,6 +55,11 @@ export default function SignaturePad({ value, onChange }: SignaturePadProps) {
     e.preventDefault();
     const canvas = canvasRef.current;
     if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      const snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      setHistory(prev => [...prev, { snapshot, hadSig: hasSig }].slice(-10));
+    }
     setIsDrawing(true);
     lastPos.current = getPos(e, canvas);
   }
@@ -93,8 +101,20 @@ export default function SignaturePad({ value, onChange }: SignaturePadProps) {
     if (!ctx) return;
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    setHistory([]);
     setHasSig(false);
     onChange('');
+  }
+
+  function undoStroke() {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx || history.length === 0) return;
+    const last = history[history.length - 1];
+    ctx.putImageData(last.snapshot, 0, 0);
+    setHistory(prev => prev.slice(0, -1));
+    setHasSig(last.hadSig);
+    onChange(last.hadSig ? canvas.toDataURL('image/png') : '');
   }
 
   return (
@@ -102,6 +122,8 @@ export default function SignaturePad({ value, onChange }: SignaturePadProps) {
       <div className="relative border-2 border-gray-300 rounded-lg overflow-hidden bg-white">
         <canvas
           ref={canvasRef}
+          role="img"
+          aria-label="Signature area — draw your signature here with your mouse or finger"
           width={560}
           height={120}
           className="w-full touch-none cursor-crosshair"
@@ -123,15 +145,26 @@ export default function SignaturePad({ value, onChange }: SignaturePadProps) {
         <p className="text-xs text-gray-500">
           Draw your signature above
         </p>
-        {hasSig && (
-          <button
-            type="button"
-            onClick={clearSignature}
-            className="text-xs text-red-600 hover:text-red-800 font-medium"
-          >
-            Clear & Redo
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {history.length > 0 && (
+            <button
+              type="button"
+              onClick={undoStroke}
+              className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+            >
+              Undo stroke
+            </button>
+          )}
+          {hasSig && (
+            <button
+              type="button"
+              onClick={clearSignature}
+              className="text-xs text-red-600 hover:text-red-800 font-medium"
+            >
+              Clear & Redo
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

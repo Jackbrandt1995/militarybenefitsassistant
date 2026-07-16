@@ -30,14 +30,19 @@ export default function AcceptTermsPage() {
       });
       if (metaErr) throw metaErr;
 
-      // Also persist to profiles table for auditing
-      await supabase
+      // Also persist to profiles table for auditing. Non-blocking for the user
+      // (acceptance already lives in auth metadata), but log it so a missing
+      // audit row is detectable.
+      const { error: auditError } = await supabase
         .from('profiles')
         .upsert({ id: user.id, terms_accepted_at: now }, { onConflict: 'id' });
+      if (auditError) {
+        console.error('[terms accept] profiles audit write failed:', auditError.message);
+      }
 
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong. Please try again.');
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : 'Something went wrong. Please try again.');
       setLoading(false);
     }
   }

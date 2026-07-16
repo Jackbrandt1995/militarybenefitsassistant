@@ -7,18 +7,38 @@ interface DocumentUploaderProps {
   isLoading?: boolean;
 }
 
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB — must match the copy below
+const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'];
+
+/**
+ * Pure file picker: validates size/type and hands accepted files to the
+ * parent, which owns the authoritative file list (with per-file Remove).
+ * Keeping no internal list avoids two out-of-sync lists on screen.
+ */
 export default function DocumentUploader({ onFilesSelected, isLoading }: DocumentUploaderProps) {
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [rejectedMessages, setRejectedMessages] = useState<string[]>([]);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
-    setSelectedFiles(files);
-    onFilesSelected?.(files);
-  };
+    const rejected: string[] = [];
+    const accepted: File[] = [];
 
-  const handleClear = () => {
-    setSelectedFiles([]);
-    onFilesSelected?.([]);
+    for (const file of files) {
+      const dot = file.name.lastIndexOf('.');
+      const ext = dot >= 0 ? file.name.slice(dot).toLowerCase() : '';
+      if (!ALLOWED_EXTENSIONS.includes(ext)) {
+        rejected.push(`${file.name} is not an accepted file type. Please upload a PDF, JPG, PNG, DOC, or DOCX file.`);
+      } else if (file.size > MAX_FILE_SIZE) {
+        rejected.push(`${file.name} is ${(file.size / 1024 / 1024).toFixed(1)} MB — the limit is 25 MB per file.`);
+      } else {
+        accepted.push(file);
+      }
+    }
+
+    setRejectedMessages(rejected);
+    if (accepted.length > 0) onFilesSelected?.(accepted);
+    // Reset so picking the same file again (e.g. after removing it) re-fires onChange
+    e.target.value = '';
   };
 
   return (
@@ -45,33 +65,11 @@ export default function DocumentUploader({ onFilesSelected, isLoading }: Documen
         </label>
       </div>
 
-      {selectedFiles.length > 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm font-semibold text-green-900">
-                {selectedFiles.length} file{selectedFiles.length > 1 ? 's' : ''} selected
-              </p>
-              <ul className="text-sm text-green-800 mt-2 space-y-1">
-                {selectedFiles.map(f => (
-                  <li key={f.name} className="flex items-center gap-1.5">
-                    <svg className="w-3.5 h-3.5 shrink-0 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    <span className="truncate">{f.name}</span>
-                    <span className="text-green-600 shrink-0">({(f.size / 1024 / 1024).toFixed(1)} MB)</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <button
-              onClick={handleClear}
-              disabled={isLoading}
-              className="text-sm text-green-700 hover:text-green-900 font-semibold ml-4 shrink-0"
-            >
-              Clear
-            </button>
-          </div>
+      {rejectedMessages.length > 0 && (
+        <div role="alert" className="bg-red-50 border border-red-200 rounded-lg p-3 space-y-1">
+          {rejectedMessages.map((msg, i) => (
+            <p key={i} className="text-sm text-red-800">{msg}</p>
+          ))}
         </div>
       )}
     </div>

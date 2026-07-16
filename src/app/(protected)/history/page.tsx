@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import { getAllForms } from '@/lib/forms/registry';
@@ -116,13 +116,16 @@ export default function HistoryPage() {
   const [submissions, setSubmissions]           = useState<Submission[]>([]);
   const [inProgressForms, setInProgressForms]   = useState<InProgressForm[]>([]);
   const [loading, setLoading]                   = useState(true);
+  const [loadFailed, setLoadFailed]             = useState(false);
 
   // Messaging state
   const [expandedMessages, setExpandedMessages] = useState<Record<string, boolean>>({});
   const [messages, setMessages]                 = useState<Record<string, MessageItem[]>>({});
   const [loadingMessages, setLoadingMessages]   = useState<Record<string, boolean>>({});
+  const [threadLoadFailed, setThreadLoadFailed] = useState<Record<string, boolean>>({});
   const [newMessage, setNewMessage]             = useState<Record<string, string>>({});
   const [sendingMessage, setSendingMessage]     = useState<Record<string, boolean>>({});
+  const [sendFailed, setSendFailed]             = useState<Record<string, boolean>>({});
   const [unreadCounts, setUnreadCounts]         = useState<Record<string, number>>({});
 
   useEffect(() => {
@@ -147,66 +150,90 @@ export default function HistoryPage() {
     })));
   }, []);
 
-  useEffect(() => {
+  const loadSubmissions = useCallback(async () => {
     if (!user) return;
     const supabase = createClient();
-    supabase
-      .from('form_submissions')
-      .select('id, form_id, form_name, generated_at, submission_status, agent_filing_requested, tracking_number, return_reason')
-      .eq('user_id', user.id)
-      .order('generated_at', { ascending: false })
-      .then(async ({ data }) => {
-        const subs = (data ?? []) as Submission[];
-        setSubmissions(subs);
-        setLoading(false);
+    setLoading(true);
+    setLoadFailed(false);
 
-        // Load unread admin message counts for agent-filed submissions
-        const agentSubIds = subs
-          .filter(s => s.agent_filing_requested)
-          .map(s => s.id);
+    try {
+      const { data, error } = await supabase
+        .from('form_submissions')
+        .select('id, form_id, form_name, generated_at, submission_status, agent_filing_requested, tracking_number, return_reason')
+        .eq('user_id', user.id)
+        .order('generated_at', { ascending: false });
 
-        if (agentSubIds.length > 0) {
-          const { data: unreadData } = await supabase
-            .from('submission_messages')
-            .select('submission_id')
-            .in('submission_id', agentSubIds)
-            .eq('sender_type', 'admin')
-            .eq('is_read', false);
+      if (error) throw error;
 
-          if (unreadData) {
-            const counts: Record<string, number> = {};
-            unreadData.forEach(row => {
-              counts[row.submission_id] = (counts[row.submission_id] ?? 0) + 1;
-            });
-            setUnreadCounts(counts);
-          }
+      const subs = (data ?? []) as Submission[];
+      setSubmissions(subs);
+
+      // Load unread admin message counts for agent-filed submissions (non-fatal)
+      const agentSubIds = subs
+        .filter(s => s.agent_filing_requested)
+        .map(s => s.id);
+
+      if (agentSubIds.length > 0) {
+        const { data: unreadData } = await supabase
+          .from('submission_messages')
+          .select('submission_id')
+          .in('submission_id', agentSubIds)
+          .eq('sender_type', 'admin')
+          .eq('is_read', false);
+
+        if (unreadData) {
+          const counts: Record<string, number> = {};
+          unreadData.forEach(row => {
+            counts[row.submission_id] = (counts[row.submission_id] ?? 0) + 1;
+          });
+          setUnreadCounts(counts);
         }
-      });
+      }
+    } catch (err) {
+      // A failed load must never masquerade as "no forms yet"
+      console.error('[history] failed to load submissions:', err);
+      setLoadFailed(true);
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
+
+  useEffect(() => {
+    loadSubmissions();
+  }, [loadSubmissions]);
 
   async function loadMessages(submissionId: string) {
     setLoadingMessages(prev => ({ ...prev, [submissionId]: true }));
+    setThreadLoadFailed(prev => ({ ...prev, [submissionId]: false }));
     const supabase = createClient();
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('submission_messages')
       .select('id, sender_type, message, created_at, is_read')
       .eq('submission_id', submissionId)
       .order('created_at', { ascending: true });
 
+    if (error) {
+      // Show a retry link instead of pretending the thread is empty
+      setThreadLoadFailed(prev => ({ ...prev, [submissionId]: true }));
+      setLoadingMessages(prev => ({ ...prev, [submissionId]: false }));
+      return;
+    }
+
     setMessages(prev => ({ ...prev, [submissionId]: (data ?? []) as MessageItem[] }));
     setLoadingMessages(prev => ({ ...prev, [submissionId]: false }));
 
-    // Mark admin messages as read
-    await supabase
+    // Mark admin messages as read; only clear the local badge if that write landed
+    const { error: readError } = await supabase
       .from('submission_messages')
       .update({ is_read: true })
       .eq('submission_id', submissionId)
       .eq('sender_type', 'admin')
       .eq('is_read', false);
 
-    // Clear unread count locally
-    setUnreadCounts(prev => ({ ...prev, [submissionId]: 0 }));
+    if (!readError) {
+      setUnreadCounts(prev => ({ ...prev, [submissionId]: 0 }));
+    }
   }
 
   async function sendMessage(submissionId: string) {
@@ -233,17 +260,21 @@ export default function HistoryPage() {
         [submissionId]: [...(prev[submissionId] ?? []), inserted as MessageItem],
       }));
       setNewMessage(prev => ({ ...prev, [submissionId]: '' }));
-    }
+      setSendFailed(prev => ({ ...prev, [submissionId]: false }));
 
-    // Non-fatal notification
-    try {
-      await fetch('/api/notify-message', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ submission_id: submissionId, direction: 'client_to_admin' }),
-      });
-    } catch (e) {
-      console.warn('[notify-message] non-fatal:', e);
+      // Non-fatal notification (only for messages that actually saved)
+      try {
+        await fetch('/api/notify-message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ submission_id: submissionId, direction: 'client_to_admin' }),
+        });
+      } catch (e) {
+        console.warn('[notify-message] non-fatal:', e);
+      }
+    } else {
+      // Keep the draft in the box and tell the user why nothing appeared
+      setSendFailed(prev => ({ ...prev, [submissionId]: true }));
     }
 
     setSendingMessage(prev => ({ ...prev, [submissionId]: false }));
@@ -266,7 +297,7 @@ export default function HistoryPage() {
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Filing History</h1>
-          <p className="text-slate-500 mt-1 text-sm">Track the status of every form you've started or submitted.</p>
+          <p className="text-slate-500 mt-1 text-sm">Track the status of every form you&apos;ve started or submitted.</p>
         </div>
 
         {/* Status legend */}
@@ -286,8 +317,24 @@ export default function HistoryPage() {
           </div>
         )}
 
+        {/* Load error */}
+        {!loading && loadFailed && (
+          <div className="bg-white rounded-xl border border-red-200 p-10 text-center">
+            <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
+            <p className="font-medium text-slate-700">We couldn&apos;t load your filing history.</p>
+            <p className="text-sm text-slate-400 mt-1">Your forms are safe — this is just a loading problem.</p>
+            <button
+              onClick={loadSubmissions}
+              className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Try Again
+            </button>
+          </div>
+        )}
+
         {/* Empty state */}
-        {!loading && !hasAnything && (
+        {!loading && !loadFailed && !hasAnything && (
           <div className="bg-white rounded-xl border border-slate-200 p-14 text-center">
             <FileText className="w-10 h-10 text-slate-300 mx-auto mb-3" />
             <p className="font-medium text-slate-600">No forms yet.</p>
@@ -343,7 +390,9 @@ export default function HistoryPage() {
               const threadMsgs   = messages[sub.id] ?? [];
               const unreadCount  = unreadCounts[sub.id] ?? 0;
               const msgLoading   = !!loadingMessages[sub.id];
+              const threadFailed = !!threadLoadFailed[sub.id];
               const isSending    = !!sendingMessage[sub.id];
+              const sendError    = !!sendFailed[sub.id];
 
               return (
                 <div
@@ -438,7 +487,19 @@ export default function HistoryPage() {
                           </div>
                         )}
 
-                        {!msgLoading && threadMsgs.length === 0 && (
+                        {!msgLoading && threadFailed && (
+                          <p className="text-xs text-red-600 text-center py-4">
+                            We couldn&apos;t load these messages.{' '}
+                            <button
+                              onClick={() => loadMessages(sub.id)}
+                              className="font-medium underline hover:text-red-700"
+                            >
+                              Try again
+                            </button>
+                          </p>
+                        )}
+
+                        {!msgLoading && !threadFailed && threadMsgs.length === 0 && (
                           <p className="text-xs text-slate-400 text-center py-4">No messages yet. Send a message to MBA below.</p>
                         )}
 
@@ -472,6 +533,7 @@ export default function HistoryPage() {
                         <textarea
                           rows={2}
                           placeholder="Type a message to MBA…"
+                          aria-label="Message to Military Benefits Assistant"
                           value={newMessage[sub.id] ?? ''}
                           onChange={e => setNewMessage(prev => ({ ...prev, [sub.id]: e.target.value }))}
                           onKeyDown={e => {
@@ -491,6 +553,10 @@ export default function HistoryPage() {
                           {isSending ? 'Sending…' : 'Send'}
                         </button>
                       </div>
+
+                      {sendError && (
+                        <p className="text-xs text-red-600">Message not sent — please try again.</p>
+                      )}
                     </div>
                   )}
                 </div>

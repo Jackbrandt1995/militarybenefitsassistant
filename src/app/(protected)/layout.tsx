@@ -36,7 +36,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
 
     if (!user) {
       validatedFor.current = null;
-      router.push('/login');
+      router.replace('/login');
       return;
     }
 
@@ -52,7 +52,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
       return;
     }
     if (!user.user_metadata?.terms_accepted_at) {
-      router.push('/terms/accept');
+      router.replace('/terms/accept');
       return;
     }
 
@@ -98,18 +98,18 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
 
         const hasVerifiedTotp = (factors?.totp ?? []).some(f => f.status === 'verified');
         if (!hasVerifiedTotp) {
-          router.push('/mfa/setup');
+          router.replace('/mfa/setup');
           return;
         }
         if (aal?.nextLevel === 'aal2' && aal?.currentLevel !== 'aal2') {
-          router.push('/mfa');
+          router.replace('/mfa');
           return;
         }
         validatedFor.current = user.id;
         setReady(true);
       } catch {
         // Couldn't determine MFA state → fail closed: send to the challenge page.
-        if (!cancelled) router.push('/mfa');
+        if (!cancelled) router.replace('/mfa');
       }
     })();
 

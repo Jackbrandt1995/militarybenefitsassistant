@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
@@ -14,6 +14,16 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
+  // null = still checking; updating a password requires the recovery session
+  // established by the emailed link, so verify one exists before showing the form.
+  const [hasSession, setHasSession] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setHasSession(!!session);
+    });
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -33,13 +43,55 @@ export default function ResetPasswordPage() {
     const { error } = await supabase.auth.updateUser({ password });
 
     if (error) {
-      setError(error.message);
+      // Supabase's raw "Auth session missing!" is jargon — translate it.
+      setError(
+        error.message.toLowerCase().includes('session missing')
+          ? 'This reset link has expired or was already used. Please request a new one below.'
+          : error.message
+      );
       setLoading(false);
     } else {
       setDone(true);
       // Give the user a moment to read the confirmation, then send to dashboard
       setTimeout(() => router.push('/dashboard'), 2500);
     }
+  }
+
+  // No recovery session: the link expired, was already used, or the user
+  // navigated here directly. Point them back to request a fresh link.
+  if (hasSession === false) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center px-4">
+        <div className="w-full max-w-md text-center">
+          <Shield className="h-12 w-12 text-blue-700 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Reset Link Expired</h1>
+          <p className="text-gray-600 mb-6">
+            This password reset link has expired or was already used. Request a new
+            one and we&apos;ll email it to you right away.
+          </p>
+          <Link
+            href="/forgot-password"
+            className="inline-block bg-blue-700 hover:bg-blue-800 text-white px-6 py-2.5 rounded-md text-sm font-medium transition-colors"
+          >
+            Request a New Link
+          </Link>
+          <p className="text-sm text-gray-600 mt-4">
+            <Link href="/login" className="text-blue-700 font-medium hover:underline">
+              ← Back to Sign In
+            </Link>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Still verifying the link — avoid flashing the form before we know.
+  if (hasSession === null) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center px-4">
+        <p className="text-gray-500 text-sm">Checking your reset link…</p>
+      </div>
+    );
   }
 
   if (done) {
@@ -108,6 +160,12 @@ export default function ResetPasswordPage() {
         </form>
 
         <p className="text-center text-sm text-gray-600 mt-4">
+          Link not working?{' '}
+          <Link href="/forgot-password" className="text-blue-700 font-medium hover:underline">
+            Request a new one
+          </Link>
+        </p>
+        <p className="text-center text-sm text-gray-600 mt-2">
           <Link href="/login" className="text-blue-700 font-medium hover:underline">
             ← Back to Sign In
           </Link>

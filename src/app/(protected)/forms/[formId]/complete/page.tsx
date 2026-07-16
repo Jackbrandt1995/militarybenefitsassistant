@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, useEffect } from 'react';
+import { use, useState, useEffect, useRef } from 'react';
 import { notFound, useRouter } from 'next/navigation';
 import { getFormById } from '@/lib/forms/registry';
 import { useAuth } from '@/components/AuthProvider';
@@ -31,15 +31,28 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
   const { formId } = use(params);
   const form = getFormById(formId);
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   // PDF generation state
   const [status, setStatus] = useState<'generating' | 'ready' | 'error'>('generating');
   const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
-  const [submissionId, setSubmissionId] = useState<string | null>(null);
+  // Seed from sessionStorage so a refresh of this page reuses the submission
+  // row recorded on the first visit instead of inserting a duplicate (the
+  // draft snapshot survives until download/agent-filing, so Effect 2 would
+  // otherwise re-record on every reload).
+  const [submissionId, setSubmissionId] = useState<string | null>(() =>
+    typeof window !== 'undefined' ? sessionStorage.getItem(`form-wizard-${formId}-sid`) : null,
+  );
+  // Ref (not state) so two rapid retry clicks can't start two POSTs before a
+  // re-render lands; the state mirror below only drives the button UI.
+  const recordingRef = useRef(false);
+  const [isRecording, setIsRecording] = useState(false);
   const [wizardAttachedCount, setWizardAttachedCount] = useState(0);
+  const [skippedFileNames, setSkippedFileNames] = useState<string[]>([]);
+  const [uploadStepHadNoFiles, setUploadStepHadNoFiles] = useState(false);
   const [safeAnswers, setSafeAnswers] = useState<Record<string, string | boolean> | null>(null);
+  const [recordAttempt, setRecordAttempt] = useState(0);
 
   // Submission mode
   const [submissionMode, setSubmissionMode] = useState<'self' | 'agent' | null>(null);
@@ -56,7 +69,7 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
 
   // Effect 1: Generate PDF — runs once when the form is available.
   // Intentionally excludes `user` from deps so auth loading never triggers
-  // a second run that would fail because localStorage was already cleared.
+  // a second run.
   useEffect(() => {
     if (!form) return;
 
@@ -89,14 +102,25 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
         let bytes = await fillPdf(form!.pdfTemplate, answers, mapping);
 
         const wizardFiles = getFormFiles();
+        const hasUploadStep = form!.steps.some(s =>
+          ['requiredDocs', 'optionalDocs', 'attachments'].includes(s.id),
+        );
         if (wizardFiles.length > 0) {
           try {
             bytes = await mergePdfsWithAttachments(bytes, wizardFiles);
             setWizardAttachedCount(wizardFiles.filter(f => f.type === 'application/pdf').length);
+            // Only PDFs can be merged — tell the veteran which files were left
+            // out so they know to mail them separately.
+            setSkippedFileNames(wizardFiles.filter(f => f.type !== 'application/pdf').map(f => f.name));
           } catch (mergeErr) {
             console.warn('Wizard attachment merge (non-fatal):', mergeErr);
+            setSkippedFileNames(wizardFiles.map(f => f.name));
           }
           clearFormFiles();
+        } else if (hasUploadStep) {
+          // Uploaded files live in an in-memory cache that does not survive a
+          // full page reload — surface that instead of silently merging nothing.
+          setUploadStepHadNoFiles(true);
         }
 
         // Scrub sensitive data before storing answers_json. `answers` here is the
@@ -121,20 +145,22 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
           safe[k] = v as string | boolean;
         }
 
-        sessionStorage.removeItem(`form-wizard-${formId}`);
-        localStorage.removeItem(`wizard-${formId}`); // clear the in-progress draft so it stops showing under "In Progress"
+        // NOTE: the sessionStorage snapshot and localStorage draft are NOT
+        // cleared here — they're cleared in clearStoredDrafts() once the
+        // veteran has actually downloaded the PDF (or authorized agent
+        // filing). That way a refresh before download can regenerate instead
+        // of losing every answer.
         setPdfBytes(bytes);
         setSafeAnswers(safe);
         setStatus('ready');
-      } catch (err: any) {
+      } catch (err) {
         console.error('PDF generation error:', err);
-        setErrorMsg(err.message || 'Failed to generate PDF.');
+        setErrorMsg(err instanceof Error ? err.message : 'Failed to generate PDF.');
         setStatus('error');
       }
     }
 
     generate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form, formId]);
 
   // Effect 2: Record submission once PDF is ready AND user session is resolved.
@@ -143,6 +169,9 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
     if (!user || !safeAnswers || status !== 'ready' || submissionId) return;
 
     async function record() {
+      if (recordingRef.current) return; // a POST is already in flight
+      recordingRef.current = true;
+      setIsRecording(true);
       try {
         // Server route encrypts the answers at rest (keeps only name + email
         // plaintext) and returns the new submission id.
@@ -165,21 +194,42 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
           );
           return;
         }
+        setSubmissionError('');
         setSubmissionId(json?.id ?? null);
+        // Remember the row this page created so a refresh (the draft snapshot
+        // survives until download/agent-filing) doesn't insert a duplicate.
+        if (json?.id) sessionStorage.setItem(`form-wizard-${formId}-sid`, json.id);
       } catch (dbErr) {
         console.error('Submission record error:', dbErr);
         setSubmissionError("We couldn't save this submission — please check your connection and try again.");
+      } finally {
+        recordingRef.current = false;
+        setIsRecording(false);
       }
     }
 
     record();
-  }, [user, safeAnswers, status, submissionId, formId, form]);
+  }, [user, safeAnswers, status, submissionId, formId, form, recordAttempt]);
 
   if (!form) notFound();
+
+  // Auth resolved to signed-out: Effect 2 can never run, so the submission
+  // will never be saved. Derived (not stored) so it clears if the user signs
+  // back in from another tab and the save then succeeds.
+  const sessionExpired = status === 'ready' && !authLoading && !user && !submissionId;
+
+  // Clear saved answers only once the veteran actually has the PDF (download
+  // or agent filing) — until then, a refresh can regenerate from the draft.
+  function clearStoredDrafts() {
+    sessionStorage.removeItem(`form-wizard-${formId}`);
+    sessionStorage.removeItem(`form-wizard-${formId}-sid`); // next submission gets its own row
+    localStorage.removeItem(`wizard-${formId}`); // stops showing under "In Progress"
+  }
 
   function handleDownload() {
     if (pdfBytes) {
       downloadPdf(pdfBytes, `${form!.formNumber.replace(/\s+/g, '-')}-filled.pdf`);
+      clearStoredDrafts();
     }
   }
 
@@ -188,7 +238,9 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
     if (!user || !submissionId || !pdfBytes) {
       setAgentError(
         submissionError ||
-        "We couldn't record your submission, so it can't be sent for filing yet. Please refresh and try again.",
+        (sessionExpired
+          ? 'Your session has expired — please sign in again before authorizing MBA to file for you.'
+          : "We couldn't record your submission, so it can't be sent for filing yet. Please refresh and try again."),
       );
       return;
     }
@@ -201,8 +253,15 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
       const pdfPath = `${user.id}/${submissionId}/form.pdf`;
       const { error: uploadErr } = await supabase.storage
         .from('form_submissions')
-        .upload(pdfPath, new Blob([pdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' }));
-      if (uploadErr) throw uploadErr;
+        .upload(
+          pdfPath,
+          new Blob([pdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' }),
+          { contentType: 'application/pdf' },
+        );
+      // If a previous attempt uploaded this file but a later step failed, the
+      // retry hits "The resource already exists" — that earlier upload is this
+      // exact same PDF, so treat it as success instead of dead-ending.
+      if (uploadErr && !/already exists/i.test(uploadErr.message)) throw uploadErr;
 
       // Record authorization via RPC — bypasses PostgREST schema cache entirely
       const { error: updateErr } = await supabase.rpc('record_agent_filing', {
@@ -235,10 +294,14 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
         console.warn('Notification email failed (non-fatal):', emailErr);
       }
 
+      clearStoredDrafts();
       setAgentAuthorized(true);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Agent authorization error:', err);
-      setAgentError(err.message || 'Authorization failed. Please try again.');
+      setAgentError(
+        'Something went wrong while sending your form — please try again. ' +
+        'Your PDF is still available to download above, so you can also mail it yourself.',
+      );
     } finally {
       setIsAuthorizingAgent(false);
     }
@@ -291,6 +354,26 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
                 </p>
               )}
 
+              {skippedFileNames.length > 0 && (
+                <div className="mt-3 rounded-lg bg-amber-50 border border-amber-200 p-3 text-left">
+                  <p className="text-sm font-semibold text-amber-900">
+                    {skippedFileNames.length} uploaded file{skippedFileNames.length > 1 ? 's' : ''} could
+                    not be merged into this PDF: {skippedFileNames.join(', ')}
+                  </p>
+                  <p className="text-sm text-amber-800 mt-1">
+                    Only PDF files can be merged. Print these documents separately and include
+                    them in your envelope.
+                  </p>
+                </div>
+              )}
+
+              {uploadStepHadNoFiles && (
+                <p className="mt-3 text-sm text-slate-500">
+                  This download contains only the filled form — no uploaded documents were merged.
+                  If you uploaded documents earlier, print them and include copies in your envelope.
+                </p>
+              )}
+
               <Button onClick={handleDownload} className="mt-5 w-full sm:w-auto px-8">
                 <Download className="w-4 h-4 mr-2" />
                 Download Filled PDF
@@ -298,14 +381,26 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
             </div>
 
             {/* Submission save failed — the PDF is fine, but it wasn't recorded to history */}
-            {submissionError && (
+            {(submissionError || sessionExpired) && (
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
                 <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-semibold text-amber-900">
                     Your PDF is ready to download, but it wasn&apos;t saved to your history.
                   </p>
-                  <p className="text-sm text-amber-800 mt-0.5">{submissionError}</p>
+                  <p className="text-sm text-amber-800 mt-0.5">
+                    {submissionError ||
+                      'Your session has expired — sign in again to save this submission to your history.'}
+                  </p>
+                  {submissionError && (
+                    <button
+                      onClick={() => { setSubmissionError(''); setRecordAttempt(a => a + 1); }}
+                      disabled={isRecording}
+                      className="mt-2 text-sm font-semibold text-amber-900 underline hover:text-amber-700 disabled:opacity-60 disabled:no-underline"
+                    >
+                      {isRecording ? 'Saving…' : 'Try saving again'}
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -326,7 +421,7 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
                     }`}
                   >
                     <Mail className={`w-7 h-7 mb-2 ${submissionMode === 'self' ? 'text-blue-600' : 'text-slate-400'}`} />
-                    <p className="font-semibold text-slate-900">I'll submit it myself</p>
+                    <p className="font-semibold text-slate-900">I&apos;ll submit it myself</p>
                     <p className="text-sm text-slate-500 mt-1">
                       Step-by-step instructions to find the correct VA office and mail your package.
                     </p>
@@ -493,20 +588,29 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
                     )}
 
                     {/* ── FALLBACK (no guide) ────────────────────────────────── */}
+                    {/* This form has no specific mailing guide. Do NOT show the
+                        education-RPO address picker here — non-education forms
+                        (health care, home loan, representation) go to entirely
+                        different VA offices. Point to the form's own
+                        instructions instead of guessing. */}
                     {!guide && (
                       <div className="space-y-3">
                         <StepCard number={1} title="Print your form"
-                          body="Download the PDF above and print all pages on standard 8.5″ × 11″ white paper." />
-                        <MailingSteps
-                          stepOffset={2}
-                          formNumber={form!.formNumber}
-                          officeType="rpo"
-                          userState={userState}
-                          setUserState={setUserState}
-                          rpo={rpo}
-                          timeline={undefined}
-                          moreInfo={undefined}
-                        />
+                          body="Download the PDF above and print all pages on standard 8.5″ × 11″ white paper. Do not staple — use a binder clip or paper clip." />
+                        <StepCard number={2} title="Make photocopies for your records"
+                          body={`Photocopy every page and label the copies "MY COPY — DO NOT SUBMIT". Keep them somewhere safe. If VA loses your package, these are your only backup.`} />
+                        <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
+                          <p className="font-semibold text-blue-900 text-sm mb-1">Where to send it</p>
+                          <p className="text-sm text-blue-800">
+                            Check the mailing instructions printed on your form — the correct address
+                            is listed on the form itself or its instruction pages. If you are not sure,
+                            call VA at 1-800-827-1000 and ask where to send VA Form {form!.formNumber}.
+                          </p>
+                          <p className="text-sm text-blue-800 mt-2">
+                            When you mail it, send it Certified Mail with Return Receipt Requested at
+                            the Post Office counter so you have proof VA received it.
+                          </p>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -554,8 +658,8 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
                     </div>
 
                     {/* Signature pad */}
-                    <div>
-                      <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    <div role="group" aria-labelledby="agent-sig-label">
+                      <label id="agent-sig-label" className="block text-sm font-semibold text-slate-700 mb-2">
                         Sign below to authorize MBA to file on your behalf
                       </label>
                       <SignaturePad value={agentSig} onChange={setAgentSig} />
@@ -703,17 +807,18 @@ function MailingSteps({
           <p className="font-semibold text-slate-800 mb-1">Address your envelope</p>
           <p className="text-sm text-slate-600 mb-3">
             Use a <strong>9″ × 12″ manila or kraft envelope</strong> — large enough so your documents lie flat without folding.
-            Write <strong>"VA FORM {formNumber} ENCLOSED"</strong> in the lower-left corner of the envelope front.
+            Write <strong>&quot;VA FORM {formNumber} ENCLOSED&quot;</strong> in the lower-left corner of the envelope front.
             Put your own return address in the upper-left corner.
           </p>
 
           {/* Address sub-section */}
           {!isRegionalOffice && (
             <>
-              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+              <label htmlFor="mailing-state" className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
                 Select your state to get the correct mailing address
               </label>
               <select
+                id="mailing-state"
                 value={userState}
                 onChange={e => setUserState(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -722,7 +827,7 @@ function MailingSteps({
                 {US_STATES.map(st => (
                   <option key={st.abbr} value={st.abbr}>{st.name}</option>
                 ))}
-                <option value="__FOREIGN__">Foreign school / outside US</option>
+                <option value="__FOREIGN__">Foreign school or U.S. territory (outside the 50 states)</option>
               </select>
             </>
           )}
@@ -765,7 +870,7 @@ function MailingSteps({
           </p>
           <p className="text-sm text-slate-700 font-medium mb-2">Tell the clerk exactly this:</p>
           <div className="rounded-lg bg-slate-800 text-white px-4 py-3 text-sm font-mono mb-3">
-            "I need to send this Certified Mail with Return Receipt Requested."
+            &quot;I need to send this Certified Mail with Return Receipt Requested.&quot;
           </div>
           <p className="text-sm font-semibold text-slate-700 mb-2">What that means:</p>
           <ul className="space-y-2 mb-3">

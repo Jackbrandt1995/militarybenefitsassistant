@@ -1,5 +1,4 @@
 import type { FieldMapping } from '../fillPdf';
-import { formatDateString } from '../fillPdf';
 
 export const va281900Mapping: FieldMapping = {
   // Personal

@@ -20,6 +20,7 @@ import {
   Send,
   MessageSquare,
   UserCog,
+  Search,
 } from 'lucide-react';
 
 interface AgentSubmission {
@@ -72,6 +73,7 @@ export default function AdminPage() {
   const [loading, setLoading]                 = useState(true);
   const [refreshing, setRefreshing]           = useState(false);
   const [filter, setFilter]                   = useState<FilterType>('agent_pending');
+  const [search, setSearch]                   = useState('');
   const [expanded, setExpanded]               = useState<Record<string, boolean>>({});
   const [mailingId, setMailingId]             = useState<string | null>(null);
   const [downloadingId, setDownloadingId]     = useState<string | null>(null);
@@ -91,6 +93,8 @@ export default function AdminPage() {
   const [loadingMessages, setLoadingMessages] = useState<Record<string, boolean>>({});
   const [adminNewMessage, setAdminNewMessage] = useState<Record<string, string>>({});
   const [sendingAdminMessage, setSendingAdminMessage] = useState<Record<string, boolean>>({});
+  const [sendErrors, setSendErrors]           = useState<Record<string, string>>({});
+  const [messageErrors, setMessageErrors]     = useState<Record<string, string>>({});
   const [unreadCounts, setUnreadCounts]       = useState<Record<string, number>>({});
 
   // Client assignment (self-claim from the shared pool)
@@ -172,42 +176,66 @@ export default function AdminPage() {
 
   useEffect(() => { loadSubmissions(); loadAssignments(); }, [loadSubmissions, loadAssignments]);
 
+  // Seed the status tab from ?status= (e.g. "Manage in queue" links from the client case view).
+  useEffect(() => {
+    const status = new URLSearchParams(window.location.search).get('status');
+    if (status === 'all' || status === 'agent_pending' || status === 'agent_mailed' || status === 'agent_returned') {
+      setFilter(status);
+    }
+  }, []);
+
   async function handleClaim(userId: string) {
     setClaimingId(userId);
-    const supabase = createClient();
-    const { data, error } = await supabase.rpc('claim_client', { p_user_id: userId });
-    setClaimingId(null);
-    if (error) { alert(error.message); return; }
-    if (data === 'taken') { alert('Another representative already has this client. Refresh to see who.'); }
-    await loadAssignments();
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase.rpc('claim_client', { p_user_id: userId });
+      if (error) { alert(error.message); return; }
+      if (data === 'taken') { alert('Another representative already has this client.'); }
+      await loadAssignments();
+    } finally {
+      setClaimingId(null);
+    }
   }
 
   async function handleRelease(userId: string) {
     setClaimingId(userId);
-    const supabase = createClient();
-    const { error } = await supabase.rpc('release_client', { p_user_id: userId });
-    setClaimingId(null);
-    if (error) { alert(error.message); return; }
-    await loadAssignments();
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.rpc('release_client', { p_user_id: userId });
+      if (error) { alert(error.message); return; }
+      await loadAssignments();
+    } finally {
+      setClaimingId(null);
+    }
   }
 
   async function loadAdminMessages(submissionId: string) {
     setLoadingMessages(prev => ({ ...prev, [submissionId]: true }));
+    setMessageErrors(prev => ({ ...prev, [submissionId]: '' }));
     const supabase = createClient();
     const { data, error: rpcErr } = await supabase.rpc('admin_get_messages', {
       p_submission_id: submissionId,
     });
-    if (!rpcErr && data) {
-      setMessages(prev => ({ ...prev, [submissionId]: data as MessageItem[] }));
+    if (rpcErr) {
+      console.error('[admin_get_messages]', rpcErr);
+      setMessageErrors(prev => ({ ...prev, [submissionId]: rpcErr.message ?? 'Failed to load messages.' }));
+    } else {
+      if (data) {
+        setMessages(prev => ({ ...prev, [submissionId]: data as MessageItem[] }));
+      }
+      // The server marks client messages read on fetch — clear the unread badge.
+      setUnreadCounts(prev => ({ ...prev, [submissionId]: 0 }));
     }
     setLoadingMessages(prev => ({ ...prev, [submissionId]: false }));
   }
 
   async function sendAdminMessage(sub: AgentSubmission) {
+    if (sendingAdminMessage[sub.id]) return;
     const text = (adminNewMessage[sub.id] ?? '').trim();
     if (!text) return;
 
     setSendingAdminMessage(prev => ({ ...prev, [sub.id]: true }));
+    setSendErrors(prev => ({ ...prev, [sub.id]: '' }));
     const supabase = createClient();
 
     const { error: rpcErr } = await supabase.rpc('admin_send_message', {
@@ -215,15 +243,18 @@ export default function AdminPage() {
       p_message: text,
     });
 
-    if (!rpcErr) {
-      setAdminNewMessage(prev => ({ ...prev, [sub.id]: '' }));
-      // Reload thread to show the new message
-      await loadAdminMessages(sub.id);
-    } else {
+    if (rpcErr) {
       console.error('[admin_send_message]', rpcErr);
+      setSendErrors(prev => ({ ...prev, [sub.id]: 'Your message didn’t send. Please try again.' }));
+      setSendingAdminMessage(prev => ({ ...prev, [sub.id]: false }));
+      return;
     }
 
-    // Non-fatal notification
+    setAdminNewMessage(prev => ({ ...prev, [sub.id]: '' }));
+    // Reload thread to show the new message
+    await loadAdminMessages(sub.id);
+
+    // Non-fatal notification — only after the message actually saved.
     try {
       await fetch('/api/notify-message', {
         method: 'POST',
@@ -244,14 +275,18 @@ export default function AdminPage() {
   async function handleDownload(sub: AgentSubmission) {
     if (!sub.pdf_storage_path) { alert('No PDF path on file for this submission.'); return; }
     setDownloadingId(sub.id);
+    // Open the tab synchronously within the click gesture so popup blockers allow it.
+    const pdfWindow = window.open('', '_blank');
     try {
       const supabase = createClient();
       const { data, error: urlErr } = await supabase.storage
         .from('form_submissions')
         .createSignedUrl(sub.pdf_storage_path, 3600);
       if (urlErr || !data?.signedUrl) throw urlErr ?? new Error('No signed URL returned');
-      window.open(data.signedUrl, '_blank');
+      if (pdfWindow) pdfWindow.location.href = data.signedUrl;
+      else window.open(data.signedUrl, '_blank');
     } catch (err: any) {
+      pdfWindow?.close();
       alert('Download failed: ' + (err.message ?? 'Unknown error'));
     } finally {
       setDownloadingId(null);
@@ -259,6 +294,7 @@ export default function AdminPage() {
   }
 
   async function handleMarkMailed(id: string) {
+    if (!confirm('Mark this form as mailed to the VA?')) return;
     setMailingId(id);
     try {
       const supabase = createClient();
@@ -342,8 +378,8 @@ export default function AdminPage() {
   function toggleExpand(id: string) {
     const willOpen = !expanded[id];
     setExpanded(prev => ({ ...prev, [id]: willOpen }));
-    // Auto-load messages when expanding
-    if (willOpen && !messages[id]) {
+    // Auto-load messages when expanding; re-fetch if unread messages arrived since the last load.
+    if (willOpen && (!messages[id] || (unreadCounts[id] ?? 0) > 0)) {
       loadAdminMessages(id);
     }
   }
@@ -354,7 +390,11 @@ export default function AdminPage() {
     if (scope === 'pool') return !a;
     return true;
   };
-  const filtered = submissions.filter(s => inScope(s) && (filter === 'all' || s.submission_status === filter));
+  const query = search.trim().toLowerCase();
+  const matchesSearch = (s: AgentSubmission) =>
+    !query ||
+    [s.first_name, s.last_name, s.email, s.form_name].filter(Boolean).join(' ').toLowerCase().includes(query);
+  const filtered = submissions.filter(s => inScope(s) && matchesSearch(s) && (filter === 'all' || s.submission_status === filter));
 
   // Status counts (stat cards + filter badges) reflect the active scope so the
   // numbers always agree with the visible list.
@@ -395,7 +435,7 @@ export default function AdminPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="bg-white rounded-xl border border-amber-200 p-5 text-center">
             <p className="text-3xl font-bold text-amber-600">{pendingCount}</p>
             <p className="text-sm text-slate-500 mt-1 font-medium">Awaiting Mailing</p>
@@ -409,7 +449,7 @@ export default function AdminPage() {
             <p className="text-sm text-slate-500 mt-1 font-medium">Mailed</p>
           </div>
           <div className="bg-white rounded-xl border border-slate-200 p-5 text-center">
-            <p className="text-3xl font-bold text-slate-700">{submissions.length}</p>
+            <p className="text-3xl font-bold text-slate-700">{inScopeSubs.length}</p>
             <p className="text-sm text-slate-500 mt-1 font-medium">Total</p>
           </div>
         </div>
@@ -429,6 +469,7 @@ export default function AdminPage() {
               value={mfaEmail}
               onChange={e => setMfaEmail(e.target.value)}
               placeholder="user@example.com"
+              aria-label="Email of the user whose two-step verification you want to reset"
               className="flex-1 min-w-[220px] rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <Button type="submit" loading={mfaResetting} disabled={!mfaEmail.trim()} className="bg-slate-700 hover:bg-slate-800">
@@ -459,6 +500,19 @@ export default function AdminPage() {
               <span className={`ml-1.5 text-xs rounded-full px-1.5 py-0.5 ${scope === s.value ? 'bg-slate-600 text-white' : 'bg-slate-100 text-slate-500'}`}>{s.count}</span>
             </button>
           ))}
+        </div>
+
+        {/* Search */}
+        <div className="relative max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="search"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search by name, email, or form…"
+            aria-label="Search filings by client name, email, or form"
+            className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-400"
+          />
         </div>
 
         {/* Filter tabs */}
@@ -503,7 +557,7 @@ export default function AdminPage() {
 
         {/* Loading */}
         {loading && (
-          <div className="text-center py-16">
+          <div className="text-center py-16" role="status">
             <div className="animate-spin w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full mx-auto mb-3" />
             <p className="text-sm text-slate-500">Loading submissions…</p>
           </div>
@@ -513,7 +567,9 @@ export default function AdminPage() {
         {!loading && !error && filtered.length === 0 && (
           <div className="bg-white rounded-xl border border-slate-200 p-14 text-center">
             <FileText className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-            <p className="font-medium text-slate-500">No submissions in this category.</p>
+            <p className="font-medium text-slate-500">
+              {query ? 'No submissions match your search.' : 'No submissions in this category.'}
+            </p>
           </div>
         )}
 
@@ -533,6 +589,8 @@ export default function AdminPage() {
           const unreadCount     = unreadCounts[sub.id] ?? 0;
           const threadMsgs      = messages[sub.id] ?? [];
           const msgLoading      = !!loadingMessages[sub.id];
+          const msgError        = messageErrors[sub.id] ?? '';
+          const sendError       = sendErrors[sub.id] ?? '';
           const isSendingMsg    = !!sendingAdminMessage[sub.id];
 
           return (
@@ -669,7 +727,19 @@ export default function AdminPage() {
                         </div>
                       )}
 
-                      {!msgLoading && threadMsgs.length === 0 && (
+                      {!msgLoading && msgError && (
+                        <p className="text-xs text-red-600 text-center py-3">
+                          Couldn&apos;t load messages.{' '}
+                          <button
+                            onClick={() => loadAdminMessages(sub.id)}
+                            className="font-medium text-blue-600 hover:underline"
+                          >
+                            Retry
+                          </button>
+                        </p>
+                      )}
+
+                      {!msgLoading && !msgError && threadMsgs.length === 0 && (
                         <p className="text-xs text-slate-400 text-center py-4">No messages yet.</p>
                       )}
 
@@ -703,6 +773,7 @@ export default function AdminPage() {
                       <textarea
                         rows={2}
                         placeholder="Reply to client…"
+                        aria-label="Reply to client"
                         value={adminNewMessage[sub.id] ?? ''}
                         onChange={e => setAdminNewMessage(prev => ({ ...prev, [sub.id]: e.target.value }))}
                         onKeyDown={e => {
@@ -722,6 +793,9 @@ export default function AdminPage() {
                         {isSendingMsg ? 'Sending…' : 'Send'}
                       </Button>
                     </div>
+                    {sendError && (
+                      <p className="text-xs text-red-600 mt-1.5">{sendError}</p>
+                    )}
                   </div>
 
                   {/* ── Return with edits ── */}
@@ -801,6 +875,7 @@ export default function AdminPage() {
                         <input
                           type="text"
                           placeholder="e.g. 9400111899223397622887"
+                          aria-label="USPS tracking number"
                           value={trackingVal}
                           onChange={e => setTrackingInputs(prev => ({ ...prev, [sub.id]: e.target.value }))}
                           className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono placeholder:font-sans placeholder:text-slate-400"

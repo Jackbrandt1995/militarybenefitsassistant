@@ -13,7 +13,9 @@ import { aal2Satisfied } from '@/lib/server/mfa';
  * the blob is recoverable with the encryption key if ever needed.
  */
 const SENSITIVE_KEY = /ssn|routing|account|bank|vafile|filenumber/i;
-const PLAINTEXT_KEY = /name|email/i;
+// Anchored to the veteran's OWN identity keys — a bare /name|email/i would also
+// leave spouseName, dependentName, schoolName, etc. in plaintext.
+const PLAINTEXT_KEY = /^(?:(?:first|middle|last|full)?_?name|(?:user_?)?email)$/i;
 const looksLikeSSN = (v: unknown) => typeof v === 'string' && /^\d{3}-\d{2}-\d{4}$/.test(v.trim());
 
 export async function POST(req: NextRequest) {
@@ -26,8 +28,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'MFA required' }, { status: 403 });
   }
 
+  // Malformed JSON is a client error, not a retryable server failure.
+  let parsed: { formId?: unknown; formName?: unknown; answers?: unknown };
   try {
-    const { formId, formName, answers } = await req.json();
+    parsed = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
+  }
+
+  try {
+    const { formId, formName, answers } = parsed;
     if (!formId || !answers || typeof answers !== 'object') {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
     }
@@ -65,7 +75,8 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('[submissions insert]', error.message);
+      return NextResponse.json({ error: 'Something went wrong saving the submission. Please try again.' }, { status: 500 });
     }
     return NextResponse.json({ id: data.id });
   } catch (err) {

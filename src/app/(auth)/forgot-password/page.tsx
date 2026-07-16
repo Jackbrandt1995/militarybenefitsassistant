@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { Shield, Mail } from 'lucide-react';
@@ -9,7 +10,11 @@ import CaptchaField from '@/components/CaptchaField';
 
 const CAPTCHA_REQUIRED = !!process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY;
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordForm() {
+  const searchParams = useSearchParams();
+  // The auth callback redirects here with ?error=expired when a reset link
+  // couldn't be verified (expired, already used, or opened in another browser).
+  const linkExpired = searchParams.get('error') === 'expired';
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -71,6 +76,12 @@ export default function ForgotPasswordPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-lg border shadow-sm p-6 space-y-4">
+          {linkExpired && !error && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-md p-3">
+              That reset link is invalid or has expired. Enter your email below and
+              we&apos;ll send you a new one.
+            </div>
+          )}
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-md p-3">
               {error}
@@ -108,5 +119,14 @@ export default function ForgotPasswordPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function ForgotPasswordPage() {
+  // useSearchParams requires a Suspense boundary in the App Router.
+  return (
+    <Suspense fallback={null}>
+      <ForgotPasswordForm />
+    </Suspense>
   );
 }

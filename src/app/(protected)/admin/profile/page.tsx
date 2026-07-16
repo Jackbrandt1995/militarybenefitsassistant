@@ -106,9 +106,25 @@ export default function RepProfilePage() {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
     setSaved(false);
     setError('');
+
+    // Light format checks — fields stay optional, but block obviously malformed
+    // values since these autofill the 21-22A for every client this rep represents.
+    const country = (form.rep_country ?? '').trim().toUpperCase();
+    const isUS = !country || ['US', 'USA', 'UNITED STATES', 'UNITED STATES OF AMERICA'].includes(country);
+    const zip = (form.rep_zip ?? '').trim();
+    if (isUS && zip && !/^\d{5}(-\d{4})?$/.test(zip)) {
+      setError('ZIP Code should be 5 digits, like 12345 (or ZIP+4, like 12345-6789).');
+      return;
+    }
+    const phoneDigits = (form.rep_phone ?? '').replace(/\D/g, '');
+    if ((form.rep_phone ?? '').trim() && phoneDigits.length < 10) {
+      setError('Phone number should include at least 10 digits, like (555) 123-4567.');
+      return;
+    }
+
+    setSaving(true);
     try {
       const supabase = createClient();
       const { error: rpcErr } = await supabase.rpc('upsert_my_rep_profile', {
@@ -178,7 +194,7 @@ export default function RepProfilePage() {
 
         {/* Loading */}
         {loading ? (
-          <div className="text-center py-16">
+          <div className="text-center py-16" role="status">
             <div className="animate-spin w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full mx-auto mb-3" />
             <p className="text-sm text-slate-500">Loading your profile…</p>
           </div>
@@ -190,18 +206,18 @@ export default function RepProfilePage() {
               <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">Name</h2>
               <div className="grid sm:grid-cols-3 gap-4">
                 <div className="sm:col-span-1">
-                  <label className={labelClass}>First Name</label>
-                  <input className={inputClass} value={form.rep_first_name ?? ''} maxLength={30}
+                  <label htmlFor="rep_first_name" className={labelClass}>First Name</label>
+                  <input id="rep_first_name" className={inputClass} value={form.rep_first_name ?? ''} maxLength={30}
                     onChange={e => set('rep_first_name', e.target.value)} />
                 </div>
                 <div>
-                  <label className={labelClass}>Middle Initial</label>
-                  <input className={inputClass} value={form.rep_middle_initial ?? ''} maxLength={1}
+                  <label htmlFor="rep_middle_initial" className={labelClass}>Middle Initial</label>
+                  <input id="rep_middle_initial" className={inputClass} value={form.rep_middle_initial ?? ''} maxLength={1}
                     onChange={e => set('rep_middle_initial', e.target.value)} />
                 </div>
                 <div>
-                  <label className={labelClass}>Last Name</label>
-                  <input className={inputClass} value={form.rep_last_name ?? ''} maxLength={30}
+                  <label htmlFor="rep_last_name" className={labelClass}>Last Name</label>
+                  <input id="rep_last_name" className={inputClass} value={form.rep_last_name ?? ''} maxLength={30}
                     onChange={e => set('rep_last_name', e.target.value)} />
                 </div>
               </div>
@@ -212,23 +228,23 @@ export default function RepProfilePage() {
               <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">Mailing Address</h2>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
-                  <label className={labelClass}>Street Address</label>
-                  <input className={inputClass} value={form.rep_street ?? ''} placeholder="456 Oak Ave"
+                  <label htmlFor="rep_street" className={labelClass}>Street Address</label>
+                  <input id="rep_street" className={inputClass} value={form.rep_street ?? ''} placeholder="456 Oak Ave"
                     onChange={e => set('rep_street', e.target.value)} />
                 </div>
                 <div>
-                  <label className={labelClass}>Suite / Unit Number</label>
-                  <input className={inputClass} value={form.rep_apt ?? ''} placeholder="Suite 200 (optional)"
+                  <label htmlFor="rep_apt" className={labelClass}>Suite / Unit Number</label>
+                  <input id="rep_apt" className={inputClass} value={form.rep_apt ?? ''} placeholder="Suite 200 (optional)"
                     onChange={e => set('rep_apt', e.target.value)} />
                 </div>
                 <div>
-                  <label className={labelClass}>City</label>
-                  <input className={inputClass} value={form.rep_city ?? ''}
+                  <label htmlFor="rep_city" className={labelClass}>City</label>
+                  <input id="rep_city" className={inputClass} value={form.rep_city ?? ''}
                     onChange={e => set('rep_city', e.target.value)} />
                 </div>
                 <div>
-                  <label className={labelClass}>State</label>
-                  <select className={inputClass} value={form.rep_state ?? ''}
+                  <label htmlFor="rep_state" className={labelClass}>State</label>
+                  <select id="rep_state" className={inputClass} value={form.rep_state ?? ''}
                     onChange={e => set('rep_state', e.target.value)}>
                     <option value="">Select a state…</option>
                     {stateOptions.map(o => (
@@ -237,13 +253,13 @@ export default function RepProfilePage() {
                   </select>
                 </div>
                 <div>
-                  <label className={labelClass}>ZIP Code</label>
-                  <input className={inputClass} value={form.rep_zip ?? ''} maxLength={10} placeholder="12345"
+                  <label htmlFor="rep_zip" className={labelClass}>ZIP Code</label>
+                  <input id="rep_zip" className={inputClass} value={form.rep_zip ?? ''} maxLength={10} placeholder="12345"
                     onChange={e => set('rep_zip', e.target.value)} />
                 </div>
                 <div>
-                  <label className={labelClass}>Country</label>
-                  <input className={inputClass} value={form.rep_country ?? ''} placeholder="Leave blank if USA"
+                  <label htmlFor="rep_country" className={labelClass}>Country</label>
+                  <input id="rep_country" className={inputClass} value={form.rep_country ?? ''} placeholder="Leave blank if USA"
                     onChange={e => set('rep_country', e.target.value)} />
                 </div>
               </div>
@@ -254,13 +270,13 @@ export default function RepProfilePage() {
               <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">Contact</h2>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className={labelClass}>Phone</label>
-                  <input className={inputClass} type="tel" value={form.rep_phone ?? ''}
+                  <label htmlFor="rep_phone" className={labelClass}>Phone</label>
+                  <input id="rep_phone" className={inputClass} type="tel" value={form.rep_phone ?? ''}
                     onChange={e => set('rep_phone', e.target.value)} />
                 </div>
                 <div>
-                  <label className={labelClass}>Email Address</label>
-                  <input className={inputClass} type="email" value={form.rep_email ?? ''}
+                  <label htmlFor="rep_email" className={labelClass}>Email Address</label>
+                  <input id="rep_email" className={inputClass} type="email" value={form.rep_email ?? ''}
                     onChange={e => set('rep_email', e.target.value)} />
                 </div>
               </div>
@@ -271,8 +287,8 @@ export default function RepProfilePage() {
               <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-4">Accreditation</h2>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className={labelClass}>Type of Representative</label>
-                  <select className={inputClass} value={form.appointment_type ?? ''}
+                  <label htmlFor="appointment_type" className={labelClass}>Type of Representative</label>
+                  <select id="appointment_type" className={inputClass} value={form.appointment_type ?? ''}
                     onChange={e => set('appointment_type', e.target.value)}>
                     <option value="">Select a type…</option>
                     {APPOINTMENT_TYPES.map(o => (
@@ -281,15 +297,15 @@ export default function RepProfilePage() {
                   </select>
                 </div>
                 <div>
-                  <label className={labelClass}>Accreditation Number</label>
-                  <input className={inputClass} value={form.accreditation_number ?? ''}
+                  <label htmlFor="accreditation_number" className={labelClass}>Accreditation Number</label>
+                  <input id="accreditation_number" className={inputClass} value={form.accreditation_number ?? ''}
                     onChange={e => set('accreditation_number', e.target.value)} />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className={labelClass}>
+                  <label htmlFor="org_name" className={labelClass}>
                     Organization Name {isServiceOrg ? '' : '(optional)'}
                   </label>
-                  <input className={inputClass} value={form.org_name ?? ''}
+                  <input id="org_name" className={inputClass} value={form.org_name ?? ''}
                     placeholder="e.g., Disabled American Veterans"
                     onChange={e => set('org_name', e.target.value)} />
                   {isServiceOrg && (
@@ -302,7 +318,7 @@ export default function RepProfilePage() {
             </div>
 
             {/* ── Save ── */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <Button type="submit" loading={saving} disabled={saving}>
                 <Save className="w-4 h-4 mr-1.5" />
                 {saving ? 'Saving…' : 'Save profile'}
@@ -311,6 +327,14 @@ export default function RepProfilePage() {
                 <span className="inline-flex items-center gap-1.5 text-sm font-medium text-green-700">
                   <CheckCircle className="w-4 h-4" />
                   Saved.
+                </span>
+              )}
+              {/* Inline echo of the top error banner — the banner can be off-screen
+                  by the time the rep scrolls down to the Save button. */}
+              {error && !saving && (
+                <span className="inline-flex items-center gap-1.5 text-sm font-medium text-red-700">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  {error}
                 </span>
               )}
             </div>

@@ -21,7 +21,8 @@ export async function GET() {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('[profile GET]', error.message);
+    return NextResponse.json({ error: 'Something went wrong loading your profile. Please try again.' }, { status: 500 });
   }
 
   // Decrypt sensitive values for the client. If decrypt fails (a still-plaintext
@@ -35,6 +36,9 @@ export async function GET() {
   if (profile.va_file_number) {
     try { profile.va_file_number_decrypted = decrypt(profile.va_file_number); }
     catch { profile.va_file_number_decrypted = profile.va_file_number; }
+    // Never send ciphertext under the same key the client edits and PUTs back —
+    // that round-trip would re-encrypt the ciphertext and corrupt the stored value.
+    profile.va_file_number = profile.va_file_number_decrypted;
   }
 
   return NextResponse.json(profile, { headers: { 'Cache-Control': 'no-store' } });
@@ -54,14 +58,26 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // Encrypt sensitive fields before storing.
-    if (body.ssn) {
-      body.ssn_encrypted = encrypt(body.ssn);
+    // Never trust a client-supplied encrypted-column value (it would let plaintext
+    // bypass encryption); the real value is derived from `ssn` just below.
+    delete body.ssn_encrypted;
+
+    // Encrypt sensitive fields before storing. Check presence, not truthiness, so
+    // an empty value CLEARS the stored one — otherwise the phantom `ssn` key (no
+    // such column on profiles) reaches the update and PostgREST rejects it.
+    if ('ssn' in body) {
+      body.ssn_encrypted = body.ssn ? encrypt(body.ssn) : null;
       delete body.ssn;
     }
     // VA file number is stored encrypted (in the va_file_number column).
-    if (body.va_file_number) {
-      body.va_file_number = encrypt(body.va_file_number);
+    if ('va_file_number' in body) {
+      // Real VA file numbers are ~8–9 characters; anything much longer is a
+      // ciphertext echo (a base64 blob shown after a failed decrypt being PUT
+      // back), which would get double-encrypted and corrupt the stored value.
+      if (typeof body.va_file_number === 'string' && body.va_file_number.length > 20) {
+        return NextResponse.json({ error: 'That VA file number looks too long. Please enter it as shown on your VA letters.' }, { status: 400 });
+      }
+      body.va_file_number = body.va_file_number ? encrypt(body.va_file_number) : null;
     }
 
     // Remove fields that shouldn't be directly updated
@@ -79,7 +95,8 @@ export async function PUT(request: NextRequest) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('[profile PUT]', error.message);
+      return NextResponse.json({ error: 'Something went wrong saving your profile. Please try again.' }, { status: 500 });
     }
 
     return NextResponse.json(data);

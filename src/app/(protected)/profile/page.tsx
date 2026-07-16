@@ -1,13 +1,33 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useProfile } from '@/hooks/useProfile';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
-import { branchOptions, dischargeOptions, stateOptions } from '@/lib/validation';
-import { ChevronDown, ChevronUp, Plus, Trash2, Save } from 'lucide-react';
+import { z } from 'zod';
+import {
+  branchOptions, dischargeOptions, stateOptions,
+  ssnSchema, phoneSchema, zipSchema, emailSchema, routingNumberSchema,
+} from '@/lib/validation';
+import { ChevronDown, ChevronUp, Plus, Trash2, Save, Eye, EyeOff } from 'lucide-react';
 import type { Profile, ServicePeriod, EducationRecord, EmploymentRecord, DirectDeposit } from '@/types/profile';
+
+// Matches the server-side check in /api/direct-deposit.
+const accountNumberSchema = z.string().regex(/^\d{4,17}$/, 'Account number must be 4 to 17 digits, with no spaces or dashes');
+
+// Format checks for blur-saved fields, keyed by field name. Empty values are
+// always allowed — every profile field is optional; format is only checked when
+// a value is present, so bad data never lands on a generated VA form.
+const VALIDATORS: Record<string, z.ZodString> = {
+  ssn: ssnSchema,
+  email: emailSchema,
+  phone_home: phoneSchema,
+  phone_mobile: phoneSchema,
+  address_zip: zipSchema,
+  routing_number: routingNumberSchema,
+  account_number: accountNumberSchema,
+};
 
 function Section({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -40,7 +60,23 @@ export default function ProfilePage() {
   const [led, setLed] = useState<EducationRecord[]>([]);
   const [lemp, setLemp] = useState<EmploymentRecord[]>([]);
   const [ldd, setLdd] = useState<Partial<DirectDeposit>>({});
-  const [saving, setSaving] = useState(false);
+  // Autosave indicator: 'Saving…' while any blur-save is in flight, then a brief
+  // 'All changes saved' confirmation.
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
+  // Per-field validation/save errors, rendered through Input's `error` prop
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  // Save failures that don't belong to a specific input
+  const [saveError, setSaveError] = useState('');
+  // Show/hide toggles for the masked sensitive inputs
+  const [showSSN, setShowSSN] = useState(false);
+  const [showRouting, setShowRouting] = useState(false);
+  const [showAccount, setShowAccount] = useState(false);
+  const pendingSaves = useRef(0);
+  const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Last successfully saved values for the sensitive fields, so tabbing through
+  // an untouched field doesn't fire a request, while a failed save can still be
+  // retried by blurring again.
+  const lastSaved = useRef<Record<string, string>>({});
 
   // Initialize local state from fetched data
   useEffect(() => {
@@ -50,8 +86,19 @@ export default function ProfilePage() {
       setLed(data.educationHistory);
       setLemp(data.employmentHistory);
       setLdd(data.directDeposit || {});
+      lastSaved.current = {
+        ssn: data.profile?.ssn_encrypted || '',
+        va_file_number: data.profile?.va_file_number || '',
+        routing_number: data.directDeposit?.routing_number_encrypted || '',
+        account_number: data.directDeposit?.account_number_encrypted || '',
+      };
     }
   }, [data]);
+
+  // Clear any pending 'All changes saved' timer on unmount
+  useEffect(() => () => {
+    if (savedTimer.current) clearTimeout(savedTimer.current);
+  }, []);
 
   if (loading || !data) {
     return (
@@ -66,37 +113,113 @@ export default function ProfilePage() {
     setLp(prev => ({ ...prev, [field]: value }));
   };
 
+  // Track in-flight blur-saves so the indicator shows 'Saving…' until the last
+  // one lands, then flashes 'All changes saved'.
+  const beginSave = () => {
+    pendingSaves.current += 1;
+    if (savedTimer.current) clearTimeout(savedTimer.current);
+    setSaveState('saving');
+  };
+
+  const endSave = (ok: boolean) => {
+    pendingSaves.current = Math.max(0, pendingSaves.current - 1);
+    if (pendingSaves.current === 0) {
+      if (ok) {
+        setSaveState('saved');
+        savedTimer.current = setTimeout(() => setSaveState('idle'), 2500);
+      } else {
+        setSaveState('idle');
+      }
+    }
+  };
+
+  const setFieldError = (field: string, message: string | null) => {
+    setFieldErrors(prev => {
+      const next = { ...prev };
+      if (message) next[field] = message;
+      else delete next[field];
+      return next;
+    });
+  };
+
+  // Format-check a field before saving. A bad format blocks the save and shows
+  // the message inline; clearing or fixing the value clears the message.
+  const validateField = (field: string, value: string): boolean => {
+    const schema = VALIDATORS[field];
+    if (!schema || !value) {
+      setFieldError(field, null);
+      return true;
+    }
+    const result = schema.safeParse(value);
+    setFieldError(field, result.success ? null : result.error.issues[0].message);
+    return result.success;
+  };
+
   const saveField = async (field: string, value: string | boolean | number | null) => {
-    setSaving(true);
-    await updateProfile({ [field]: value } as Partial<Profile>);
-    setSaving(false);
+    beginSave();
+    try {
+      await updateProfile({ [field]: value } as Partial<Profile>);
+    } finally {
+      endSave(true);
+    }
+  };
+
+  // Blur-save for fields that have a format check (email, phones, ZIP).
+  const saveValidatedField = async (field: string, value: string) => {
+    if (!validateField(field, value)) return;
+    await saveField(field, value);
   };
 
   // SSN and VA file number are sensitive — saved through the encrypting API
   // route (which encrypts them), never a direct plaintext write.
   const saveSSN = async (value: string) => {
-    setSaving(true);
+    if (value === lastSaved.current.ssn) return; // untouched — nothing to save
+    if (!validateField('ssn', value)) return;
+    beginSave();
+    let ok = false;
     try {
-      await fetch('/api/profile', {
+      const res = await fetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ssn: value }),
       });
+      ok = res.ok;
+      if (res.ok) {
+        lastSaved.current.ssn = value;
+        setFieldError('ssn', null);
+      } else {
+        const body = await res.json().catch(() => null);
+        setFieldError('ssn', body?.error || 'Your SSN could not be saved. Please try again.');
+      }
+    } catch {
+      setFieldError('ssn', 'Your SSN could not be saved — check your connection and try again.');
     } finally {
-      setSaving(false);
+      endSave(ok);
     }
   };
 
   const saveVAFile = async (value: string) => {
-    setSaving(true);
+    if (value === lastSaved.current.va_file_number) return; // untouched
+    beginSave();
+    let ok = false;
     try {
-      await fetch('/api/profile', {
+      const res = await fetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ va_file_number: value }),
       });
+      ok = res.ok;
+      if (res.ok) {
+        lastSaved.current.va_file_number = value;
+        setFieldError('va_file_number', null);
+      } else {
+        const body = await res.json().catch(() => null);
+        setFieldError('va_file_number', body?.error || 'Your VA file number could not be saved. Please try again.');
+      }
+    } catch {
+      setFieldError('va_file_number', 'Your VA file number could not be saved — check your connection and try again.');
     } finally {
-      setSaving(false);
+      endSave(ok);
     }
   };
 
@@ -106,7 +229,12 @@ export default function ProfilePage() {
   };
 
   const saveSPField = async (id: string, field: string, value: string) => {
-    await updateServicePeriod(id, { [field]: value } as Partial<ServicePeriod>);
+    beginSave();
+    try {
+      await updateServicePeriod(id, { [field]: value } as Partial<ServicePeriod>);
+    } finally {
+      endSave(true);
+    }
   };
 
   // Education helpers
@@ -115,7 +243,12 @@ export default function ProfilePage() {
   };
 
   const saveEdField = async (id: string, field: string, value: string) => {
-    await updateEducation(id, { [field]: value } as Partial<EducationRecord>);
+    beginSave();
+    try {
+      await updateEducation(id, { [field]: value } as Partial<EducationRecord>);
+    } finally {
+      endSave(true);
+    }
   };
 
   // Employment helpers
@@ -124,7 +257,12 @@ export default function ProfilePage() {
   };
 
   const saveEmpField = async (id: string, field: string, value: string | number | null) => {
-    await updateEmployment(id, { [field]: value } as Partial<EmploymentRecord>);
+    beginSave();
+    try {
+      await updateEmployment(id, { [field]: value } as Partial<EmploymentRecord>);
+    } finally {
+      endSave(true);
+    }
   };
 
   // Direct deposit helpers
@@ -135,35 +273,59 @@ export default function ProfilePage() {
   // All direct-deposit writes go through the encrypting API route (single write
   // path; routing/account are encrypted server-side, the rest upserted as-is).
   const saveDDField = async (field: string, value: string) => {
-    setSaving(true);
+    beginSave();
+    let ok = false;
     try {
-      await fetch('/api/direct-deposit', {
+      const res = await fetch('/api/direct-deposit', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ [field]: value }),
       });
+      ok = res.ok;
+      if (res.ok) {
+        setSaveError('');
+      } else {
+        const body = await res.json().catch(() => null);
+        setSaveError(body?.error || 'Your direct deposit info could not be saved. Please try again.');
+      }
+    } catch {
+      setSaveError('Your direct deposit info could not be saved — check your connection and try again.');
     } finally {
-      setSaving(false);
+      endSave(ok);
     }
   };
 
   // Routing/account numbers are sensitive — send the plain field names so the API
   // route encrypts them (the inputs display the decrypted value in *_encrypted).
   const saveBank = async (field: 'routing_number' | 'account_number', value: string) => {
-    setSaving(true);
+    if (value === lastSaved.current[field]) return; // untouched — nothing to save
+    if (!validateField(field, value)) return;
+    beginSave();
+    let ok = false;
     try {
-      await fetch('/api/direct-deposit', {
+      const res = await fetch('/api/direct-deposit', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ [field]: value }),
       });
+      ok = res.ok;
+      if (res.ok) {
+        lastSaved.current[field] = value;
+        setFieldError(field, null);
+      } else {
+        const body = await res.json().catch(() => null);
+        setFieldError(field, body?.error || 'This could not be saved. Please try again.');
+      }
+    } catch {
+      setFieldError(field, 'This could not be saved — check your connection and try again.');
     } finally {
-      setSaving(false);
+      endSave(ok);
     }
   };
 
-  // Calculate completeness
-  const fields = [lp.first_name, lp.last_name, lp.dob, lp.sex, lp.email,
+  // Calculate completeness — keep this field list in sync with
+  // COMPLETENESS_FIELDS in dashboard/page.tsx so both pages report the same number.
+  const fields = [lp.first_name, lp.last_name, lp.dob, lp.sex, lp.ssn_encrypted, lp.email,
     lp.phone_mobile, lp.address_street, lp.address_city, lp.address_state, lp.address_zip];
   const filled = fields.filter(Boolean).length;
   const pct = Math.round((filled / fields.length) * 100);
@@ -182,7 +344,9 @@ export default function ProfilePage() {
             <div className="bg-blue-700 h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
           </div>
         </div>
-        {saving && <p className="text-xs text-blue-600 mt-2">Saving...</p>}
+        {saveError && (
+          <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2 mt-3">{saveError}</p>
+        )}
       </div>
 
       <div className="space-y-4">
@@ -208,14 +372,24 @@ export default function ProfilePage() {
               options={[{ label: 'Male', value: 'Male' }, { label: 'Female', value: 'Female' }]}
               value={lp.sex || ''}
               onChange={e => { setField('sex', e.target.value); saveField('sex', e.target.value); }} />
-            <Input label="SSN" id="ssn" type="password" placeholder="XXX-XX-XXXX"
-              value={lp.ssn_encrypted || ''}
-              onChange={e => setField('ssn_encrypted', e.target.value)}
-              onBlur={e => saveSSN(e.target.value)}
-              helpText="Encrypted at rest" />
+            <div className="relative">
+              <Input label="SSN" id="ssn" type={showSSN ? 'text' : 'password'} placeholder="XXX-XX-XXXX"
+                className="pr-9"
+                value={lp.ssn_encrypted || ''}
+                onChange={e => setField('ssn_encrypted', e.target.value)}
+                onBlur={e => saveSSN(e.target.value)}
+                error={fieldErrors.ssn}
+                helpText="Encrypted at rest" />
+              <button type="button" onClick={() => setShowSSN(s => !s)}
+                aria-label={showSSN ? 'Hide SSN' : 'Show SSN'}
+                className="absolute right-2 top-[31px] p-1 text-gray-400 hover:text-gray-600">
+                {showSSN ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
             <Input label="VA File Number" id="va_file_number" value={lp.va_file_number || ''}
               onChange={e => setField('va_file_number', e.target.value)}
-              onBlur={e => saveVAFile(e.target.value)} />
+              onBlur={e => saveVAFile(e.target.value)}
+              error={fieldErrors.va_file_number} />
           </div>
         </Section>
 
@@ -224,13 +398,16 @@ export default function ProfilePage() {
           <div className="grid sm:grid-cols-2 gap-4 pt-4">
             <Input label="Email" id="email" type="email" value={lp.email || ''}
               onChange={e => setField('email', e.target.value)}
-              onBlur={e => saveField('email', e.target.value)} />
+              onBlur={e => saveValidatedField('email', e.target.value)}
+              error={fieldErrors.email} />
             <Input label="Home Phone" id="phone_home" type="tel" value={lp.phone_home || ''}
               onChange={e => setField('phone_home', e.target.value)}
-              onBlur={e => saveField('phone_home', e.target.value)} />
+              onBlur={e => saveValidatedField('phone_home', e.target.value)}
+              error={fieldErrors.phone_home} />
             <Input label="Mobile Phone" id="phone_mobile" type="tel" value={lp.phone_mobile || ''}
               onChange={e => setField('phone_mobile', e.target.value)}
-              onBlur={e => saveField('phone_mobile', e.target.value)} />
+              onBlur={e => saveValidatedField('phone_mobile', e.target.value)}
+              error={fieldErrors.phone_mobile} />
             <div className="sm:col-span-2">
               <Input label="Street Address" id="address_street" value={lp.address_street || ''}
                 onChange={e => setField('address_street', e.target.value)}
@@ -247,7 +424,8 @@ export default function ProfilePage() {
               onChange={e => { setField('address_state', e.target.value); saveField('address_state', e.target.value); }} />
             <Input label="ZIP Code" id="address_zip" value={lp.address_zip || ''}
               onChange={e => setField('address_zip', e.target.value)}
-              onBlur={e => saveField('address_zip', e.target.value)} />
+              onBlur={e => saveValidatedField('address_zip', e.target.value)}
+              error={fieldErrors.address_zip} />
           </div>
         </Section>
 
@@ -256,7 +434,10 @@ export default function ProfilePage() {
           <div className="pt-4 space-y-4">
             {lsp.map((sp) => (
               <div key={sp.id} className="border rounded-md p-4 relative">
-                <button onClick={() => deleteServicePeriod(sp.id)} className="absolute top-2 right-2 text-red-500 hover:text-red-700">
+                <button
+                  onClick={() => { if (window.confirm('Remove this service period? This cannot be undone.')) deleteServicePeriod(sp.id); }}
+                  aria-label="Delete service period"
+                  className="absolute top-2 right-2 text-red-500 hover:text-red-700">
                   <Trash2 className="h-4 w-4" />
                 </button>
                 <div className="grid sm:grid-cols-2 gap-3">
@@ -290,7 +471,10 @@ export default function ProfilePage() {
           <div className="pt-4 space-y-4">
             {led.map((ed) => (
               <div key={ed.id} className="border rounded-md p-4 relative">
-                <button onClick={() => deleteEducation(ed.id)} className="absolute top-2 right-2 text-red-500 hover:text-red-700">
+                <button
+                  onClick={() => { if (window.confirm('Remove this education record? This cannot be undone.')) deleteEducation(ed.id); }}
+                  aria-label="Delete education record"
+                  className="absolute top-2 right-2 text-red-500 hover:text-red-700">
                   <Trash2 className="h-4 w-4" />
                 </button>
                 <div className="grid sm:grid-cols-2 gap-3">
@@ -326,7 +510,10 @@ export default function ProfilePage() {
           <div className="pt-4 space-y-4">
             {lemp.map((emp) => (
               <div key={emp.id} className="border rounded-md p-4 relative">
-                <button onClick={() => deleteEmployment(emp.id)} className="absolute top-2 right-2 text-red-500 hover:text-red-700">
+                <button
+                  onClick={() => { if (window.confirm('Remove this employment record? This cannot be undone.')) deleteEmployment(emp.id); }}
+                  aria-label="Delete employment record"
+                  className="absolute top-2 right-2 text-red-500 hover:text-red-700">
                   <Trash2 className="h-4 w-4" />
                 </button>
                 <div className="grid sm:grid-cols-2 gap-3">
@@ -359,18 +546,55 @@ export default function ProfilePage() {
             <Input label="Bank Name" id="bank_name" value={ldd.bank_name || ''}
               onChange={e => setDDField('bank_name', e.target.value)}
               onBlur={e => saveDDField('bank_name', e.target.value)} />
-            <Input label="Routing Number" id="routing" type="password"
-              value={ldd.routing_number_encrypted || ''}
-              onChange={e => setDDField('routing_number_encrypted', e.target.value)}
-              onBlur={e => saveBank('routing_number', e.target.value)}
-              helpText="9 digits" />
-            <Input label="Account Number" id="account" type="password"
-              value={ldd.account_number_encrypted || ''}
-              onChange={e => setDDField('account_number_encrypted', e.target.value)}
-              onBlur={e => saveBank('account_number', e.target.value)} />
+            <div className="relative">
+              <Input label="Routing Number" id="routing" type={showRouting ? 'text' : 'password'}
+                className="pr-9"
+                value={ldd.routing_number_encrypted || ''}
+                onChange={e => setDDField('routing_number_encrypted', e.target.value)}
+                onBlur={e => saveBank('routing_number', e.target.value)}
+                error={fieldErrors.routing_number}
+                helpText="9 digits" />
+              <button type="button" onClick={() => setShowRouting(s => !s)}
+                aria-label={showRouting ? 'Hide routing number' : 'Show routing number'}
+                className="absolute right-2 top-[31px] p-1 text-gray-400 hover:text-gray-600">
+                {showRouting ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            <div className="relative">
+              <Input label="Account Number" id="account" type={showAccount ? 'text' : 'password'}
+                className="pr-9"
+                value={ldd.account_number_encrypted || ''}
+                onChange={e => setDDField('account_number_encrypted', e.target.value)}
+                onBlur={e => saveBank('account_number', e.target.value)}
+                error={fieldErrors.account_number} />
+              <button type="button" onClick={() => setShowAccount(s => !s)}
+                aria-label={showAccount ? 'Hide account number' : 'Show account number'}
+                className="absolute right-2 top-[31px] p-1 text-gray-400 hover:text-gray-600">
+                {showAccount ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
         </Section>
       </div>
+
+      {/* Autosave status — fixed to the corner so it's visible wherever the
+          user is on the page (fields save when you click or tab away). */}
+      {saveState !== 'idle' && (
+        <div role="status" aria-live="polite"
+          className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-full border bg-white shadow-md px-3.5 py-1.5 text-xs font-medium text-gray-700">
+          {saveState === 'saving' ? (
+            <>
+              <span className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-700" />
+              Saving…
+            </>
+          ) : (
+            <>
+              <Save className="h-3.5 w-3.5 text-green-600" />
+              All changes saved
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }

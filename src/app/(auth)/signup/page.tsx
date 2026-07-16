@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
@@ -19,8 +19,29 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState('');
   const [captchaKey, setCaptchaKey] = useState(0);
+  const [resendState, setResendState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const router = useRouter();
   const supabase = createClient();
+
+  // Already-signed-in users (bookmark, back button) go straight to their dashboard.
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) router.replace('/dashboard');
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Lets a user whose confirmation email never arrived (spam filter, delay)
+  // trigger a fresh one instead of being stuck unable to log in.
+  const handleResend = async () => {
+    setResendState('sending');
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/callback` },
+    });
+    setResendState(error ? 'error' : 'sent');
+  };
 
   function resetCaptcha() {
     setCaptchaToken('');
@@ -77,9 +98,33 @@ export default function SignupPage() {
             We sent a confirmation link to <strong>{email}</strong>.
             Click the link to activate your account.
           </p>
-          <Link href="/login" className="text-blue-700 font-medium hover:underline">
-            Back to Login
-          </Link>
+          <div className="space-y-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleResend}
+              loading={resendState === 'sending'}
+              disabled={resendState === 'sending' || resendState === 'sent'}
+            >
+              {resendState === 'sent' ? 'Email Sent' : 'Resend Confirmation Email'}
+            </Button>
+            {resendState === 'sent' && (
+              <p className="text-sm text-green-700">
+                A new confirmation email is on its way. Check your spam folder if you
+                don&apos;t see it in a few minutes.
+              </p>
+            )}
+            {resendState === 'error' && (
+              <p className="text-sm text-red-600">
+                We couldn&apos;t resend the email. Please wait a minute and try again.
+              </p>
+            )}
+            <p>
+              <Link href="/login" className="text-blue-700 font-medium hover:underline">
+                Back to Login
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     );

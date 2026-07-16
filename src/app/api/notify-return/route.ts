@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     <div class="body">
       <p style="font-size:15px;color:#0f172a;margin:0 0 4px;">Hi ${userName || 'there'},</p>
       <p style="font-size:14px;color:#475569;margin:8px 0 16px;">
-        We reviewed your <strong>${formName}</strong> (${formId?.toUpperCase() ?? ''}) submission and have a few items
+        We reviewed your <strong>${formName}</strong>${formId ? ` (${formId.toUpperCase()})` : ''} submission and have a few items
         that need to be corrected or completed before we can mail it to the VA.
       </p>
 
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     await sendMail({ to: userEmail, subject, html });
 
     return NextResponse.json({ ok: true });
-  } catch (err: any) {
+  } catch (err) {
     console.error('[notify-return]', err);
     return NextResponse.json({ error: 'Failed to send email.' }, { status: 500 });
   }

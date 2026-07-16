@@ -35,12 +35,15 @@ const ACCENTS: Record<string, { tile: string; panelBorder: string; panelBg: stri
   healthcare:     { tile: 'bg-blue-900 hover:bg-blue-950', panelBorder: 'border-blue-200', panelBg: 'bg-blue-50/40', iconBg: 'bg-blue-900' },
 };
 
+// Keep this field list in sync with the completeness calculation on the profile
+// page (profile/page.tsx), so the banner here and the meter there always agree.
 const COMPLETENESS_FIELDS: Array<keyof NonNullable<ReturnType<typeof useProfile>['profile']>['profile']> = [
   'first_name',
   'last_name',
   'dob',
   'sex',
   'ssn_encrypted',
+  'email',
   'phone_mobile',
   'address_street',
   'address_city',

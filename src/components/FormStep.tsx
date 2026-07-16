@@ -46,14 +46,25 @@ export default function FormStep({ step, answers, errors, preFilledFields, onAns
 
           return (
             <div key={field.id} className="relative">
-              {/* Label */}
-              <label
-                htmlFor={field.id}
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                {field.label}
-                {field.required && <span className="text-red-500 ml-1">*</span>}
-              </label>
+              {/* Label — checkboxes label themselves inline; radios use a
+                  <fieldset>/<legend>; signature/document have no single input
+                  a htmlFor could point to, so they get a plain heading. */}
+              {field.type !== 'checkbox' && field.type !== 'radio' && (
+                field.type === 'signature' || field.type === 'document' ? (
+                  <span className="block text-sm font-medium text-gray-700 mb-1">
+                    {field.label}
+                    {field.required && <span className="text-red-500 ml-1">*</span>}
+                  </span>
+                ) : (
+                  <label
+                    htmlFor={field.id}
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    {field.label}
+                    {field.required && <span className="text-red-500 ml-1">*</span>}
+                  </label>
+                )
+              )}
 
               {/* Pre-fill badge */}
               {isPreFilled && (
@@ -92,53 +103,75 @@ export default function FormStep({ step, answers, errors, preFilledFields, onAns
                   ))}
                 </select>
               ) : field.type === 'radio' ? (
-                <div className="flex flex-wrap gap-4 mt-1">
-                  {field.options?.map(opt => (
-                    <label key={opt.value} className="flex items-center gap-2 text-sm">
-                      <input
-                        type="radio"
-                        name={field.id}
-                        value={opt.value}
-                        checked={value === opt.value}
-                        onChange={e => onAnswer(field.id, e.target.value)}
-                        className="text-blue-600 focus:ring-blue-500"
-                      />
-                      {opt.label}
-                    </label>
-                  ))}
-                </div>
+                <fieldset>
+                  <legend className="block text-sm font-medium text-gray-700 mb-1">
+                    {field.label}
+                    {field.required && <span className="text-red-500 ml-1">*</span>}
+                  </legend>
+                  <div className="flex flex-wrap gap-4 mt-1">
+                    {field.options?.map((opt, optIdx) => (
+                      <label key={opt.value} className="flex items-center gap-2 text-sm">
+                        <input
+                          type="radio"
+                          id={optIdx === 0 ? field.id : undefined}
+                          name={field.id}
+                          value={opt.value}
+                          checked={value === opt.value}
+                          onChange={e => onAnswer(field.id, e.target.value)}
+                          className="text-blue-600 focus:ring-blue-500"
+                        />
+                        {opt.label}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
               ) : field.type === 'checkbox' ? (
-                <label className="flex items-center gap-2 text-sm mt-1">
+                <label className="flex items-start gap-2 text-sm mt-1">
                   <input
                     type="checkbox"
                     id={field.id}
                     checked={value === true || value === 'true'}
                     onChange={e => onAnswer(field.id, e.target.checked)}
-                    className="rounded text-blue-600 focus:ring-blue-500"
+                    className="mt-0.5 rounded text-blue-600 focus:ring-blue-500"
                   />
-                  {field.helpText || field.label}
+                  <span>
+                    {field.label}
+                    {field.required && <span className="text-red-500 ml-1">*</span>}
+                    {field.helpText && (
+                      <span className="block text-xs text-gray-500 mt-0.5">{field.helpText}</span>
+                    )}
+                  </span>
                 </label>
               ) : field.type === 'ssn' ? (
-                <input
-                  type="password"
-                  id={field.id}
-                  value={String(value)}
-                  onChange={e => {
-                    const digits = e.target.value.replace(/\D/g, '').slice(0, 9);
-                    let formatted = digits;
-                    if (digits.length > 5) {
-                      formatted = `${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5)}`;
-                    } else if (digits.length > 3) {
-                      formatted = `${digits.slice(0, 3)}-${digits.slice(3)}`;
-                    }
-                    onAnswer(field.id, formatted);
-                  }}
-                  placeholder="XXX-XX-XXXX"
-                  maxLength={11}
-                  className={`w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    error ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
+                <div className="relative">
+                  <input
+                    type={visibleFields.has(field.id) ? 'text' : 'password'}
+                    id={field.id}
+                    value={String(value)}
+                    onChange={e => {
+                      const digits = e.target.value.replace(/\D/g, '').slice(0, 9);
+                      let formatted = digits;
+                      if (digits.length > 5) {
+                        formatted = `${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5)}`;
+                      } else if (digits.length > 3) {
+                        formatted = `${digits.slice(0, 3)}-${digits.slice(3)}`;
+                      }
+                      onAnswer(field.id, formatted);
+                    }}
+                    placeholder="XXX-XX-XXXX"
+                    maxLength={11}
+                    className={`w-full rounded-md border px-3 py-2 pr-20 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      error ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => toggleVisible(field.id)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    {visibleFields.has(field.id) ? 'Hide' : 'Show'}
+                  </button>
+                </div>
               ) : field.type === 'phone' ? (
                 <input
                   type="tel"
@@ -165,10 +198,14 @@ export default function FormStep({ step, answers, errors, preFilledFields, onAns
                   <p className="text-sm text-gray-700 whitespace-pre-wrap">{field.helpText}</p>
                 </div>
               ) : field.type === 'signature' ? (
-                <SignaturePad
-                  value={String(value || '')}
-                  onChange={dataUrl => onAnswer(field.id, dataUrl)}
-                />
+                /* id + tabIndex let the wizard scroll/focus here when the
+                   signature is still missing at review time */
+                <div id={field.id} tabIndex={-1}>
+                  <SignaturePad
+                    value={String(value || '')}
+                    onChange={dataUrl => onAnswer(field.id, dataUrl)}
+                  />
+                </div>
               ) : field.sensitive ? (
                 <div className="relative">
                   <input

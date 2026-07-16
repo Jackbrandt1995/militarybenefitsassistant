@@ -21,7 +21,8 @@ export async function GET() {
     .single();
 
   if (error && error.code !== 'PGRST116') {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('[direct-deposit GET]', error.message);
+    return NextResponse.json({ error: 'Something went wrong loading your banking info. Please try again.' }, { status: 500 });
   }
 
   if (data) {
@@ -52,13 +53,28 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // Encrypt sensitive fields
-    if (body.routing_number) {
-      body.routing_number_encrypted = encrypt(body.routing_number);
+    // Validate format before storing — a bad routing/account number flows onto
+    // the veteran's VA direct-deposit form and means a rejected or lost payment.
+    if (body.routing_number && !/^\d{9}$/.test(body.routing_number)) {
+      return NextResponse.json({ error: 'Routing number must be exactly 9 digits, with no spaces or dashes.' }, { status: 400 });
+    }
+    if (body.account_number && !/^\d{4,17}$/.test(body.account_number)) {
+      return NextResponse.json({ error: 'Account number must be 4 to 17 digits, with no spaces or dashes.' }, { status: 400 });
+    }
+
+    // Never trust client-supplied encrypted-column values; they're derived below.
+    delete body.routing_number_encrypted;
+    delete body.account_number_encrypted;
+
+    // Encrypt sensitive fields. Check presence, not truthiness, so an empty value
+    // CLEARS the stored one — otherwise the phantom plain-named key (no such
+    // column on direct_deposit) reaches the upsert and PostgREST rejects it.
+    if ('routing_number' in body) {
+      body.routing_number_encrypted = body.routing_number ? encrypt(body.routing_number) : null;
       delete body.routing_number;
     }
-    if (body.account_number) {
-      body.account_number_encrypted = encrypt(body.account_number);
+    if ('account_number' in body) {
+      body.account_number_encrypted = body.account_number ? encrypt(body.account_number) : null;
       delete body.account_number;
     }
 
@@ -73,7 +89,8 @@ export async function PUT(request: NextRequest) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('[direct-deposit PUT]', error.message);
+      return NextResponse.json({ error: 'Something went wrong saving your banking info. Please try again.' }, { status: 500 });
     }
 
     return NextResponse.json(data);

@@ -62,22 +62,35 @@ export function useProfile() {
     fetchProfile();
   }, [fetchProfile]);
 
-  // Optimistic update for core profile fields (no refetch)
-  const updateProfile = async (updates: Partial<Profile>) => {
-    if (!user) return;
+  // Every mutator returns true when the row actually saved. On failure the
+  // optimistic merge is rolled back by refetching server truth, so the UI can
+  // never keep showing a value the database rejected (RLS, network, etc.).
+  const failAndRestore = async (error: unknown, op: string): Promise<false> => {
+    console.error(`[useProfile] ${op} failed:`, error);
+    await fetchProfile();
+    return false;
+  };
+
+  // Optimistic update for core profile fields (no refetch on success)
+  const updateProfile = async (updates: Partial<Profile>): Promise<boolean> => {
+    if (!user) return false;
     setProfile(prev => prev ? { ...prev, profile: { ...prev.profile, ...updates } } : prev);
-    await supabase.from('profiles').update(updates).eq('id', user.id);
+    const { error } = await supabase.from('profiles').update(updates).eq('id', user.id);
+    if (error) return failAndRestore(error, 'updateProfile');
+    return true;
   };
 
   // Service Periods
-  const addServicePeriod = async (period: Partial<ServicePeriod>) => {
-    if (!user) return;
-    await supabase.from('service_periods').insert({ ...period, user_id: user.id });
+  const addServicePeriod = async (period: Partial<ServicePeriod>): Promise<boolean> => {
+    if (!user) return false;
+    const { error } = await supabase.from('service_periods').insert({ ...period, user_id: user.id });
     await fetchProfile(); // Need server-generated ID
+    if (error) { console.error('[useProfile] addServicePeriod failed:', error); return false; }
+    return true;
   };
 
-  const updateServicePeriod = async (id: string, updates: Partial<ServicePeriod>) => {
-    if (!user) return;
+  const updateServicePeriod = async (id: string, updates: Partial<ServicePeriod>): Promise<boolean> => {
+    if (!user) return false;
     setProfile(prev => {
       if (!prev) return prev;
       return {
@@ -87,24 +100,30 @@ export function useProfile() {
         ),
       };
     });
-    await supabase.from('service_periods').update(updates).eq('id', id);
+    const { error } = await supabase.from('service_periods').update(updates).eq('id', id);
+    if (error) return failAndRestore(error, 'updateServicePeriod');
+    return true;
   };
 
-  const deleteServicePeriod = async (id: string) => {
-    if (!user) return;
-    await supabase.from('service_periods').delete().eq('id', id);
+  const deleteServicePeriod = async (id: string): Promise<boolean> => {
+    if (!user) return false;
+    const { error } = await supabase.from('service_periods').delete().eq('id', id);
     await fetchProfile();
+    if (error) { console.error('[useProfile] deleteServicePeriod failed:', error); return false; }
+    return true;
   };
 
   // Education
-  const addEducation = async (record: Partial<EducationRecord>) => {
-    if (!user) return;
-    await supabase.from('education_history').insert({ ...record, user_id: user.id });
+  const addEducation = async (record: Partial<EducationRecord>): Promise<boolean> => {
+    if (!user) return false;
+    const { error } = await supabase.from('education_history').insert({ ...record, user_id: user.id });
     await fetchProfile();
+    if (error) { console.error('[useProfile] addEducation failed:', error); return false; }
+    return true;
   };
 
-  const updateEducation = async (id: string, updates: Partial<EducationRecord>) => {
-    if (!user) return;
+  const updateEducation = async (id: string, updates: Partial<EducationRecord>): Promise<boolean> => {
+    if (!user) return false;
     setProfile(prev => {
       if (!prev) return prev;
       return {
@@ -114,24 +133,30 @@ export function useProfile() {
         ),
       };
     });
-    await supabase.from('education_history').update(updates).eq('id', id);
+    const { error } = await supabase.from('education_history').update(updates).eq('id', id);
+    if (error) return failAndRestore(error, 'updateEducation');
+    return true;
   };
 
-  const deleteEducation = async (id: string) => {
-    if (!user) return;
-    await supabase.from('education_history').delete().eq('id', id);
+  const deleteEducation = async (id: string): Promise<boolean> => {
+    if (!user) return false;
+    const { error } = await supabase.from('education_history').delete().eq('id', id);
     await fetchProfile();
+    if (error) { console.error('[useProfile] deleteEducation failed:', error); return false; }
+    return true;
   };
 
   // Employment
-  const addEmployment = async (record: Partial<EmploymentRecord>) => {
-    if (!user) return;
-    await supabase.from('employment_history').insert({ ...record, user_id: user.id });
+  const addEmployment = async (record: Partial<EmploymentRecord>): Promise<boolean> => {
+    if (!user) return false;
+    const { error } = await supabase.from('employment_history').insert({ ...record, user_id: user.id });
     await fetchProfile();
+    if (error) { console.error('[useProfile] addEmployment failed:', error); return false; }
+    return true;
   };
 
-  const updateEmployment = async (id: string, updates: Partial<EmploymentRecord>) => {
-    if (!user) return;
+  const updateEmployment = async (id: string, updates: Partial<EmploymentRecord>): Promise<boolean> => {
+    if (!user) return false;
     setProfile(prev => {
       if (!prev) return prev;
       return {
@@ -141,18 +166,22 @@ export function useProfile() {
         ),
       };
     });
-    await supabase.from('employment_history').update(updates).eq('id', id);
+    const { error } = await supabase.from('employment_history').update(updates).eq('id', id);
+    if (error) return failAndRestore(error, 'updateEmployment');
+    return true;
   };
 
-  const deleteEmployment = async (id: string) => {
-    if (!user) return;
-    await supabase.from('employment_history').delete().eq('id', id);
+  const deleteEmployment = async (id: string): Promise<boolean> => {
+    if (!user) return false;
+    const { error } = await supabase.from('employment_history').delete().eq('id', id);
     await fetchProfile();
+    if (error) { console.error('[useProfile] deleteEmployment failed:', error); return false; }
+    return true;
   };
 
   // Direct Deposit
-  const updateDirectDeposit = async (deposit: Partial<DirectDeposit>) => {
-    if (!user) return;
+  const updateDirectDeposit = async (deposit: Partial<DirectDeposit>): Promise<boolean> => {
+    if (!user) return false;
     setProfile(prev => {
       if (!prev) return prev;
       return {
@@ -164,24 +193,31 @@ export function useProfile() {
     });
     const existing = profile?.directDeposit;
     if (existing) {
-      await supabase.from('direct_deposit').update(deposit).eq('id', existing.id);
-    } else {
-      await supabase.from('direct_deposit').insert({ ...deposit, user_id: user.id });
-      await fetchProfile(); // Need server-generated ID for future updates
+      const { error } = await supabase.from('direct_deposit').update(deposit).eq('id', existing.id);
+      if (error) return failAndRestore(error, 'updateDirectDeposit');
+      return true;
     }
+    const { error } = await supabase.from('direct_deposit').insert({ ...deposit, user_id: user.id });
+    await fetchProfile(); // Need server-generated ID for future updates
+    if (error) { console.error('[useProfile] updateDirectDeposit insert failed:', error); return false; }
+    return true;
   };
 
   // Dependents
-  const addDependent = async (dep: Partial<Dependent>) => {
-    if (!user) return;
-    await supabase.from('dependents').insert({ ...dep, user_id: user.id });
+  const addDependent = async (dep: Partial<Dependent>): Promise<boolean> => {
+    if (!user) return false;
+    const { error } = await supabase.from('dependents').insert({ ...dep, user_id: user.id });
     await fetchProfile();
+    if (error) { console.error('[useProfile] addDependent failed:', error); return false; }
+    return true;
   };
 
-  const deleteDependent = async (id: string) => {
-    if (!user) return;
-    await supabase.from('dependents').delete().eq('id', id);
+  const deleteDependent = async (id: string): Promise<boolean> => {
+    if (!user) return false;
+    const { error } = await supabase.from('dependents').delete().eq('id', id);
     await fetchProfile();
+    if (error) { console.error('[useProfile] deleteDependent failed:', error); return false; }
+    return true;
   };
 
   return {

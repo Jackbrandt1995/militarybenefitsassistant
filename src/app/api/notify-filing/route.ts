@@ -19,7 +19,10 @@ export async function POST(req: NextRequest) {
     const formId = escapeHtml(raw.formId);
     const userEmail = escapeHtml(raw.userEmail);
     const submissionId = escapeHtml(raw.submissionId);
-    const submittedAt = raw.submittedAt;
+    // Guard the timestamp parse — an unparseable submittedAt would render the
+    // 'Received' row as literally "Invalid Date". Fall back to the request time.
+    const ts = Date.parse(String(raw.submittedAt ?? ''));
+    const received = Number.isFinite(ts) ? new Date(ts) : new Date();
 
     if (!userName || !formName || !formId) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
@@ -79,7 +82,7 @@ export async function POST(req: NextRequest) {
       </div>
       <div class="row">
         <span class="label">Received</span>
-        <span class="value">${submittedAt ? new Date(submittedAt).toLocaleString('en-US', { timeZone: 'America/New_York', dateStyle: 'full', timeStyle: 'short' }) : new Date().toLocaleString()}</span>
+        <span class="value">${received.toLocaleString('en-US', { timeZone: 'America/New_York', dateStyle: 'full', timeStyle: 'short' })}</span>
       </div>
       <div class="row">
         <span class="label">Status</span>
@@ -106,7 +109,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ ok: true });
-  } catch (err: any) {
+  } catch (err) {
     console.error('[notify-filing]', err);
     return NextResponse.json({ error: 'Failed to send email.' }, { status: 500 });
   }

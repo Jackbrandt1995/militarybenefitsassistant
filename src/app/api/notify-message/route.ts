@@ -20,9 +20,14 @@ export async function POST(req: NextRequest) {
     const userName = escapeHtml(raw.userName);
     const formName = escapeHtml(raw.formName);
 
-    if (!direction || !message) {
-      return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
+    // Reject unknown directions up front — otherwise a typo'd value would fall
+    // into the admin→client branch (403 for clients, wrong template for admins).
+    if (direction !== 'client_to_admin' && direction !== 'admin_to_client') {
+      return NextResponse.json({ error: 'Invalid direction.' }, { status: 400 });
     }
+    // `message` is OPTIONAL: both in-app callers intentionally omit the text so
+    // case details never transit email. Without it we send a generic "you have
+    // a new secure message" notification instead.
 
     const isClientToAdmin = direction === 'client_to_admin';
 
@@ -50,6 +55,14 @@ export async function POST(req: NextRequest) {
     const ctaLabel     = isClientToAdmin ? 'View in Admin Panel →' : 'View My Filing History →';
     const headerColor  = isClientToAdmin ? '#1e3a5f' : '#7c3aed';
 
+    // Identify the sender to the admin — without this the notification carries no
+    // email address at all (userName may be empty), leaving no way to reply.
+    // Prefer the authenticated user's email over the client-supplied one.
+    const senderEmail  = isClientToAdmin ? escapeHtml(user.email || raw.userEmail) : '';
+    const senderRow    = isClientToAdmin
+      ? `<p style="font-size:13px;color:#475569;margin:0 0 4px;">From: ${senderEmail ? `<a href="mailto:${senderEmail}" style="color:#1e3a5f;">${senderEmail}</a>` : 'no email on file'}</p>`
+      : '';
+
     const html = `
 <!DOCTYPE html>
 <html>
@@ -73,7 +86,8 @@ export async function POST(req: NextRequest) {
       <p>${senderLabel} ${contextLabel}${formName ? ` regarding ${formName}` : ''}.</p>
     </div>
     <div class="body">
-      <div class="msg-box">${message}</div>
+      ${senderRow}
+      <div class="msg-box">${message || 'You have a new secure message. Sign in to read it.'}</div>
       <a href="${ctaUrl}" class="cta">${ctaLabel}</a>
     </div>
     <div class="footer">Military Benefits Assistant · <a href="mailto:info@militarybenefitsassistant.com" style="color:#94a3b8;">info@militarybenefitsassistant.com</a></div>
@@ -84,7 +98,7 @@ export async function POST(req: NextRequest) {
     await sendMail({ to, subject, html });
 
     return NextResponse.json({ ok: true });
-  } catch (err: any) {
+  } catch (err) {
     console.error('[notify-message]', err);
     return NextResponse.json({ error: 'Failed to send.' }, { status: 500 });
   }

@@ -7,13 +7,20 @@ interface ProgressBarProps {
 }
 
 export default function ProgressBar({ currentStep, totalSteps, stepLabels }: ProgressBarProps) {
+  const stepNumber = Math.min(currentStep + 1, totalSteps);
+  const activeLabel = stepLabels[Math.min(currentStep, totalSteps - 1)];
   return (
-    <div className="w-full">
+    <div
+      className="w-full"
+      role="group"
+      aria-label={`Step ${stepNumber} of ${totalSteps}${activeLabel ? `: ${activeLabel}` : ''}`}
+    >
       <div className="flex items-center justify-between mb-2">
         {Array.from({ length: totalSteps }).map((_, i) => (
           <div key={i} className="flex items-center flex-1 last:flex-none">
             <div className="flex flex-col items-center">
               <div
+                aria-current={i === currentStep ? 'step' : undefined}
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
                   i < currentStep
                     ? 'bg-blue-700 text-white'
