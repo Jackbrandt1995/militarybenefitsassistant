@@ -33,9 +33,13 @@ do not exist in Supabase until this runs. Do this before anyone touches admin.
    `SUPABASE_SERVICE_ROLE_KEY` is **not** exposed with a `NEXT_PUBLIC_` prefix.
 
 **VERIFY:** log in as the demo admin → `/admin` → search a client → **Claim** →
-open their case view → add a note → release. Every action working = 016–018
-live. A wrong-password login attempt repeated ~6× should start returning a
-"too many attempts" style error = 015 hook live.
+open their case view → add a note → release (proves 016–017) → open
+Admin → My Rep Profile and save it (proves 018). A wrong-password login attempt
+repeated ~6× should start returning a "too many attempts" style error = 015
+hook live. One caveat: the admin message threads / Mark Mailed / tracking
+features come from EARLIER migrations (005–011, assumed already applied) — if
+those specific features error while claim/case-view work, an earlier migration
+never ran in prod; send me the exact error.
 
 ---
 
@@ -105,7 +109,9 @@ SMTP sends succeeding (no rate-limit warnings).
 
 **VERIFY:** response headers on the live site show `content-security-policy`
 (not `-report-only`) — DevTools → Network → any doc request; login still shows
-the captcha; a fresh account hits MFA setup; demo buttons still one-click.
+the captcha; a fresh account hits MFA setup; demo buttons still work after
+completing the captcha (they're disabled until it's solved — the amber hint
+under them explains this to visitors).
 
 ---
 
