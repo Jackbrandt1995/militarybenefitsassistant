@@ -2,16 +2,24 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 /**
- * Build a per-request CSP nonce + policy. We emit it as REPORT-ONLY for now:
- * the browser reports violations (visible in its console) but blocks nothing, so
- * it can't break the app. Once the violation reports are clean, switch the
- * response header from `Content-Security-Policy-Report-Only` to
- * `Content-Security-Policy` to enforce it.
+ * Build a per-request CSP nonce + policy.
+ *
+ * Emitted as REPORT-ONLY by default: the browser reports violations (visible in
+ * its console) but blocks nothing, so it can't break the app. To ENFORCE, set
+ * the env var `CSP_ENFORCE=true` (Vercel → Settings → Environment Variables,
+ * Production) and redeploy — no code change needed. Flip it only after a
+ * DevTools pass on the deployed site shows zero `[Report Only]` violations
+ * across login (with the live hCaptcha) → dashboard → a form → profile → admin.
  *
  * Next.js reads the nonce from the `Content-Security-Policy` header we set on the
  * forwarded REQUEST headers and applies it to its own scripts; 'strict-dynamic'
  * then trusts anything those nonce'd scripts load.
  */
+const CSP_RESPONSE_HEADER =
+  process.env.CSP_ENFORCE === 'true'
+    ? 'Content-Security-Policy'
+    : 'Content-Security-Policy-Report-Only';
+
 function buildCsp(nonce: string): string {
   return [
     `default-src 'self'`,
@@ -72,10 +80,10 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     const redirect = NextResponse.redirect(url);
-    redirect.headers.set('Content-Security-Policy-Report-Only', csp);
+    redirect.headers.set(CSP_RESPONSE_HEADER, csp);
     return redirect;
   }
 
-  supabaseResponse.headers.set('Content-Security-Policy-Report-Only', csp);
+  supabaseResponse.headers.set(CSP_RESPONSE_HEADER, csp);
   return supabaseResponse;
 }

@@ -9,12 +9,14 @@
       `DROP` is **permanent and unrecoverable**. Pro gives daily backups + 7-day
       PITR. This is the single cheapest piece of insurance for irreplaceable
       veteran PII (SSNs, bank numbers, submitted forms).
-- [ ] **Set `ENCRYPTION_KEY`** as a Vercel Production secret (sensitive, Prod
+- [x] **Set `ENCRYPTION_KEY`** as a Vercel Production secret (sensitive, Prod
       scope only — not Preview/Dev). Confirm it is **not** committed to git.
+      ✔ Done — submissions encrypt-and-save in production.
 - [ ] **Set `SUPABASE_SERVICE_ROLE_KEY`** in Vercel (Production) — used by the
       one-time PII backfill script only, never shipped to the browser.
-- [ ] Run all SQL migrations through `015_password_verification_hook.sql` in the
-      Supabase SQL editor.
+- [ ] **Run `supabase/production_setup.sql`** in the Supabase SQL editor — one
+      idempotent paste covering migrations 014–018 (RLS tightening, brute-force
+      hook, admin pool, case view, rep profiles). See RUNBOOKS.md → Runbook 1.
 
 ## 🟠 REQUIRED — brute-force protection (auth-layer)
 - [ ] **Enable the password-verification auth hook.** Supabase Dashboard →
@@ -22,11 +24,12 @@
       `public.password_verification_hook` (created by migration 015). This is the
       *real* brute-force defense — enforced inside GoTrue, so it can't be bypassed
       by calling the auth endpoint directly. Exponential backoff, auto-expiring.
-- [ ] **Enable CAPTCHA.** Create a free Cloudflare Turnstile site → put the SITE
-      key in `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (Vercel) **and** the SECRET key in
-      Supabase → Authentication → Settings → Bot & Abuse Protection (Turnstile).
-      ⚠ Enable both together — turning on Supabase CAPTCHA without the site key
-      set makes every login/signup/reset fail.
+- [ ] **Enable CAPTCHA (hCaptcha — this is what the code implements).** Put the
+      hCaptcha SITE key in `NEXT_PUBLIC_HCAPTCHA_SITE_KEY` (Vercel) **and** the
+      SECRET key in Supabase → Authentication → Bot & Abuse Protection
+      (hCaptcha). ⚠ Enable both together — turning on Supabase CAPTCHA without
+      the site key set makes every login/signup/reset fail. (Demo buttons stay
+      usable: the login page shows a "complete the hCaptcha to demo" hint.)
 
 ## 🟠 REQUIRED — transactional email
 - [ ] **Replace Supabase's built-in auth email sender with a real SMTP provider**
@@ -39,11 +42,11 @@
       all-CNAME domain auth.)
 
 ## 🟠 REQUIRED — app hardening
-- [ ] **Flip CSP from report-only to enforcing.** In `src/lib/supabase/middleware.ts`
-      rename `Content-Security-Policy-Report-Only` → `Content-Security-Policy`
-      **after** confirming zero `[Report Only]` violations in Chrome DevTools
-      across login → MFA → dashboard → forms → profile → admin. (Turnstile +
-      Supabase are already allowlisted in the policy.)
+- [ ] **Flip CSP from report-only to enforcing.** Set `CSP_ENFORCE=true` in
+      Vercel (Production) and redeploy — no code change; unset to roll back.
+      Do it **after** confirming zero `[Report Only]` violations in Chrome
+      DevTools across login (with live hCaptcha) → dashboard → forms → profile
+      → admin. (hCaptcha + Supabase are already allowlisted in the policy.)
 - [ ] **Re-enable mandatory MFA** — set `NEXT_PUBLIC_REQUIRE_MFA=true` (it's OFF
       for now so demos are frictionless). Then verify it's enforced end-to-end on
       a fresh real account (setup → login step-up) and that an un-enrolled session
