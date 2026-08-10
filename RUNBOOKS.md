@@ -21,10 +21,15 @@ do not exist in Supabase until this runs. Do this before anyone touches admin.
    entire contents of `supabase/production_setup.sql` → Run.
    The tail of the output must show: `tables 4`, `rpc functions 9`,
    `owner-update policies 0`. Anything else → stop and send me the output.
-2. **Enable the brute-force hook** — Dashboard → Authentication → Hooks →
-   "Password verification attempt" → Enable → choose
-   `public.password_verification_hook`. (The SQL created it; this switch turns
-   it on inside the auth server where it can't be bypassed.)
+2. **Brute-force protection (Pro-plan version)** — the "Password verification
+   attempt" hook is ⚠ **Teams/Enterprise-only**, so on Pro you will not see it
+   under Authentication → Hooks (migration 015's function sits unused in the DB;
+   harmless). Do these two instead:
+   - Dashboard → Authentication → Rate Limits → lower "sign ups and sign ins"
+     to ~10 per 5 minutes per IP (default is far looser).
+   - Dashboard → Authentication → Passwords (Pro feature) → enable **leaked
+     password protection** (blocks passwords found in known breaches).
+   Combined with hCaptcha these cover the same threat at launch scale.
 3. **Upgrade to Supabase Pro** — Dashboard → Settings → Billing → Pro ($25/mo).
    Buys daily backups + 7-day point-in-time recovery for veteran PII, and stops
    the free-tier project-pausing that would take demos down.
@@ -34,9 +39,10 @@ do not exist in Supabase until this runs. Do this before anyone touches admin.
 
 **VERIFY:** log in as the demo admin → `/admin` → search a client → **Claim** →
 open their case view → add a note → release (proves 016–017) → open
-Admin → My Rep Profile and save it (proves 018). A wrong-password login attempt
-repeated ~6× should start returning a "too many attempts" style error = 015
-hook live. One caveat: the admin message threads / Mark Mailed / tracking
+Admin → My Rep Profile and save it (proves 018). Rapid-fire wrong-password
+attempts should eventually return a rate-limit error (the Auth rate limit —
+the 015 hook itself can't be enabled below the Teams plan). One caveat: the
+admin message threads / Mark Mailed / tracking
 features come from EARLIER migrations (005–011, assumed already applied) — if
 those specific features error while claim/case-view work, an earlier migration
 never ran in prod; send me the exact error.

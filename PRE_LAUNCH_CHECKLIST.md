@@ -19,11 +19,13 @@
       hook, admin pool, case view, rep profiles). See RUNBOOKS.md → Runbook 1.
 
 ## 🟠 REQUIRED — brute-force protection (auth-layer)
-- [ ] **Enable the password-verification auth hook.** Supabase Dashboard →
-      Authentication → Hooks → "Password verification attempt" → enable → select
-      `public.password_verification_hook` (created by migration 015). This is the
-      *real* brute-force defense — enforced inside GoTrue, so it can't be bypassed
-      by calling the auth endpoint directly. Exponential backoff, auto-expiring.
+- [ ] **Brute-force protection.** ⚠ The "Password verification attempt" hook is
+      **Teams/Enterprise-only** — on Free/Pro it does not appear under
+      Authentication → Hooks (migration 015's function stays unused; harmless).
+      On Pro, do instead: Authentication → Rate Limits → tighten "sign ups and
+      sign ins" to ~10 per 5 min per IP, AND Authentication → Passwords → enable
+      leaked-password protection. Revisit the hook if the project ever moves to
+      the Teams plan.
 - [ ] **Enable CAPTCHA (hCaptcha — this is what the code implements).** Put the
       hCaptcha SITE key in `NEXT_PUBLIC_HCAPTCHA_SITE_KEY` (Vercel) **and** the
       SECRET key in Supabase → Authentication → Bot & Abuse Protection
