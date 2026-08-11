@@ -49,22 +49,37 @@ never ran in prod; send me the exact error.
 
 ---
 
-## Runbook 2 — Email + full dress rehearsal (~45 min)
+## Runbook 2 — Email + full dress rehearsal (~30 min)
 
 Supabase's built-in mailer sends a handful of emails per hour and lands in
 spam. Real signups will silently fail without this.
 
+**DECISION (Aug 2026): Gmail SMTP is the primary sender** — the app's
+notification pipeline already uses it (GMAIL_USER / GMAIL_APP_PASSWORD in
+Vercel), and the domain's mail runs on Google (MX → aspmx.l.google.com, SPF
+already includes _spf.google.com), so sends align with existing DNS. Resend
+was evaluated and skipped. Known limits, acceptable at launch scale: ~2,000
+emails/day on a Workspace account (~500/day if GMAIL_USER is a plain
+@gmail.com address), silent throttling near the cap, and no per-send logs.
+Revisit when signups grow — SendGrid's all-CNAME domain auth is the upgrade
+path (Wix-DNS-friendly, and DNS records can be added via the Wix API).
+
 **🖱 YOU:**
-1. **Create a Resend account** (resend.com, free tier: 3k emails/mo) →
-   Add domain `militarybenefitsassistant.com` → add the DKIM records it shows
-   you in your DNS. ⚠ Wix DNS can't host the return-path **subdomain MX**
-   Resend suggests — verify with **DKIM only** (that's enough to send), or use
-   SendGrid's all-CNAME domain auth instead.
-2. Resend → API Keys → create key → then Supabase Dashboard → Authentication →
-   Emails → SMTP Settings → Enable custom SMTP:
-   - Host `smtp.resend.com`, Port `465`, User `resend`, Password = the API key
-   - Sender: `no-reply@militarybenefitsassistant.com`, name
+1. Google Account for GMAIL_USER → Security → App passwords → generate a NEW
+   app password named "supabase-auth" (don't reuse the one in Vercel — separate
+   credentials are revocable separately).
+2. Supabase Dashboard → Authentication → Emails → SMTP Settings → Enable
+   custom SMTP:
+   - Host `smtp.gmail.com`, Port `465`, Username = the full GMAIL_USER address,
+     Password = the new app password
+   - Sender address = the same GMAIL_USER address, sender name
      "Military Benefits Assistant"
+   (Gmail rewrites the From to the authenticated account, so the sender address
+   MUST be that same address — a mismatch silently gets overwritten.)
+3. Optional deliverability boost (recommended, ~10 min): Google Admin console →
+   Apps → Google Workspace → Gmail → Authenticate email → generate the DKIM
+   record → paste the TXT value into this chat and it can be added to Wix DNS
+   via the API → back in Admin console click "Start authentication".
 3. **Dress rehearsal on the deployed site** (use a real personal email, not a
    demo account) — run straight through this list:
    - [ ] Sign up → confirmation email arrives (inbox, not spam) → confirm

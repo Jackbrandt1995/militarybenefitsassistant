@@ -34,14 +34,15 @@
       usable: the login page shows a "complete the hCaptcha to demo" hint.)
 
 ## 🟠 REQUIRED — transactional email
-- [ ] **Replace Supabase's built-in auth email sender with a real SMTP provider**
-      (Resend or SendGrid on a verified sending domain). The default sender is
-      testing-grade — rate-limited to ~a few emails/hour and frequently spam-
-      filtered — so confirmation and password-reset emails will fail for real
-      users at volume. Set it in Supabase → Authentication → Emails → SMTP.
-      (Note: Wix DNS can't add the subdomain MX Resend's custom return-path wants
-      — either verify with DKIM only, move DNS to Cloudflare, or use SendGrid's
-      all-CNAME domain auth.)
+- [ ] **Replace Supabase's built-in auth email sender with custom SMTP.** The
+      default sender is testing-grade — rate-limited to ~a few emails/hour and
+      frequently spam-filtered — so confirmation and password-reset emails will
+      fail for real users at volume. DECISION: **Gmail SMTP is the primary**
+      (same GMAIL_USER account the app's notifications already use; domain MX/SPF
+      are already Google's). Supabase → Authentication → Emails → SMTP:
+      smtp.gmail.com:465, user = GMAIL_USER, a dedicated app password, sender =
+      that same address. Caps ~2,000/day (Workspace) — revisit at scale; upgrade
+      path is SendGrid all-CNAME domain auth (see RUNBOOKS.md Runbook 2).
 
 ## 🟠 REQUIRED — app hardening
 - [ ] **Flip CSP from report-only to enforcing.** Set `CSP_ENFORCE=true` in
