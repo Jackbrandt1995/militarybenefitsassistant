@@ -30,9 +30,9 @@ do not exist in Supabase until this runs. Do this before anyone touches admin.
    - Dashboard → Authentication → Passwords (Pro feature) → enable **leaked
      password protection** (blocks passwords found in known breaches).
    Combined with hCaptcha these cover the same threat at launch scale.
-3. **Upgrade to Supabase Pro** — Dashboard → Settings → Billing → Pro ($25/mo).
-   Buys daily backups + 7-day point-in-time recovery for veteran PII, and stops
-   the free-tier project-pausing that would take demos down.
+3. **Upgrade to Supabase Pro** — ✔ DONE (Aug 2026). Daily backups with 7-day
+   retention are now automatic, and free-tier project-pausing is gone. (True
+   PITR is a separate add-on — revisit at real volume.)
 4. Quick env sanity in Vercel → Settings → Environment Variables (Production):
    `ENCRYPTION_KEY` ✔ (already set — submissions work), and confirm
    `SUPABASE_SERVICE_ROLE_KEY` is **not** exposed with a `NEXT_PUBLIC_` prefix.

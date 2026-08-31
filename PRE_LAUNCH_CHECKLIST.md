@@ -3,12 +3,12 @@
 > Hard gates. Do not open signups to real veterans until every **[ ] REQUIRED** item is checked.
 
 ## 🔴 REQUIRED — data durability & secrets
-- [ ] **Upgrade Supabase to Pro ($25/mo) BEFORE LAUNCH.**
-      Free has **no automated backups and no point-in-time recovery** — a bad
-      migration, an accidental `delete`, or a leaked service-role key running
-      `DROP` is **permanent and unrecoverable**. Pro gives daily backups + 7-day
-      PITR. This is the single cheapest piece of insurance for irreplaceable
-      veteran PII (SSNs, bank numbers, submitted forms).
+- [x] **Upgrade Supabase to Pro ($25/mo) BEFORE LAUNCH.** ✔ Done Aug 2026.
+      Pro includes automated **daily backups (7-day retention)**. Note: true
+      point-in-time recovery (PITR) is a separate paid add-on, not part of Pro —
+      daily backups are sufficient at launch scale; consider the PITR add-on
+      once real volume arrives (worst case with daily backups = losing up to
+      one day of writes).
 - [x] **Set `ENCRYPTION_KEY`** as a Vercel Production secret (sensitive, Prod
       scope only — not Preview/Dev). Confirm it is **not** committed to git.
       ✔ Done — submissions encrypt-and-save in production.
