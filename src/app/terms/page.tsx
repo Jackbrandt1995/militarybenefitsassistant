@@ -96,6 +96,28 @@ export default function TermsPage() {
               </li>
               <li><strong>Password hashing</strong> — passwords are hashed with bcrypt; never stored in plain text</li>
             </ul>
+            <p className="mt-2 text-gray-700">
+              Your use of this service also involves Supabase&apos;s hosting infrastructure, which is
+              governed by Supabase&apos;s own{' '}
+              <a
+                href="https://supabase.com/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-700 underline hover:text-blue-900"
+              >
+                Terms of Service
+              </a>{' '}
+              and{' '}
+              <a
+                href="https://supabase.com/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-700 underline hover:text-blue-900"
+              >
+                Privacy Policy
+              </a>
+              .
+            </p>
 
             <SubHeading>Vercel (Application Hosting)</SubHeading>
             <ul className="mt-2 space-y-1 list-disc list-inside text-gray-700">

@@ -130,6 +130,27 @@ export default function PrivacyPage() {
                 stored in plain text
               </li>
             </ul>
+            <p className="mt-2 text-gray-700">
+              Because your data is hosted on Supabase&apos;s infrastructure, Supabase&apos;s own{' '}
+              <a
+                href="https://supabase.com/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-700 underline hover:text-blue-900"
+              >
+                Privacy Policy
+              </a>{' '}
+              and{' '}
+              <a
+                href="https://supabase.com/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-700 underline hover:text-blue-900"
+              >
+                Terms of Service
+              </a>{' '}
+              also apply to how that infrastructure handles data.
+            </p>
 
             <SubHeading>Vercel (Application Hosting)</SubHeading>
             <ul className="mt-2 space-y-1 list-disc list-inside text-gray-700">
