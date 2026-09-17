@@ -37,7 +37,7 @@ do not exist in Supabase until this runs. Do this before anyone touches admin.
    `ENCRYPTION_KEY` ✔ (already set — submissions work), and confirm
    `SUPABASE_SERVICE_ROLE_KEY` is **not** exposed with a `NEXT_PUBLIC_` prefix.
 
-**VERIFY:** log in as the demo admin → `/admin` → search a client → **Claim** →
+**VERIFY:** log in as your admin account (info@) → `/admin` → search a client → **Claim** →
 open their case view → add a note → release (proves 016–017) → open
 Admin → My Rep Profile and save it (proves 018). Rapid-fire wrong-password
 attempts should eventually return a rate-limit error (the Auth rate limit —
@@ -90,7 +90,7 @@ path (Wix-DNS-friendly, and DNS records can be added via the Wix API).
    - [ ] Log in → dashboard loads → complete a short form (e.g. 22-1990)
    - [ ] PDF generates; submission appears in History
    - [ ] Send a message from History → admin inbox gets the notification email
-   - [ ] Log in as demo admin → claim that client → reply → your account sees it
+   - [ ] Log in as your admin account (info@) → claim that client → reply → your account sees it
    - [ ] Log out → "Forgot password?" → reset email arrives → reset works
    - [ ] Delete the test account's rows afterward if you want a clean pool
 

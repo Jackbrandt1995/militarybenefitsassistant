@@ -66,6 +66,18 @@ export async function PUT(request: NextRequest) {
     // an empty value CLEARS the stored one — otherwise the phantom `ssn` key (no
     // such column on profiles) reaches the update and PostgREST rejects it.
     if ('ssn' in body) {
+      // Accept any formatting (spaces/dashes/dots) and canonicalize to
+      // XXX-XX-XXXX. Rejecting non-9-digit values also blocks ciphertext
+      // echoes (a base64 blob PUT back after a failed decrypt) from being
+      // double-encrypted.
+      if (typeof body.ssn === 'string') body.ssn = body.ssn.trim();
+      if (body.ssn) {
+        const digits = String(body.ssn).replace(/\D/g, '');
+        if (digits.length !== 9) {
+          return NextResponse.json({ error: 'Please enter your SSN as 9 digits, like 123-45-6789.' }, { status: 400 });
+        }
+        body.ssn = `${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5)}`;
+      }
       body.ssn_encrypted = body.ssn ? encrypt(body.ssn) : null;
       delete body.ssn;
     }

@@ -70,29 +70,24 @@ function LoginForm() {
   // ── One-click demo sign-in ─────────────────────────────────────────────────
   // Only enabled when NEXT_PUBLIC_ENABLE_DEMO === 'true'. Lets a prospective user
   // try the app with no credentials. Run supabase/seed_demo_accounts.sql first.
+  // NOTE: there is intentionally NO demo ADMIN. A demo admin would be a real
+  // admin over real client PII (removed Sept 2026 before beta testers arrived).
   const demoEnabled = process.env.NEXT_PUBLIC_ENABLE_DEMO === 'true';
   const demoCreds = {
-    user: {
-      email: process.env.NEXT_PUBLIC_DEMO_USER_EMAIL || 'demo.user@militarybenefitsassistant.com',
-      password: process.env.NEXT_PUBLIC_DEMO_USER_PASSWORD || 'DemoUser2026!',
-    },
-    admin: {
-      email: process.env.NEXT_PUBLIC_DEMO_ADMIN_EMAIL || 'demo.admin@militarybenefitsassistant.com',
-      password: process.env.NEXT_PUBLIC_DEMO_ADMIN_PASSWORD || 'DemoAdmin2026!',
-    },
+    email: process.env.NEXT_PUBLIC_DEMO_USER_EMAIL || 'demo.user@militarybenefitsassistant.com',
+    password: process.env.NEXT_PUBLIC_DEMO_USER_PASSWORD || 'DemoUser2026!',
   };
 
-  const handleDemo = async (role: 'user' | 'admin') => {
+  const handleDemo = async () => {
     setError('');
     setLoading(true);
-    const { email: demoEmail, password: demoPassword } = demoCreds[role];
     const { error } = await supabase.auth.signInWithPassword({
-      email: demoEmail,
-      password: demoPassword,
+      email: demoCreds.email,
+      password: demoCreds.password,
       options: captchaToken ? { captchaToken } : undefined,
     });
     if (error) {
-      // Most likely cause: the demo accounts haven't been seeded — run
+      // Most likely cause: the demo account hasn't been seeded — run
       // supabase/seed_demo_accounts.sql. Users just get plain language.
       setError(
         "Demo sign-in isn't available right now. Please try again later or create a free account.",
@@ -100,7 +95,7 @@ function LoginForm() {
       setLoading(false);
       resetCaptcha();
     } else {
-      router.push(role === 'admin' ? '/admin' : '/dashboard');
+      router.push('/dashboard');
     }
   };
 
@@ -173,31 +168,23 @@ function LoginForm() {
                 </span>
               </div>
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="mt-4">
               <button
                 type="button"
-                onClick={() => handleDemo('user')}
+                onClick={handleDemo}
                 disabled={blockSubmit}
-                className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-slate-50 disabled:opacity-60"
+                className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-slate-50 disabled:opacity-60"
               >
-                Demo as User
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemo('admin')}
-                disabled={blockSubmit}
-                className="rounded-md border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100 disabled:opacity-60"
-              >
-                Demo as Admin
+                Try the Demo
               </button>
             </div>
             {CAPTCHA_REQUIRED && !captchaToken && (
               <p className="mt-3 text-center text-xs font-medium text-amber-600">
-                Complete the hCaptcha above to use a demo.
+                Complete the hCaptcha above to use the demo.
               </p>
             )}
             <p className="mt-2 text-center text-xs text-gray-400">
-              Demo accounts are pre-filled and shared. Don&apos;t enter real personal information.
+              The demo account is pre-filled and shared. Don&apos;t enter real personal information.
             </p>
           </div>
         )}

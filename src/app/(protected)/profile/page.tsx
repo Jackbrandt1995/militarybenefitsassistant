@@ -172,9 +172,18 @@ export default function ProfilePage() {
 
   // SSN and VA file number are sensitive — saved through the encrypting API
   // route (which encrypts them), never a direct plaintext write.
-  const saveSSN = async (value: string) => {
-    if (value === lastSaved.current.ssn) return; // untouched — nothing to save
-    if (!validateField('ssn', value)) return;
+  const saveSSN = async (rawValue: string) => {
+    // Accept any formatting the veteran types (spaces, dashes, dots — "123 45
+    // 6789" is common) and canonicalize to XXX-XX-XXXX. Only the digit COUNT
+    // can be wrong.
+    const digits = rawValue.replace(/\D/g, '');
+    if (rawValue.trim() !== '' && digits.length !== 9) {
+      setFieldError('ssn', 'SSN must be 9 digits (XXX-XX-XXXX)');
+      return;
+    }
+    const value = digits.length === 9 ? `${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5)}` : '';
+    if (value !== rawValue) setField('ssn_encrypted', value); // show the normalized form
+    if (value === lastSaved.current.ssn) { setFieldError('ssn', null); return; } // untouched
     beginSave();
     let ok = false;
     try {
