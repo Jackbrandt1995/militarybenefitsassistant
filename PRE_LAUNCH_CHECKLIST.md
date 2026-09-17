@@ -34,15 +34,15 @@
       usable: the login page shows a "complete the hCaptcha to demo" hint.)
 
 ## 🟠 REQUIRED — transactional email
-- [ ] **Replace Supabase's built-in auth email sender with custom SMTP.** The
-      default sender is testing-grade — rate-limited to ~a few emails/hour and
-      frequently spam-filtered — so confirmation and password-reset emails will
-      fail for real users at volume. DECISION: **Gmail SMTP is the primary**
-      (same GMAIL_USER account the app's notifications already use; domain MX/SPF
-      are already Google's). Supabase → Authentication → Emails → SMTP:
-      smtp.gmail.com:465, user = GMAIL_USER, a dedicated app password, sender =
-      that same address. Caps ~2,000/day (Workspace) — revisit at scale; upgrade
-      path is SendGrid all-CNAME domain auth (see RUNBOOKS.md Runbook 2).
+- [x] **Replace Supabase's built-in auth email sender with custom SMTP.**
+      ✔ Done Sept 2026 — Gmail SMTP via info@militarybenefitsassistant.com
+      (smtp.gmail.com:465, dedicated app password, sender = username), verified
+      by a delivered password-reset email. Caps ~2,000/day (Workspace) — revisit
+      at scale; upgrade path is SendGrid all-CNAME auth (RUNBOOKS.md Runbook 2).
+- [ ] **Auth URL configuration** — Supabase → Authentication → URL
+      Configuration: Site URL `https://militarybenefitsassistant.vercel.app`;
+      Redirect URLs allowlist BOTH prod domains (`/**`) + `http://localhost:3000/**`.
+      Without this, confirmation/reset links fall back to localhost:3000.
 
 ## 🟠 REQUIRED — app hardening
 - [ ] **Flip CSP from report-only to enforcing.** Set `CSP_ENFORCE=true` in

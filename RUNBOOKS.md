@@ -65,22 +65,26 @@ Revisit when signups grow — SendGrid's all-CNAME domain auth is the upgrade
 path (Wix-DNS-friendly, and DNS records can be added via the Wix API).
 
 **🖱 YOU:**
-1. Google Account for GMAIL_USER → Security → App passwords → generate a NEW
-   app password named "supabase-auth" (don't reuse the one in Vercel — separate
-   credentials are revocable separately).
-2. Supabase Dashboard → Authentication → Emails → SMTP Settings → Enable
-   custom SMTP:
-   - Host `smtp.gmail.com`, Port `465`, Username = the full GMAIL_USER address,
-     Password = the new app password
-   - Sender address = the same GMAIL_USER address, sender name
-     "Military Benefits Assistant"
-   (Gmail rewrites the From to the authenticated account, so the sender address
-   MUST be that same address — a mismatch silently gets overwritten.)
-3. Optional deliverability boost (recommended, ~10 min): Google Admin console →
+1. ✔ DONE (Sept 2026) — app password "supabase-auth" generated on
+   info@militarybenefitsassistant.com (the chosen sender for all MBA mail).
+2. ✔ DONE (Sept 2026) — Supabase custom SMTP enabled and verified working:
+   Host `smtp.gmail.com`, Port `465`, Username/Sender both
+   `info@militarybenefitsassistant.com`. (Gmail rewrites the From to the
+   authenticated account, so sender MUST equal username. Supabase shows a
+   "personal rather than transactional" warning for Gmail — expected, accepted
+   trade-off at beta scale.)
+3. **Auth URL configuration** (required — without it, email links point at
+   localhost): Supabase Dashboard → Authentication → URL Configuration:
+   - Site URL: `https://militarybenefitsassistant.vercel.app`
+   - Redirect URLs (add all): `https://militarybenefitsassistant.vercel.app/**`,
+     `https://www.militarybenefitsassistant.com/**`, `http://localhost:3000/**`
+   The app passes `{origin}/callback?next=...` as redirectTo; Supabase only
+   honors it when the origin is allowlisted, else it falls back to Site URL.
+4. Optional deliverability boost (recommended, ~10 min): Google Admin console →
    Apps → Google Workspace → Gmail → Authenticate email → generate the DKIM
    record → paste the TXT value into this chat and it can be added to Wix DNS
    via the API → back in Admin console click "Start authentication".
-3. **Dress rehearsal on the deployed site** (use a real personal email, not a
+5. **Dress rehearsal on the deployed site** (use a real personal email, not a
    demo account) — run straight through this list:
    - [ ] Sign up → confirmation email arrives (inbox, not spam) → confirm
    - [ ] Log in → dashboard loads → complete a short form (e.g. 22-1990)
