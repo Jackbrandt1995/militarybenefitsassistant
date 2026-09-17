@@ -19,7 +19,18 @@ const TAG_LENGTH = 16;
 function currentKey(): Buffer {
   const key = process.env.ENCRYPTION_KEY;
   if (!key) throw new Error('ENCRYPTION_KEY environment variable is not set');
-  return Buffer.from(key, 'hex');
+  const buf = Buffer.from(key, 'hex');
+  // AES-256 requires exactly 32 bytes. Buffer.from(x, 'hex') silently ignores
+  // non-hex input, so a passphrase or truncated value yields a wrong-length
+  // buffer and createCipheriv throws an opaque ERR_CRYPTO_INVALID_KEYLEN.
+  // Fail loudly and say how to make a valid key instead.
+  if (buf.length !== 32) {
+    throw new Error(
+      `ENCRYPTION_KEY must be exactly 64 hex characters (32 bytes); the configured value decodes to ${buf.length} bytes. ` +
+      'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"',
+    );
+  }
+  return buf;
 }
 
 // Keys to try when decrypting: current first, then any retired keys.
