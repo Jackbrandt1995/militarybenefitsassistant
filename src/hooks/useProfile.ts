@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import type { UserProfile, Profile, ServicePeriod, EducationRecord, EmploymentRecord, DirectDeposit, Dependent } from '@/types/profile';
@@ -11,9 +11,15 @@ export function useProfile() {
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
+  // Only the FIRST fetch shows the page-level loading state. Later refetches
+  // (row inserts needing server ids, error rollbacks) refresh data in place —
+  // flipping `loading` mid-edit unmounts the whole page into a spinner, which
+  // reads as a "page reload" and throws away the user's editing context.
+  const hasLoadedOnce = useRef(false);
+
   const fetchProfile = useCallback(async () => {
     if (!user) return;
-    setLoading(true);
+    if (!hasLoadedOnce.current) setLoading(true);
 
     // The 6 direct table reads come back with the *_encrypted columns as stored
     // (ciphertext after the PII backfill, plaintext before). The two API reads
@@ -55,6 +61,7 @@ export function useProfile() {
       dependents: (dependentsRes.data || []) as Dependent[],
     });
 
+    hasLoadedOnce.current = true;
     setLoading(false);
   }, [user, supabase]);
 

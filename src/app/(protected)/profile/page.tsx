@@ -232,6 +232,12 @@ export default function ProfilePage() {
     }
   };
 
+  // Row-table saves write '' as NULL: the date columns (date_from/date_to,
+  // date_entered/date_separated) are Postgres `date` types that REJECT empty
+  // strings — blurring an empty date field used to error on every save (and
+  // the error rollback refetched the profile, which read as a page reload).
+  const nullIfEmpty = (value: string | number | null) => (value === '' ? null : value);
+
   // Service period helpers
   const setSPField = (id: string, field: string, value: string) => {
     setLsp(prev => prev.map(sp => sp.id === id ? { ...sp, [field]: value } : sp));
@@ -239,10 +245,11 @@ export default function ProfilePage() {
 
   const saveSPField = async (id: string, field: string, value: string) => {
     beginSave();
+    let ok = false;
     try {
-      await updateServicePeriod(id, { [field]: value } as Partial<ServicePeriod>);
+      ok = await updateServicePeriod(id, { [field]: nullIfEmpty(value) } as Partial<ServicePeriod>);
     } finally {
-      endSave(true);
+      endSave(ok);
     }
   };
 
@@ -253,10 +260,11 @@ export default function ProfilePage() {
 
   const saveEdField = async (id: string, field: string, value: string) => {
     beginSave();
+    let ok = false;
     try {
-      await updateEducation(id, { [field]: value } as Partial<EducationRecord>);
+      ok = await updateEducation(id, { [field]: nullIfEmpty(value) } as Partial<EducationRecord>);
     } finally {
-      endSave(true);
+      endSave(ok);
     }
   };
 
@@ -267,10 +275,11 @@ export default function ProfilePage() {
 
   const saveEmpField = async (id: string, field: string, value: string | number | null) => {
     beginSave();
+    let ok = false;
     try {
-      await updateEmployment(id, { [field]: value } as Partial<EmploymentRecord>);
+      ok = await updateEmployment(id, { [field]: nullIfEmpty(value) } as Partial<EmploymentRecord>);
     } finally {
-      endSave(true);
+      endSave(ok);
     }
   };
 
