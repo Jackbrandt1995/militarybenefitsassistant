@@ -18,6 +18,7 @@ const ROUTES = [
   ['/profile', 'protected'],
   ['/terms/accept', 'protected'],
   ['/forms/va-22-1990', 'protected'],
+  ['/forms/va-28-1902w', 'protected'],
   ['/forms/va-22-1990/review', 'protected'],
   ['/forms/va-22-1990/complete', 'protected'],
   ['/admin', 'protected'],

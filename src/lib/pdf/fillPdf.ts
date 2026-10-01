@@ -140,7 +140,9 @@ async function fillOneField(
       }
       case 'radio': {
         const radioField = form.getField(entry.pdfFieldName);
-        if (radioField instanceof PDFRadioGroup) {
+        // Skip empty values: a transform returning '' means "leave this group
+        // unticked" (e.g. the 28-1902w branch fan-out), and select('') throws.
+        if (radioField instanceof PDFRadioGroup && value) {
           radioField.select(value);
         }
         break;

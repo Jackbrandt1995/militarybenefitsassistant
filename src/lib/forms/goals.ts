@@ -45,6 +45,7 @@ export const goals: Goal[] = [
       { formId: 'va-22-5490',  actionLabel: "Survivors' & dependents' education (DEA / Fry)" },
       { formId: 'va-22-5495',  actionLabel: 'Change school or program (dependents)' },
       { formId: 'va-28-1900',  actionLabel: 'Apply for Veteran Readiness & Employment (VR&E)' },
+      { formId: 'va-28-1902w', actionLabel: 'Prepare for your VR&E entitlement evaluation (Rehabilitation Needs Inventory)' },
       { formId: 'va-22-5281',  actionLabel: 'Request a refund of VEAP contributions' },
       { formId: 'va-22-1999c', actionLabel: 'Affirm correspondence course enrollment' },
     ],
@@ -58,6 +59,7 @@ export const goals: Goal[] = [
       { formId: 'va-22-0803', actionLabel: 'Reimburse a licensing or certification test fee' },
       { formId: 'va-22-0810', actionLabel: 'Reimburse a national exam fee (SAT, CLEP, GRE, AP)' },
       { formId: 'va-28-1900', actionLabel: 'Apply for Veteran Readiness & Employment (VR&E)' },
+      { formId: 'va-28-1902w', actionLabel: 'Prepare for your VR&E entitlement evaluation (Rehabilitation Needs Inventory)' },
     ],
   },
   {

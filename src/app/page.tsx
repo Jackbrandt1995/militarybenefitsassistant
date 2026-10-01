@@ -15,6 +15,7 @@ const forms = [
   { number: '22-5495',  title: "Dependents' Change of Program" },
   { number: '22-8691',  title: 'Work-Study Allowance Application' },
   { number: '28-1900',  title: 'Disabled Veterans Application for VR&E' },
+  { number: '28-1902w', title: 'VR&E Rehabilitation Needs Inventory' },
   { number: '22-1999c', title: 'Correspondence Course Enrollment Affirmation' },
   { number: '10-10EZ',  title: 'Application for VA Health Care' },
   { number: '26-1880',  title: 'Request for Certificate of Eligibility (Home Loan)' },
@@ -33,7 +34,7 @@ export default async function Home() {
       {/* Stats bar */}
       <div className="bg-slate-800 text-gray-300 text-xs text-center py-2 px-4">
         <span className="inline-flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-          <span>15 VA Forms Supported</span>
+          <span>16 VA Forms Supported</span>
           <span className="text-slate-600 hidden sm:inline">·</span>
           <span>Free to Use</span>
           <span className="text-slate-600 hidden sm:inline">·</span>
@@ -101,7 +102,7 @@ export default async function Home() {
               <div className="text-xs font-bold text-green-600 uppercase tracking-widest mb-2">Step 2</div>
               <h3 className="text-xl font-semibold mb-2">Pick your form</h3>
               <p className="text-gray-600 text-sm leading-relaxed">
-                Select from 15 supported VA forms. We pre-fill everything we can from your profile
+                Select from 16 supported VA forms. We pre-fill everything we can from your profile
                 so you only answer what&apos;s new.
               </p>
             </div>
@@ -222,7 +223,7 @@ export default async function Home() {
       {/* Supported forms */}
       <section id="forms" className="py-20 bg-slate-50">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-4">15 Supported VA Forms</h2>
+          <h2 className="text-3xl font-bold text-center text-gray-900 mb-4">16 Supported VA Forms</h2>
           <p className="text-center text-gray-500 mb-12 max-w-2xl mx-auto text-sm">
             Major VA education, health care, and home loan benefit forms — all in one place.
           </p>

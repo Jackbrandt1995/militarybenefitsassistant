@@ -58,7 +58,7 @@ const importTs = absPath => import(pathToFileURL(path.join(TMP, compile(absPath)
 const ALL_FORMS = [
   'va-22-1990', 'va-22-1990e', 'va-22-1990t', 'va-22-1995', 'va-22-0803',
   'va-22-0810', 'va-22-5281', 'va-22-5490', 'va-22-5495', 'va-22-8691',
-  'va-28-1900', 'va-22-1999c', 'va-10-10ez', 'va-10-10ezr', 'va-26-1880', 'va-21-22a',
+  'va-28-1900', 'va-28-1902w', 'va-22-1999c', 'va-10-10ez', 'va-10-10ezr', 'va-26-1880', 'va-21-22a',
 ];
 // Optional CLI arg filters to a single form id, e.g. `node verify-forms.mjs va-22-5490`.
 const ONLY = process.argv[2];
@@ -77,6 +77,11 @@ const INTENTIONAL_UNMAPPED = {
   'va-22-1990e': ['bankName'],                    // Item 8 direct deposit = routing# + account# only (no bank-name cell)
   'va-22-5490': ['bankName', 'previouslyReceivedVABenefits', 'educationType', 'schoolName', 'educationObjective'], // see mapping comments: 22-5490 JAN-2024 has no school/objective/training cells; Item 26 is a check-all set, not Yes/No
   'va-22-1999c': ['ssn', 'address', 'city', 'state', 'zip'], // 7-item form: Item 2 is VA File No. only; Item 5 is the SCHOOL address, not the applicant's
+  // va-28-1902w: every collected answer has a named AcroForm destination (only the
+  // '*' privacyAct residual applies). The PDF's VRC-only cells (VRCName[0],
+  // NAMEOFVOCATIONALREHABILITATIONCOUNSELOR[0], Date[0] / Items 29-30) are
+  // deliberately NOT wizard questions — see the mapping file header.
+  'va-28-1902w': [],
 };
 
 function genValue(field) {

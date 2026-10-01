@@ -227,6 +227,23 @@ export const SUBMISSION_GUIDES: Record<string, SubmissionGuide> = {
       '  • Or visit your nearest VA Regional Office in person — no appointment needed to drop off paperwork\n' +
       '  • VA Regional Offices are located in most major cities; check your local government pages or call first to confirm hours',
   },
+
+  'va-28-1902w': {
+    officeType: 'regional-office',
+    whatToInclude: [
+      'Completed VA Form 28-1902w (this download)',
+      'Your resume, if you chose to provide one (covers Items 1-9)',
+      'DD-214 or other military records, if not already on file with VA (covers Items 10-13)',
+      'Academic transcripts, certifications, and/or licenses, if you chose to provide them (covers Items 16-18)',
+    ],
+    timeline:
+      'Your Vocational Rehabilitation Counselor (VRC) reviews this form with you during the comprehensive initial evaluation and uses it to make your Chapter 31 entitlement determination.',
+    moreInfo:
+      'This form is normally brought to (or completed with) your Vocational Rehabilitation Counselor at your VR&E initial evaluation appointment. It is not mailed on its own.\n\n' +
+      '  • Bring the printed form and your supporting documents to the appointment your VRC scheduled after your VA Form 28-1900 application\n' +
+      '  • If your VRC asked you to send it ahead of time, follow their instructions (secure message, upload, or mail to your VA Regional Office)\n' +
+      '  • If you have not been contacted for an initial evaluation yet, call VA at 1-800-827-1000 to check the status of your VR&E application',
+  },
 };
 
 /** US states for the state-selector dropdown */

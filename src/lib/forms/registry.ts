@@ -10,6 +10,7 @@ import { va225490 } from './definitions/va-22-5490';
 import { va225495 } from './definitions/va-22-5495';
 import { va228691 } from './definitions/va-22-8691';
 import { va281900 } from './definitions/va-28-1900';
+import { va281902w } from './definitions/va-28-1902w';
 import { va221999c } from './definitions/va-22-1999c';
 import { va1010ez } from './definitions/va-10-10ez';
 import { va1010ezr } from './definitions/va-10-10ezr';
@@ -28,6 +29,7 @@ const forms: FormDefinition[] = [
   va225495,
   va228691,
   va281900,
+  va281902w,
   va221999c,
   va1010ez,
   va1010ezr,
