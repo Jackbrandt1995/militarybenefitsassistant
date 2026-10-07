@@ -4,7 +4,7 @@ import { use, useState, useEffect, useRef } from 'react';
 import { notFound, useRouter } from 'next/navigation';
 import { getFormById } from '@/lib/forms/registry';
 import { useAuth } from '@/components/AuthProvider';
-import { fillPdf, downloadPdf, mergePdfsWithAttachments } from '@/lib/pdf/fillPdf';
+import { fillPdf, downloadPdf, mergePdfsWithAttachments, concatPdfs } from '@/lib/pdf/fillPdf';
 import { getFieldMapping } from '@/lib/pdf/fieldMappings';
 import { getFormFiles, clearFormFiles } from '@/lib/fileCache';
 import { createClient } from '@/lib/supabase/client';
@@ -92,14 +92,37 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
           '';
         if (stateFromAnswers) setUserState(stateFromAnswers.toUpperCase());
 
-        const mapping = getFieldMapping(formId);
-        if (!mapping) {
-          setErrorMsg('Field mapping not found for this form.');
-          setStatus('error');
-          return;
+        let bytes: Uint8Array;
+        if (form!.bundleForms && form!.bundleForms.length > 0) {
+          // Bundle (e.g. the VR&E package): fill each member form with its own
+          // registered mapping, running the MEMBER definition's computeAnswers
+          // over the shared answer set so derived keys (e.g. the 1902w's
+          // service1Dates) are built exactly as the standalone form builds
+          // them. The filled member PDFs are then concatenated into one
+          // document; everything after this point (attachment merge, scrub,
+          // submission record, agent filing) treats it like any single PDF.
+          const memberPdfs: Uint8Array[] = [];
+          for (const memberId of form!.bundleForms) {
+            const memberDef = getFormById(memberId);
+            const memberMapping = getFieldMapping(memberId);
+            if (!memberDef || !memberMapping) {
+              setErrorMsg(`Form definition or field mapping not found for ${memberId}.`);
+              setStatus('error');
+              return;
+            }
+            const memberAnswers = memberDef.computeAnswers ? memberDef.computeAnswers(answers) : answers;
+            memberPdfs.push(await fillPdf(memberDef.pdfTemplate, memberAnswers, memberMapping));
+          }
+          bytes = await concatPdfs(memberPdfs);
+        } else {
+          const mapping = getFieldMapping(formId);
+          if (!mapping) {
+            setErrorMsg('Field mapping not found for this form.');
+            setStatus('error');
+            return;
+          }
+          bytes = await fillPdf(form!.pdfTemplate, answers, mapping);
         }
-
-        let bytes = await fillPdf(form!.pdfTemplate, answers, mapping);
 
         const wizardFiles = getFormFiles();
         const hasUploadStep = form!.steps.some(s =>

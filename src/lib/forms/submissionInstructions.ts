@@ -228,6 +228,23 @@ export const SUBMISSION_GUIDES: Record<string, SubmissionGuide> = {
       '  • VA Regional Offices are located in most major cities; check your local government pages or call first to confirm hours',
   },
 
+  'va-vre-package': {
+    officeType: 'regional-office',
+    whatToInclude: [
+      'Signed VA Form 28-1900 (the FIRST 3 pages of this download). Do not mail the Rehabilitation Needs Inventory pages: see the note below.',
+      'DD-214, Certificate of Release or Discharge from Active Duty (if not already on file with VA)',
+      'VA service-connected disability rating decision letter (if not already on file with VA)',
+    ],
+    timeline:
+      'Allow 30 days after VA receives your application. A Vocational Rehabilitation Counselor (VRC) will contact you to schedule an initial orientation appointment.',
+    moreInfo:
+      'Your download contains BOTH forms in one PDF: pages 1-3 are VA Form 28-1900 (your application), followed by VA Form 28-1902w (the Rehabilitation Needs Inventory), then any documents you uploaded.\n\n' +
+      'Submit only the 28-1900 to VA. It goes to your nearest VA Regional Office, not an education RPO (you can also apply online at va.gov).\n' +
+      '  • Call VA at 1-800-827-1000 and ask for your Regional Office mailing address\n' +
+      '  • Or visit your nearest VA Regional Office in person: no appointment needed to drop off paperwork\n\n' +
+      'Keep the 28-1902w pages. They are NOT mailed with the application: bring the printed inventory, plus your resume, military records, and any transcripts, certifications, or licenses, to the initial evaluation appointment your VRC schedules. If your VRC asks you to send it ahead of time, follow their instructions.',
+  },
+
   'va-28-1902w': {
     officeType: 'regional-office',
     whatToInclude: [

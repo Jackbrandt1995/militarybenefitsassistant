@@ -59,6 +59,10 @@ const ALL_FORMS = [
   'va-22-1990', 'va-22-1990e', 'va-22-1990t', 'va-22-1995', 'va-22-0803',
   'va-22-0810', 'va-22-5281', 'va-22-5490', 'va-22-5495', 'va-22-8691',
   'va-28-1900', 'va-28-1902w', 'va-22-1999c', 'va-10-10ez', 'va-10-10ezr', 'va-26-1880', 'va-21-22a',
+  // Bundles (def.bundleForms set, no mapping file of their own): each member's
+  // mapping + member computeAnswers are checked against the bundle's merged
+  // answers and the member's own PDF. Members stay above as standalone entries.
+  'va-vre-package',
 ];
 // Optional CLI arg filters to a single form id, e.g. `node verify-forms.mjs va-22-5490`.
 const ONLY = process.argv[2];
@@ -120,20 +124,88 @@ function genValue(field) {
 
 const pdfPathFor = def => path.join(ROOT, 'public/forms', (def.pdfTemplate || '').replace(/^\/?forms\//, '').replace(/^\//, ''));
 
+/** Does a computeAnswers source read this wizard id? (word-boundary match) */
+const makeReadBy = computeSrc => id => {
+  try { return new RegExp('\\b' + id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(computeSrc); }
+  catch { return computeSrc.includes(id); }
+};
+
+/**
+ * Per-entry structural checks for one mapping against one loaded PDF form.
+ * `prefix` tags findings with the member form id when verifying a bundle
+ * ('' for standalone forms, keeping their output byte-identical).
+ */
+function makeEntryChecker(findings, form, fieldNames, finalAnswers, prefix = '') {
+  // Mirror fillPdf.ts: exact match, else the same endsWith fallback production uses.
+  const allNames = [...fieldNames];
+  const getField = name => {
+    let resolved = fieldNames.has(name) ? name : allNames.find(n => n === name || n.endsWith('.' + name) || name.endsWith('.' + n));
+    if (!resolved) return null;
+    try { return form.getField(resolved); } catch { return null; }
+  };
+
+  return (wizardId, entry) => {
+    if (!entry || !entry.type || ['draw-check', 'draw-text', 'image'].includes(entry.type)) return;
+    const raw = finalAnswers[wizardId];
+    if (raw === undefined || raw === '' || raw === null) {
+      findings.push(`${prefix}orphan key "${wizardId}" -> "${entry.pdfFieldName}": no value from any question/computeAnswers (always blank)`);
+      return;
+    }
+    let value;
+    try { value = entry.transform ? entry.transform(String(raw)) : String(raw); }
+    catch (e) { findings.push(`${prefix}transform threw for "${wizardId}": ${e.message}`); return; }
+    if (value === '' || value == null) return; // legitimately empty after transform
+    const field = getField(entry.pdfFieldName);
+    if (!field) { findings.push(`${prefix}MISSING field "${entry.pdfFieldName}" (key "${wizardId}")`); return; }
+    if (entry.type === 'text') {
+      if (!(field instanceof PDFTextField)) { findings.push(`${prefix}TYPE MISMATCH "${entry.pdfFieldName}": mapped text, is ${field.constructor.name}`); return; }
+      const max = field.getMaxLength();
+      if (max != null && String(value).length > max) findings.push(`${prefix}MAXLENGTH OVERFLOW (silent blank) "${entry.pdfFieldName}" (key "${wizardId}"): "${value}" len ${String(value).length} > max ${max}`);
+    } else if (entry.type === 'radio') {
+      if (!(field instanceof PDFRadioGroup)) { findings.push(`${prefix}TYPE MISMATCH "${entry.pdfFieldName}": mapped radio, is ${field.constructor.name}`); return; }
+      const opts = field.getOptions();
+      if (!opts.includes(value)) findings.push(`${prefix}INVALID RADIO OPTION (silent blank) "${entry.pdfFieldName}": "${value}" not in [${opts.join(' | ')}]`);
+    } else if (entry.type === 'dropdown') {
+      if (!(field instanceof PDFDropdown)) { findings.push(`${prefix}TYPE MISMATCH "${entry.pdfFieldName}": mapped dropdown, is ${field.constructor.name}`); return; }
+      const opts = field.getOptions();
+      if (!opts.includes(value)) findings.push(`${prefix}INVALID DROPDOWN OPTION (silent blank) "${entry.pdfFieldName}": "${value}" not in [${opts.join(' | ')}]`);
+    } else if (entry.type === 'checkbox') {
+      if (!(field instanceof PDFCheckBox)) findings.push(`${prefix}TYPE MISMATCH "${entry.pdfFieldName}": mapped checkbox, is ${field.constructor.name}`);
+    }
+  };
+}
+
+async function loadPdfForm(def) {
+  const pdf = await PDFDocument.load(readFileSync(pdfPathFor(def)), { ignoreEncryption: true });
+  const form = pdf.getForm();
+  return { form, fieldNames: new Set(form.getFields().map(f => f.getName())) };
+}
+
 let total = 0;
 const summary = [];
 
 for (const base of FORM_FILES) {
   const findings = [];
-  let def, mapping;
+  let def;
   try {
     def = Object.values(await importTs(path.join(DEF_DIR, base + '.ts'))).find(v => v && v.steps && v.id);
-    mapping = Object.values(await importTs(path.join(MAP_DIR, base + '.ts'))).find(v => v && typeof v === 'object' && !v.steps);
   } catch (e) {
     console.log(`\n### ${base}: FAILED TO LOAD — ${e.message}`);
     total++; summary.push([base, '!']); continue;
   }
-  if (!def || !mapping) { console.log(`\n### ${base}: missing ${!def ? 'definition ' : ''}${!mapping ? 'mapping' : ''}`); total++; summary.push([base, '!']); continue; }
+  if (!def) { console.log(`\n### ${base}: missing definition`); total++; summary.push([base, '!']); continue; }
+
+  const isBundle = Array.isArray(def.bundleForms) && def.bundleForms.length > 0;
+  let mapping;
+  if (!isBundle) {
+    try {
+      mapping = Object.values(await importTs(path.join(MAP_DIR, base + '.ts'))).find(v => v && typeof v === 'object' && !v.steps);
+    } catch (e) {
+      console.log(`\n### ${base}: FAILED TO LOAD — ${e.message}`);
+      total++; summary.push([base, '!']); continue;
+    }
+    if (!mapping) { console.log(`\n### ${base}: missing mapping`); total++; summary.push([base, '!']); continue; }
+  }
 
   const answers = {};
   for (const step of def.steps || []) for (const f of step.fields || []) { const v = genValue(f); if (v !== '') answers[f.id] = v; }
@@ -143,74 +215,82 @@ for (const base of FORM_FILES) {
     catch (e) { findings.push(`computeAnswers() THREW: ${e.message}`); }
   }
 
-  let form, fieldNames;
-  try {
-    const pdf = await PDFDocument.load(readFileSync(pdfPathFor(def)), { ignoreEncryption: true });
-    form = pdf.getForm();
-    fieldNames = new Set(form.getFields().map(f => f.getName()));
-  } catch (e) { console.log(`\n### ${base}: cannot open PDF — ${e.message}`); total++; summary.push([base, '!']); continue; }
-
-  // Mirror fillPdf.ts: exact match, else the same endsWith fallback production uses.
-  const allNames = [...fieldNames];
-  const getField = name => {
-    let resolved = fieldNames.has(name) ? name : allNames.find(n => n === name || n.endsWith('.' + name) || name.endsWith('.' + n));
-    if (!resolved) return null;
-    try { return form.getField(resolved); } catch { return null; }
-  };
-
-  const checkEntry = (wizardId, entry) => {
-    if (!entry || !entry.type || ['draw-check', 'draw-text', 'image'].includes(entry.type)) return;
-    const raw = finalAnswers[wizardId];
-    if (raw === undefined || raw === '' || raw === null) {
-      findings.push(`orphan key "${wizardId}" -> "${entry.pdfFieldName}": no value from any question/computeAnswers (always blank)`);
-      return;
-    }
-    let value;
-    try { value = entry.transform ? entry.transform(String(raw)) : String(raw); }
-    catch (e) { findings.push(`transform threw for "${wizardId}": ${e.message}`); return; }
-    if (value === '' || value == null) return; // legitimately empty after transform
-    const field = getField(entry.pdfFieldName);
-    if (!field) { findings.push(`MISSING field "${entry.pdfFieldName}" (key "${wizardId}")`); return; }
-    if (entry.type === 'text') {
-      if (!(field instanceof PDFTextField)) { findings.push(`TYPE MISMATCH "${entry.pdfFieldName}": mapped text, is ${field.constructor.name}`); return; }
-      const max = field.getMaxLength();
-      if (max != null && String(value).length > max) findings.push(`MAXLENGTH OVERFLOW (silent blank) "${entry.pdfFieldName}" (key "${wizardId}"): "${value}" len ${String(value).length} > max ${max}`);
-    } else if (entry.type === 'radio') {
-      if (!(field instanceof PDFRadioGroup)) { findings.push(`TYPE MISMATCH "${entry.pdfFieldName}": mapped radio, is ${field.constructor.name}`); return; }
-      const opts = field.getOptions();
-      if (!opts.includes(value)) findings.push(`INVALID RADIO OPTION (silent blank) "${entry.pdfFieldName}": "${value}" not in [${opts.join(' | ')}]`);
-    } else if (entry.type === 'dropdown') {
-      if (!(field instanceof PDFDropdown)) { findings.push(`TYPE MISMATCH "${entry.pdfFieldName}": mapped dropdown, is ${field.constructor.name}`); return; }
-      const opts = field.getOptions();
-      if (!opts.includes(value)) findings.push(`INVALID DROPDOWN OPTION (silent blank) "${entry.pdfFieldName}": "${value}" not in [${opts.join(' | ')}]`);
-    } else if (entry.type === 'checkbox') {
-      if (!(field instanceof PDFCheckBox)) findings.push(`TYPE MISMATCH "${entry.pdfFieldName}": mapped checkbox, is ${field.constructor.name}`);
-    }
-  };
-
-  for (const [wizardId, m] of Object.entries(mapping)) {
-    if (Array.isArray(m)) m.forEach(e => checkEntry(wizardId, e));
-    else checkEntry(wizardId, m);
-  }
-
-  // ── Regression guard: a wizard field collected but never mapped prints BLANK ──
-  // (Covers verify-forms' biggest blind spot — the class that caused 1990 items
-  //  19/20 and most blank-item bugs. A field is "covered" if it's a mapping key
-  //  OR it's read by computeAnswers, e.g. firstName feeding a derived fullName.)
-  const mappingKeys = new Set(Object.keys(mapping));
-  const computeSrc = typeof def.computeAnswers === 'function' ? def.computeAnswers.toString() : '';
-  const readByCompute = id => {
-    try { return new RegExp('\\b' + id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(computeSrc); }
-    catch { return computeSrc.includes(id); }
-  };
-  const intentional = new Set([...(INTENTIONAL_UNMAPPED['*'] || []), ...(INTENTIONAL_UNMAPPED[base] || [])]);
   let intentionalResiduals = 0;
-  for (const step of def.steps || []) {
-    for (const f of step.fields || []) {
-      if (!f.id || f.type === 'document') continue; // attachments aren't PDF fields
-      if (mappingKeys.has(f.id) || readByCompute(f.id)) continue;
-      if (intentional.has(f.id)) { intentionalResiduals++; continue; } // verified: no PDF cell (see INTENTIONAL_UNMAPPED)
-      findings.push(`UNMAPPED QUESTION (collected but not on PDF -> blank): "${f.id}"${f.label ? ' — ' + String(f.label).slice(0, 55) : ''}`);
+
+  if (isBundle) {
+    // ── Bundle: run the per-entry checks for EACH member mapping against the
+    //    merged answers (member computeAnswers applied) and its own PDF. ──────
+    const memberMappingKeys = new Set();
+    const memberReadBys = [];
+    const intentional = new Set([...(INTENTIONAL_UNMAPPED['*'] || []), ...(INTENTIONAL_UNMAPPED[base] || [])]);
+    for (const memberId of def.bundleForms) {
+      let mDef, mMapping;
+      try {
+        mDef = Object.values(await importTs(path.join(DEF_DIR, memberId + '.ts'))).find(v => v && v.steps && v.id);
+        mMapping = Object.values(await importTs(path.join(MAP_DIR, memberId + '.ts'))).find(v => v && typeof v === 'object' && !v.steps);
+      } catch (e) { findings.push(`[${memberId}] FAILED TO LOAD — ${e.message}`); continue; }
+      if (!mDef || !mMapping) { findings.push(`[${memberId}] missing ${!mDef ? 'definition ' : ''}${!mMapping ? 'mapping' : ''}`); continue; }
+
+      Object.keys(mMapping).forEach(k => memberMappingKeys.add(k));
+      if (typeof mDef.computeAnswers === 'function') memberReadBys.push(makeReadBy(mDef.computeAnswers.toString()));
+      (INTENTIONAL_UNMAPPED[memberId] || []).forEach(id => intentional.add(id));
+
+      // Member computeAnswers runs over the bundle's (package-computed) answers,
+      // exactly as the complete page does at generate time.
+      let memberAnswers = { ...finalAnswers };
+      if (typeof mDef.computeAnswers === 'function') {
+        try { memberAnswers = { ...finalAnswers, ...mDef.computeAnswers(finalAnswers) }; }
+        catch (e) { findings.push(`[${memberId}] computeAnswers() THREW: ${e.message}`); }
+      }
+
+      let loaded;
+      try { loaded = await loadPdfForm(mDef); }
+      catch (e) { findings.push(`[${memberId}] cannot open PDF — ${e.message}`); continue; }
+      const checkEntry = makeEntryChecker(findings, loaded.form, loaded.fieldNames, memberAnswers, `[${memberId}] `);
+      for (const [wizardId, m] of Object.entries(mMapping)) {
+        if (Array.isArray(m)) m.forEach(e => checkEntry(wizardId, e));
+        else checkEntry(wizardId, m);
+      }
+    }
+
+    // ── Coverage guard for the merged wizard: a collected field passes if it is
+    //    a key in ANY member mapping, read by any member computeAnswers, read by
+    //    the bundle's own computeAnswers (alias source), or allowlisted. ───────
+    const readByPackage = makeReadBy(typeof def.computeAnswers === 'function' ? def.computeAnswers.toString() : '');
+    for (const step of def.steps || []) {
+      for (const f of step.fields || []) {
+        if (!f.id || f.type === 'document') continue; // attachments aren't PDF fields
+        if (memberMappingKeys.has(f.id) || memberReadBys.some(r => r(f.id)) || readByPackage(f.id)) continue;
+        if (intentional.has(f.id)) { intentionalResiduals++; continue; }
+        findings.push(`UNMAPPED QUESTION (collected but on no member PDF -> blank): "${f.id}"${f.label ? ' — ' + String(f.label).slice(0, 55) : ''}`);
+      }
+    }
+  } else {
+    // ── Standalone form (unchanged behavior) ───────────────────────────────────
+    let loaded;
+    try { loaded = await loadPdfForm(def); }
+    catch (e) { console.log(`\n### ${base}: cannot open PDF — ${e.message}`); total++; summary.push([base, '!']); continue; }
+
+    const checkEntry = makeEntryChecker(findings, loaded.form, loaded.fieldNames, finalAnswers);
+    for (const [wizardId, m] of Object.entries(mapping)) {
+      if (Array.isArray(m)) m.forEach(e => checkEntry(wizardId, e));
+      else checkEntry(wizardId, m);
+    }
+
+    // ── Regression guard: a wizard field collected but never mapped prints BLANK ──
+    // (Covers verify-forms' biggest blind spot — the class that caused 1990 items
+    //  19/20 and most blank-item bugs. A field is "covered" if it's a mapping key
+    //  OR it's read by computeAnswers, e.g. firstName feeding a derived fullName.)
+    const mappingKeys = new Set(Object.keys(mapping));
+    const readByCompute = makeReadBy(typeof def.computeAnswers === 'function' ? def.computeAnswers.toString() : '');
+    const intentional = new Set([...(INTENTIONAL_UNMAPPED['*'] || []), ...(INTENTIONAL_UNMAPPED[base] || [])]);
+    for (const step of def.steps || []) {
+      for (const f of step.fields || []) {
+        if (!f.id || f.type === 'document') continue; // attachments aren't PDF fields
+        if (mappingKeys.has(f.id) || readByCompute(f.id)) continue;
+        if (intentional.has(f.id)) { intentionalResiduals++; continue; } // verified: no PDF cell (see INTENTIONAL_UNMAPPED)
+        findings.push(`UNMAPPED QUESTION (collected but not on PDF -> blank): "${f.id}"${f.label ? ' — ' + String(f.label).slice(0, 55) : ''}`);
+      }
     }
   }
 

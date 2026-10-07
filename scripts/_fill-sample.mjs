@@ -28,8 +28,9 @@ function compile(abs) {
 const importTs = abs => import(pathToFileURL(path.join(TMP, compile(abs))).href);
 
 const id = process.argv[2];
-const def = Object.values(await importTs(path.join(ROOT, 'src/lib/forms/definitions', id + '.ts'))).find(v => v && v.steps && v.id);
-const mapping = Object.values(await importTs(path.join(ROOT, 'src/lib/pdf/fieldMappings', id + '.ts'))).find(v => v && typeof v === 'object' && !v.steps);
+const loadDef = async fid => Object.values(await importTs(path.join(ROOT, 'src/lib/forms/definitions', fid + '.ts'))).find(v => v && v.steps && v.id);
+const loadMapping = async fid => Object.values(await importTs(path.join(ROOT, 'src/lib/pdf/fieldMappings', fid + '.ts'))).find(v => v && typeof v === 'object' && !v.steps);
+const def = await loadDef(id);
 
 const SIG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
 function gen(f) {
@@ -54,22 +55,50 @@ const answers = {}; for (const s of def.steps || []) for (const f of s.fields ||
 let fin = { ...answers }; if (typeof def.computeAnswers === 'function') { try { fin = { ...answers, ...def.computeAnswers(answers) }; } catch (e) { console.error('computeAnswers threw', e.message); } }
 if (process.env.FILL_OVERRIDE) { try { Object.assign(fin, JSON.parse(process.env.FILL_OVERRIDE)); } catch (e) { console.error('FILL_OVERRIDE parse fail', e.message); } }
 
-const pdfPath = path.join(ROOT, 'public/forms', (def.pdfTemplate || '').replace(/^\/?forms\//, '').replace(/^\//, ''));
-const pdf = await PDFDocument.load(readFileSync(pdfPath), { ignoreEncryption: true });
-const form = pdf.getForm(); const helv = await pdf.embedFont(StandardFonts.Helvetica);
-const names = new Set(form.getFields().map(f => f.getName())); const all = [...names];
-const resolve = n => names.has(n) ? n : all.find(x => x === n || x.endsWith('.' + n) || n.endsWith('.' + x));
-const pages = pdf.getPages();
-async function fill(wid, e) {
-  if (!e || !e.type) return; const raw = fin[wid]; if (raw === undefined || raw === '' || raw === null) return;
-  let val; try { val = e.transform ? e.transform(String(raw)) : String(raw); } catch { return; }
-  if (e.type === 'draw-check') { if (val !== 'true' && raw !== true) return; const p = pages[e.checkPage ?? 0]; if (!p) return; const s = e.checkSize ?? 6; p.drawRectangle({ x: (e.checkCX ?? 0) - s / 2, y: (e.checkCY ?? 0) - s / 2, width: s, height: s, color: rgb(0, 0, 0) }); return; }
-  if (e.type === 'draw-text') { if (!val) return; const p = pages[e.textPage ?? 0]; if (!p) return; p.drawText(val, { x: e.textX ?? 0, y: e.textY ?? 0, size: e.textSize ?? 10, font: helv, color: rgb(0, 0, 0) }); return; }
-  if (e.type === 'image') { const du = String(raw); if (!du.startsWith('data:image/')) return; const bytes = Uint8Array.from(atob(du.split(',')[1]), c => c.charCodeAt(0)); const img = await pdf.embedPng(bytes); const p = pages[e.imagePage ?? 0]; if (!p) return; p.drawImage(img, { x: e.imageX ?? 36, y: e.imageY ?? 80, width: e.imageWidth ?? 230, height: e.imageHeight ?? 50 }); return; }
-  if (val === '') return; const rn = resolve(e.pdfFieldName); if (!rn) return; const fld = form.getField(rn);
-  try { if (e.type === 'text' && fld instanceof PDFTextField) fld.setText(val || ''); else if (e.type === 'checkbox' && fld instanceof PDFCheckBox) { (raw === true || val === 'true' || val === 'Yes') ? fld.check() : fld.uncheck(); } else if (e.type === 'radio' && fld instanceof PDFRadioGroup) fld.select(val); else if (e.type === 'dropdown' && fld instanceof PDFDropdown) fld.select(val); } catch (err) { console.error('fill err', e.pdfFieldName, err.message); }
+// Fill one form's PDF template from a mapping + final answer set; returns bytes.
+async function fillForm(fdef, mapping, finAnswers) {
+  const pdfPath = path.join(ROOT, 'public/forms', (fdef.pdfTemplate || '').replace(/^\/?forms\//, '').replace(/^\//, ''));
+  const pdf = await PDFDocument.load(readFileSync(pdfPath), { ignoreEncryption: true });
+  const form = pdf.getForm(); const helv = await pdf.embedFont(StandardFonts.Helvetica);
+  const names = new Set(form.getFields().map(f => f.getName())); const all = [...names];
+  const resolve = n => names.has(n) ? n : all.find(x => x === n || x.endsWith('.' + n) || n.endsWith('.' + x));
+  const pages = pdf.getPages();
+  async function fill(wid, e) {
+    if (!e || !e.type) return; const raw = finAnswers[wid]; if (raw === undefined || raw === '' || raw === null) return;
+    let val; try { val = e.transform ? e.transform(String(raw)) : String(raw); } catch { return; }
+    if (e.type === 'draw-check') { if (val !== 'true' && raw !== true) return; const p = pages[e.checkPage ?? 0]; if (!p) return; const s = e.checkSize ?? 6; p.drawRectangle({ x: (e.checkCX ?? 0) - s / 2, y: (e.checkCY ?? 0) - s / 2, width: s, height: s, color: rgb(0, 0, 0) }); return; }
+    if (e.type === 'draw-text') { if (!val) return; const p = pages[e.textPage ?? 0]; if (!p) return; p.drawText(val, { x: e.textX ?? 0, y: e.textY ?? 0, size: e.textSize ?? 10, font: helv, color: rgb(0, 0, 0) }); return; }
+    if (e.type === 'image') { const du = String(raw); if (!du.startsWith('data:image/')) return; const bytes = Uint8Array.from(atob(du.split(',')[1]), c => c.charCodeAt(0)); const img = await pdf.embedPng(bytes); const p = pages[e.imagePage ?? 0]; if (!p) return; p.drawImage(img, { x: e.imageX ?? 36, y: e.imageY ?? 80, width: e.imageWidth ?? 230, height: e.imageHeight ?? 50 }); return; }
+    if (val === '') return; const rn = resolve(e.pdfFieldName); if (!rn) return; const fld = form.getField(rn);
+    try { if (e.type === 'text' && fld instanceof PDFTextField) fld.setText(val || ''); else if (e.type === 'checkbox' && fld instanceof PDFCheckBox) { (raw === true || val === 'true' || val === 'Yes') ? fld.check() : fld.uncheck(); } else if (e.type === 'radio' && fld instanceof PDFRadioGroup) fld.select(val); else if (e.type === 'dropdown' && fld instanceof PDFDropdown) fld.select(val); } catch (err) { console.error('fill err', e.pdfFieldName, err.message); }
+  }
+  for (const [wid, m] of Object.entries(mapping)) { if (Array.isArray(m)) for (const e of m) await fill(wid, e); else await fill(wid, m); }
+  try { form.updateFieldAppearances(helv); } catch {}
+  return pdf.save();
 }
-for (const [wid, m] of Object.entries(mapping)) { if (Array.isArray(m)) for (const e of m) await fill(wid, e); else await fill(wid, m); }
-try { form.updateFieldAppearances(helv); } catch {}
-const out = path.join(TMP, id + '-filled.pdf'); writeFileSync(out, await pdf.save());
+
+let outBytes;
+if (Array.isArray(def.bundleForms) && def.bundleForms.length > 0) {
+  // Bundle (e.g. va-vre-package): fill each member with ITS mapping and ITS
+  // computeAnswers over the shared answers, then concatenate (as the app does).
+  const memberBytes = [];
+  for (const memberId of def.bundleForms) {
+    const mDef = await loadDef(memberId);
+    const mMapping = await loadMapping(memberId);
+    if (!mDef || !mMapping) { console.error('bundle member missing def/mapping:', memberId); process.exit(1); }
+    let mFin = { ...fin };
+    if (typeof mDef.computeAnswers === 'function') { try { mFin = { ...fin, ...mDef.computeAnswers(fin) }; } catch (e) { console.error(memberId, 'computeAnswers threw', e.message); } }
+    memberBytes.push(await fillForm(mDef, mMapping, mFin));
+  }
+  const merged = await PDFDocument.load(memberBytes[0], { ignoreEncryption: true });
+  for (const bytes of memberBytes.slice(1)) {
+    const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
+    for (const page of await merged.copyPages(doc, doc.getPageIndices())) merged.addPage(page);
+  }
+  outBytes = await merged.save();
+} else {
+  const mapping = await loadMapping(id);
+  outBytes = await fillForm(def, mapping, fin);
+}
+const out = path.join(TMP, id + '-filled.pdf'); writeFileSync(out, outBytes);
 console.log(out);

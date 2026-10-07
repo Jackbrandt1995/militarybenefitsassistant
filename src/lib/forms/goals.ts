@@ -10,6 +10,12 @@
  * grid stays a complete map of what the app can do. A form may appear under more
  * than one category when it genuinely fits both (e.g. VR&E under Education and
  * Certifications).
+ *
+ * Exception: the two VR&E member forms (va-28-1900, va-28-1902w) are covered
+ * here by the va-vre-package guided flow, which fills both at once. They stay
+ * registered and fillable (Browse All Forms, history, admin, direct links)
+ * but have no separate goal cards, so users are not confused about which of
+ * the three VR&E cards to pick.
  */
 
 export interface GoalForm {
@@ -44,8 +50,7 @@ export const goals: Goal[] = [
       { formId: 'va-22-1995',  actionLabel: 'Change your school or training program' },
       { formId: 'va-22-5490',  actionLabel: "Survivors' & dependents' education (DEA / Fry)" },
       { formId: 'va-22-5495',  actionLabel: 'Change school or program (dependents)' },
-      { formId: 'va-28-1900',  actionLabel: 'Apply for Veteran Readiness & Employment (VR&E)' },
-      { formId: 'va-28-1902w', actionLabel: 'Prepare for your VR&E entitlement evaluation (Rehabilitation Needs Inventory)' },
+      { formId: 'va-vre-package', actionLabel: 'Complete the VR&E process (fills both forms at once)' },
       { formId: 'va-22-5281',  actionLabel: 'Request a refund of VEAP contributions' },
       { formId: 'va-22-1999c', actionLabel: 'Affirm correspondence course enrollment' },
     ],
@@ -58,8 +63,7 @@ export const goals: Goal[] = [
     forms: [
       { formId: 'va-22-0803', actionLabel: 'Reimburse a licensing or certification test fee' },
       { formId: 'va-22-0810', actionLabel: 'Reimburse a national exam fee (SAT, CLEP, GRE, AP)' },
-      { formId: 'va-28-1900', actionLabel: 'Apply for Veteran Readiness & Employment (VR&E)' },
-      { formId: 'va-28-1902w', actionLabel: 'Prepare for your VR&E entitlement evaluation (Rehabilitation Needs Inventory)' },
+      { formId: 'va-vre-package', actionLabel: 'Complete the VR&E process (fills both forms at once)' },
     ],
   },
   {

@@ -212,6 +212,27 @@ export async function fillPdf(
 }
 
 /**
+ * Concatenate several already-filled PDFs into one document, in order (used by
+ * bundle forms, e.g. the VR&E package: 28-1900 pages first, then 28-1902w).
+ * The first document is loaded as the base so its AcroForm stays intact; the
+ * rest are appended with copyPages, which preserves the regenerated field
+ * appearance streams (the same approach mergePdfsWithAttachments uses).
+ */
+export async function concatPdfs(pdfs: Uint8Array[]): Promise<Uint8Array> {
+  if (pdfs.length === 0) throw new Error('concatPdfs: no documents to merge');
+  if (pdfs.length === 1) return pdfs[0];
+  const merged = await PDFDocument.load(pdfs[0], { ignoreEncryption: true });
+  for (const bytes of pdfs.slice(1)) {
+    const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
+    const copiedPages = await merged.copyPages(doc, doc.getPageIndices());
+    for (const page of copiedPages) {
+      merged.addPage(page);
+    }
+  }
+  return merged.save();
+}
+
+/**
  * Merge one or more File objects (PDFs only) as additional pages appended to
  * the base PDF. Non-PDF files are silently skipped. Returns updated bytes.
  */

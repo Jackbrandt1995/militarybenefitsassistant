@@ -45,6 +45,17 @@ export interface FormDefinition {
   pdfTemplate: string;
   category: FormCategory;
   steps: FormStepDef[];
+  /**
+   * Bundle: the ids of the member forms this definition fills in one pass.
+   * A bundle definition carries its OWN merged wizard steps but NO field
+   * mapping of its own. At generate time the complete page loops the members:
+   * each member's registered field mapping and its definition's computeAnswers
+   * run against the shared answer set, and the filled member PDFs are
+   * concatenated into one download (one submission record, under this id).
+   * The bundle's own computeAnswers (if any) may only alias/merge answer keys
+   * so every member mapping finds its inputs; it runs before the members'.
+   */
+  bundleForms?: string[];
   /** Bump this number to force-clear any cached wizard state in localStorage. */
   version?: number;
   /**
