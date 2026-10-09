@@ -21,6 +21,16 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+
+// Organization-level API keys (not scoped to a workspace) are rejected with
+// "must include the anthropic-workspace-id header". Set ANTHROPIC_WORKSPACE_ID
+// (Console -> Settings -> Workspaces, id starts with wrkspc_) to satisfy that;
+// a workspace-scoped key needs nothing extra.
+function workspaceHeaders(): Record<string, string> {
+  const id = process.env.ANTHROPIC_WORKSPACE_ID?.trim();
+  return id ? { 'anthropic-workspace-id': id } : {};
+}
+
 import { getAuthedUser, rateLimit } from '@/lib/server/notify';
 import { getFormById } from '@/lib/forms/registry';
 
@@ -166,7 +176,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const client = new Anthropic();
+  const client = new Anthropic({ defaultHeaders: workspaceHeaders() });
 
   try {
     // Opus 5 runs adaptive thinking by default; thinking, temperature and
