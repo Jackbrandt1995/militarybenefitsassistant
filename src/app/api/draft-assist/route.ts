@@ -179,8 +179,13 @@ export async function POST(req: NextRequest) {
       // A short rewrite does not need deep reasoning; keeps thinking brief so
       // the draft itself is never squeezed by max_tokens.
       output_config: { effort: 'medium' },
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
+      // Server-side refusal fallbacks are a beta that not every account can
+      // use (the API answers 400 invalid_request_error when it is unavailable),
+      // so they are opt-in via AI_ASSIST_SERVER_FALLBACKS=true. A refusal is
+      // handled below either way.
+      ...(process.env.AI_ASSIST_SERVER_FALLBACKS === 'true'
+        ? { betas: ['server-side-fallback-2026-07-01' as const], fallbacks: 'default' as const }
+        : {}),
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: buildUserContent(parsed.body) }],
     });
@@ -246,7 +251,9 @@ export async function POST(req: NextRequest) {
       );
     }
     if (err instanceof Anthropic.APIError) {
-      console.error('[draft-assist] provider error', err.status, err.type ?? err.name);
+      // Anthropic's error message names the rejected parameter; it never
+      // contains the veteran's notes.
+      console.error('[draft-assist] provider error', err.status, err.type ?? err.name, (err.message || '').slice(0, 300));
       return NextResponse.json(
         { error: 'The assistant ran into a problem. Please try again in a moment.' },
         { status: 502 },
