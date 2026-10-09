@@ -353,10 +353,10 @@ export const va281902w: FormDefinition = {
         { id: 'scdList', label: 'List your service-connected disabilities and impairments (Item 19)', type: 'textarea', helpText: 'Your service-connected disabilities are listed on your VA rating decision letter.' },
         {
           id: 'iuTdiu',
-          label: 'Have you filed a claim for, or are you receiving, Individual Unemployability (IU) or Total Disability based on Individual Unemployability (TDIU)? If yes, describe in detail your service-connected disabilities, feasibility, and potential independent living needs. (Item 20)',
+          label: 'Have you filed a claim for, or are you receiving, Individual Unemployability (IU) or Total Disability based on Individual Unemployability (TDIU)? (Item 20)',
           type: 'textarea',
           aiAssist: true,
-          helpText: 'Answer Yes or No. If yes, describe in detail your service-connected disabilities, feasibility, and potential independent living needs: which disabilities are involved, whether you believe working is feasible for you right now, and any support you may need to live independently. Rough notes are fine; you can use the help button to organize them in your own words.',
+          helpText: 'Answer Yes or No. If yes, add details in bullet points. We have a special tool below that can help you organize your thoughts.',
         },
         { id: 'driversLicense', label: "Do you have a valid driver's license? (Item 21)", type: 'textarea', helpText: "Answer Yes or No. If no, please explain the reason for not having a valid driver's license." },
         { id: 'treatmentFacilities', label: 'Name of the medical treatment facilities you are attending (Item 22)', type: 'textarea' },
