@@ -16,6 +16,19 @@ import type { FieldMapping } from '../fillPdf';
  *   - form1[0].#subform[19].Date[0]
  *       Printed label: "30. DATE (MM/DD/YYYY)" — pairs with Item 29; the VRC
  *       dates the form at the evaluation session.
+ *   - Item 9 (page 4), "HAS THE CLAIMANT EVER HAD DIFFICULTY WITH ANY OF THE
+ *     FOLLOWING ITEM(S) DUE TO THEIR SCD(s)?": the form frames this as the
+ *     VRC's review of the claimant's work history at the initial evaluation,
+ *     so the wizard no longer asks it (removed on beta feedback, Oct 2026).
+ *     The 14 cells left unmapped (7 checkboxes + 7 description boxes), all
+ *     under form1[0].#subform[15]:
+ *       CLAIMANTEVERHADDIFFICULTY[0] + CO-WORKERRELATIONS[0]
+ *       CLAIMANTEVERHADDIFFICULTY[1] + JOBPERFORMANCE[0]
+ *       CLAIMANTEVERHADDIFFICULTY[2] + JOBOPPORTUNITIES[0]
+ *       CLAIMANTEVERHADDIFFICULTY[3] + JOBSATISFACTION[0]
+ *       CLAIMANTEVERHADDIFFICULTY[4] + MANAGERRELATIONS[0]
+ *       CLAIMANTEVERHADDIFFICULTY[5] + MISSEDTIMEATWORK[0]
+ *       CLAIMANTEVERHADDIFFICULTY[6] + OTHERS[0]
  *
  * Quirks verified against the AcroForm:
  *   - The second "PROVIDEADESCRIPTIONOFJOBDUTIESINDETAIL*[1]" box in each job
@@ -99,21 +112,7 @@ export const va281902wMapping: FieldMapping = {
   job5Aggravate: { pdfFieldName: 'form1[0].#subform[14].PROVIDEADESCRIPTIONOFJOBDUTIESINDETAIL14[1]', type: 'text' },
   job5ReasonLeft: { pdfFieldName: 'form1[0].#subform[14].WHATISTHECLAIMANTSREASONFORLEAVINGEMPLOYMENT14[0]', type: 'text' },
 
-  // ── Item 9: difficulties at work due to SCDs (page 4) ─────────────────────
-  difficultyCoworkers: { pdfFieldName: 'form1[0].#subform[15].CLAIMANTEVERHADDIFFICULTY[0]', type: 'checkbox' },
-  difficultyCoworkersDesc: { pdfFieldName: 'form1[0].#subform[15].CO-WORKERRELATIONS[0]', type: 'text' },
-  difficultyPerformance: { pdfFieldName: 'form1[0].#subform[15].CLAIMANTEVERHADDIFFICULTY[1]', type: 'checkbox' },
-  difficultyPerformanceDesc: { pdfFieldName: 'form1[0].#subform[15].JOBPERFORMANCE[0]', type: 'text' },
-  difficultyOpportunities: { pdfFieldName: 'form1[0].#subform[15].CLAIMANTEVERHADDIFFICULTY[2]', type: 'checkbox' },
-  difficultyOpportunitiesDesc: { pdfFieldName: 'form1[0].#subform[15].JOBOPPORTUNITIES[0]', type: 'text' },
-  difficultySatisfaction: { pdfFieldName: 'form1[0].#subform[15].CLAIMANTEVERHADDIFFICULTY[3]', type: 'checkbox' },
-  difficultySatisfactionDesc: { pdfFieldName: 'form1[0].#subform[15].JOBSATISFACTION[0]', type: 'text' },
-  difficultyManagers: { pdfFieldName: 'form1[0].#subform[15].CLAIMANTEVERHADDIFFICULTY[4]', type: 'checkbox' },
-  difficultyManagersDesc: { pdfFieldName: 'form1[0].#subform[15].MANAGERRELATIONS[0]', type: 'text' },
-  difficultyMissedTime: { pdfFieldName: 'form1[0].#subform[15].CLAIMANTEVERHADDIFFICULTY[5]', type: 'checkbox' },
-  difficultyMissedTimeDesc: { pdfFieldName: 'form1[0].#subform[15].MISSEDTIMEATWORK[0]', type: 'text' },
-  difficultyOther: { pdfFieldName: 'form1[0].#subform[15].CLAIMANTEVERHADDIFFICULTY[6]', type: 'checkbox' },
-  difficultyOtherDesc: { pdfFieldName: 'form1[0].#subform[15].OTHERS[0]', type: 'text' },
+  // ── Item 9 (page 4) is VRC-only and intentionally unmapped; see the header. ─
 
   // ── Section III: military employment history (Items 10-13, page 4) ────────
   providedDd214: { pdfFieldName: 'form1[0].#subform[15].RadioButtonList[7]', type: 'radio' },

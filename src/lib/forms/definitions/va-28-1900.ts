@@ -29,7 +29,10 @@ export const va281900: FormDefinition = {
       description: 'Your current mailing address and contact details.',
       fields: [
         { id: 'street', label: 'Street Address', type: 'text', required: true, profilePath: 'profile.address_street', maxLength: 30 },
-        { id: 'apt', label: 'Apt / Unit', type: 'text', profilePath: 'profile.address_apt', maxLength: 5 },
+        // The PDF cell holds 5 characters; the mapping drops a typed "Apt" / "Unit" / "#"
+        // prefix and draws anything longer directly in the cell, so the wizard no longer
+        // cuts "Apt 7B" off at "Apt 7" (the old cap of 5).
+        { id: 'apt', label: 'Apt / Unit', type: 'text', profilePath: 'profile.address_apt', maxLength: 10, helpText: 'Just the apartment or unit number, for example 7B. Leave blank if you do not have one.' },
         { id: 'city', label: 'City', type: 'text', required: true, profilePath: 'profile.address_city', maxLength: 18 },
         { id: 'state', label: 'State', type: 'select', required: true, profilePath: 'profile.address_state', options: stateOptions },
         { id: 'zip', label: 'ZIP Code', type: 'text', required: true, profilePath: 'profile.address_zip' },
@@ -37,7 +40,9 @@ export const va281900: FormDefinition = {
         { id: 'mainPhone', label: 'Main / Home Telephone', type: 'phone', profilePath: 'profile.phone_home' },
         { id: 'cellPhone', label: 'Cell Phone', type: 'phone', profilePath: 'profile.phone_mobile' },
         { id: 'intlPhone', label: 'International Phone (if applicable)', type: 'text', helpText: 'Include country code. Leave blank if not applicable.' },
-        { id: 'email', label: 'Email Address', type: 'email', profilePath: 'profile.email', maxLength: 30 },
+        // The PDF cell holds 30 characters; longer addresses are drawn across the cell by
+        // the mapping (it is 540pt wide), so the wizard no longer stops typing at 30.
+        { id: 'email', label: 'Email Address', type: 'email', profilePath: 'profile.email', maxLength: 60 },
         { id: 'agreeElectronic', label: 'I agree to receive electronic correspondence from VA', type: 'checkbox', helpText: 'Check this box to receive VA notifications by email instead of paper mail.' },
       ],
     },

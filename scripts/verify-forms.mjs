@@ -83,9 +83,17 @@ const INTENTIONAL_UNMAPPED = {
   'va-22-1999c': ['ssn', 'address', 'city', 'state', 'zip'], // 7-item form: Item 2 is VA File No. only; Item 5 is the SCHOOL address, not the applicant's
   // va-28-1902w: every collected answer has a named AcroForm destination (only the
   // '*' privacyAct residual applies). The PDF's VRC-only cells (VRCName[0],
-  // NAMEOFVOCATIONALREHABILITATIONCOUNSELOR[0], Date[0] / Items 29-30) are
-  // deliberately NOT wizard questions — see the mapping file header.
+  // NAMEOFVOCATIONALREHABILITATIONCOUNSELOR[0], Date[0] / Items 29-30, and the
+  // Item 9 work-difficulty set CLAIMANTEVERHADDIFFICULTY[0-6] + its seven
+  // description boxes) are deliberately NOT wizard questions; see the mapping
+  // file header. Item 9 was removed from the wizard on beta feedback (Oct 2026).
   'va-28-1902w': [],
+  // va-vre-package: the merged wizard asks TWO Privacy Act acknowledgments on its
+  // certification step, one per member form. privacyAct is the 28-1900 draw-check
+  // (and the '*' residual on the 1902w); privacyAct1902w covers the 28-1902w
+  // Privacy Act Information + Respondent Burden text and, like every other form's
+  // consent gate, has no acknowledgment cell on the printed inventory.
+  'va-vre-package': ['privacyAct1902w'],
 };
 
 function genValue(field) {

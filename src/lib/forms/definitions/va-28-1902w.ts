@@ -1,4 +1,4 @@
-import type { FormDefinition } from '../types';
+import type { FormDefinition, FormStepDef } from '../types';
 
 /**
  * VA Form 28-1902w (NOV 2024) — Information for Veteran Readiness and
@@ -7,12 +7,46 @@ import type { FormDefinition } from '../types';
  * Completed for the comprehensive initial evaluation: the Vocational
  * Rehabilitation Counselor (VRC) reviews it with the claimant to make the
  * Chapter 31 entitlement determination. The wizard mirrors ONLY what the
- * printed form asks; VRC-only items (VRC name boxes, Items 29-30) are not
- * collected — see the mapping file for the documented exclusions.
+ * printed form asks; VRC-only items (VRC name boxes, Item 9's work-difficulty
+ * review, Items 29-30) are not collected; see the mapping file for the
+ * documented exclusions.
+ *
+ * Flow notes (beta feedback, Oct 2026):
+ *   - The Section II resume radio drives the job steps: Items 4-8 show ONLY
+ *     when the claimant did NOT provide a resume (step-level condition).
+ *     Claimants who attach a resume describe job impacts in Item 28 instead,
+ *     which mirrors the form's own Section II instruction.
+ *   - The five job steps form the 'jobs' group with a "No more jobs to add"
+ *     skip button, so nothing in them is required.
+ *   - Item 9 (difficulties at work due to SCDs) is reviewed by the VRC at the
+ *     evaluation, so it is no longer a wizard step.
  */
+
+/**
+ * Verbatim Privacy Act Information + Respondent Burden statement printed on
+ * page 8 of the form. Exported so the VR&E package can show the same text
+ * beside its own 28-1902w acknowledgment checkbox.
+ */
+export const VA_28_1902W_PRIVACY_ACT_TEXT =
+  'PRIVACY ACT INFORMATION: The responses you submit are considered confidential (38 U.S.C. 5701). Your obligation to respond is required in order to obtain benefits. VA will not disclose information collected on this form to any source other than what has been authorized under the Privacy Act of 1974 or Title 38, Code of Federal Regulations 1.576 for routine uses (i.e., civil or criminal law enforcement, congressional communications, epidemiological or research studies, the collection of money owed to the United States, litigation in which the United States is a party or has an interest, the administration of VA programs and delivery of VA benefits, verification of identity and status, and personnel administration) as identified in the VA system of records, 58VA21/22/28, Compensation, Pension, Education, and Veteran Readiness and Employment Records - VA, published in the Federal Register. Information that you furnish may be utilized in computer matching programs with other Federal or State agencies for the purpose of determining your eligibility to receive VA benefits, as well as to collect any amount owed to the United States by virtue of your participation in any benefit program administered by the Department of Veterans Affairs.\n\n' +
+  'RESPONDENT BURDEN: An agency may not conduct or sponsor, and a person is not required to respond to, a collection of information unless it displays a currently valid OMB control number. The OMB control number for this project is 2900-0092, and it expires November 30, 2027. Public reporting burden for this collection of information is estimated to average 45 minutes per respondent, per year, including the time for reviewing instructions, searching existing data sources, gathering and maintaining the data needed, and completing and reviewing the collection of information. Send comments regarding this burden estimate and any other aspect of this collection of information, including suggestions for reducing the burden, to VA Reports Clearance Officer at VACOPaperworkReduAct@va.gov. Please refer to OMB Control No. 2900-0092 in any correspondence. Do not send your completed VA Form 28-1902w to this email address.';
+
+/** Exact /Opt value of the "did not provide resume" radio option (RadioButtonList[0]). */
+const NO_RESUME_PROVIDED = 'CLAIMANT DID NOT PROVIDE RESUME (Please complete the section below)';
+
+/**
+ * Shared settings for the five job steps (Items 4-8): one skippable group,
+ * shown only when the claimant did NOT attach a resume. See FormStepDef.
+ */
+const JOB_STEP_FLOW: Pick<FormStepDef, 'group' | 'groupSkipLabel' | 'condition'> = {
+  group: 'jobs',
+  groupSkipLabel: 'No more jobs to add',
+  condition: { field: 'providedResume', value: NO_RESUME_PROVIDED },
+};
+
 export const va281902w: FormDefinition = {
   id: 'va-28-1902w',
-  version: 1,
+  version: 2,
   formNumber: 'VA 28-1902w',
   title: 'Rehabilitation Needs Inventory for VR&E Entitlement Determination',
   description: 'Complete the Rehabilitation Needs Inventory (RNI) your Vocational Rehabilitation Counselor uses to determine your entitlement to VR&E (Chapter 31) services. Fill it out before your initial evaluation appointment.',
@@ -32,29 +66,29 @@ export const va281902w: FormDefinition = {
     },
     {
       id: 'contactVerification',
-      title: 'Verify Your Contact Information',
-      description: 'Section I asks you to verify that the contact information VA has on file is current. Check each item you have verified. If anything has changed or is different, update your contact information and/or marital status in your VA.gov profile.',
+      title: 'Confirm Your Contact Information (Section I)',
+      description: 'Before your initial evaluation, VA needs to confirm that the address, email address, phone number, and marital status it has on file for you are current. Check each box below to confirm that item is up to date. If anything has changed or is different, update your contact information and/or marital status in your VA.gov profile before your appointment. Your Vocational Rehabilitation Counselor will confirm these with you at the evaluation.',
       fields: [
-        { id: 'verifiedAddress', label: 'I verified my address on file with VA is current', type: 'checkbox' },
-        { id: 'verifiedEmail', label: 'I verified my email address on file with VA is current', type: 'checkbox' },
-        { id: 'verifiedPhone', label: 'I verified my phone number on file with VA is current', type: 'checkbox' },
-        { id: 'verifiedMaritalStatus', label: 'I verified my marital status on file with VA is current', type: 'checkbox' },
+        { id: 'verifiedAddress', label: 'My mailing address on file with VA is current', type: 'checkbox', helpText: 'Checking this affirms that the address VA has for you is correct. If you have moved, update it in your VA.gov profile first.' },
+        { id: 'verifiedEmail', label: 'My email address on file with VA is current', type: 'checkbox', helpText: 'Checking this affirms that VA has your correct email address. If it has changed, update it in your VA.gov profile first.' },
+        { id: 'verifiedPhone', label: 'My phone number on file with VA is current', type: 'checkbox', helpText: 'Checking this affirms that VA has your correct phone number. If it has changed, update it in your VA.gov profile first.' },
+        { id: 'verifiedMaritalStatus', label: 'My marital status on file with VA is current', type: 'checkbox', helpText: 'Checking this affirms that the marital status VA has for you is correct. If it has changed, update it in your VA.gov profile first.' },
       ],
     },
     {
       id: 'employmentStatus',
       title: 'Civilian Employment Status (Items 1-3)',
-      description: 'Section II reviews your civilian employment history, including self-employment. If you provide your resume, you do not need to repeat information that is already on it.',
+      description: 'Section II covers your civilian work history, including self-employment. If you attach your resume, you can skip the job sections (Items 4-8). Your counselor will still go over your work history with you at the evaluation.',
       fields: [
         {
           id: 'providedResume',
           label: 'Are you providing a copy of your resume with this form?',
           type: 'radio',
           required: true,
-          helpText: 'If you provide a resume, you only need to complete the work-history items that are not already covered on it.',
+          helpText: 'If you attach your resume, you can skip the job sections (Items 4-8); upload it on the documents step near the end. Then use the Additional Comments step (Item 28) to describe anything your resume does not show: how your job duties affected or aggravated your disabilities, difficulties getting and keeping a job, salary, full-time or part-time status, and why you left each position.',
           options: [
             { label: 'Yes, I am providing my resume', value: 'CLAIMANT PROVIDED RESUME (Please complete fields not on resume)' },
-            { label: 'No, I am not providing a resume', value: 'CLAIMANT DID NOT PROVIDE RESUME (Please complete the section below)' },
+            { label: 'No, I am not providing a resume', value: NO_RESUME_PROVIDED },
           ],
         },
         {
@@ -85,8 +119,9 @@ export const va281902w: FormDefinition = {
     },
     {
       id: 'job1',
-      title: 'Job 1 - Most Recent (Item 4)',
-      description: 'List your civilian jobs starting with your current or most recent job. Include self-employment. If a detail is already on the resume you are providing, you may leave that field blank.',
+      ...JOB_STEP_FLOW,
+      title: 'Job 1: Current or Most Recent (Item 4)',
+      description: 'List your civilian jobs starting with your current or most recent job. Include self-employment. Fill in what you can; your counselor will go over the details with you at the evaluation. If you have no civilian jobs to list, use the "No more jobs to add" button to skip ahead.',
       fields: [
         { id: 'job1Title', label: 'Job Title', type: 'text', profilePath: 'employmentHistory[0].principal_occupation' },
         { id: 'job1Employer', label: 'Name of Employer', type: 'text', helpText: 'If self-employed, enter "Self-employed".' },
@@ -103,8 +138,9 @@ export const va281902w: FormDefinition = {
     },
     {
       id: 'job2',
+      ...JOB_STEP_FLOW,
       title: 'Job 2 (Item 5)',
-      description: 'Your next most recent job. Leave this step blank if you have no more jobs to list or they are covered on your resume.',
+      description: 'Your next most recent job. If you have no more jobs to list, use the "No more jobs to add" button to skip ahead.',
       fields: [
         { id: 'job2Title', label: 'Job Title', type: 'text', profilePath: 'employmentHistory[1].principal_occupation' },
         { id: 'job2Employer', label: 'Name of Employer', type: 'text' },
@@ -121,8 +157,9 @@ export const va281902w: FormDefinition = {
     },
     {
       id: 'job3',
+      ...JOB_STEP_FLOW,
       title: 'Job 3 (Item 6)',
-      description: 'Leave this step blank if you have no more jobs to list or they are covered on your resume.',
+      description: 'Your next most recent job. If you have no more jobs to list, use the "No more jobs to add" button to skip ahead.',
       fields: [
         { id: 'job3Title', label: 'Job Title', type: 'text', profilePath: 'employmentHistory[2].principal_occupation' },
         { id: 'job3Employer', label: 'Name of Employer', type: 'text' },
@@ -139,8 +176,9 @@ export const va281902w: FormDefinition = {
     },
     {
       id: 'job4',
+      ...JOB_STEP_FLOW,
       title: 'Job 4 (Item 7)',
-      description: 'Leave this step blank if you have no more jobs to list or they are covered on your resume.',
+      description: 'Your next most recent job. If you have no more jobs to list, use the "No more jobs to add" button to skip ahead.',
       fields: [
         { id: 'job4Title', label: 'Job Title', type: 'text', profilePath: 'employmentHistory[3].principal_occupation' },
         { id: 'job4Employer', label: 'Name of Employer', type: 'text' },
@@ -157,8 +195,9 @@ export const va281902w: FormDefinition = {
     },
     {
       id: 'job5',
+      ...JOB_STEP_FLOW,
       title: 'Job 5 (Item 8)',
-      description: 'Leave this step blank if you have no more jobs to list or they are covered on your resume.',
+      description: 'Your next most recent job. This is the last job the form has room for. If you have no more jobs to list, use the "No more jobs to add" button to skip ahead.',
       fields: [
         { id: 'job5Title', label: 'Job Title', type: 'text', profilePath: 'employmentHistory[4].principal_occupation' },
         { id: 'job5Employer', label: 'Name of Employer', type: 'text' },
@@ -173,27 +212,8 @@ export const va281902w: FormDefinition = {
         { id: 'job5ReasonLeft', label: 'What is your reason for leaving this employment?', type: 'textarea', helpText: 'For example: resigned, fired, hired for another job.' },
       ],
     },
-    {
-      id: 'workDifficulties',
-      title: 'Difficulties at Work (Item 9)',
-      description: 'Item 9 asks: have you ever had difficulty with any of the following items due to your service-connected disabilities (SCDs)? Check each item that applies and describe it in detail.',
-      fields: [
-        { id: 'difficultyCoworkers', label: 'Difficulty with co-worker relations', type: 'checkbox' },
-        { id: 'difficultyCoworkersDesc', label: 'Describe the difficulty with co-worker relations', type: 'textarea', condition: { field: 'difficultyCoworkers', value: true } },
-        { id: 'difficultyPerformance', label: 'Difficulty with job performance', type: 'checkbox' },
-        { id: 'difficultyPerformanceDesc', label: 'Describe the difficulty with job performance', type: 'textarea', condition: { field: 'difficultyPerformance', value: true } },
-        { id: 'difficultyOpportunities', label: 'Difficulty with job opportunities', type: 'checkbox' },
-        { id: 'difficultyOpportunitiesDesc', label: 'Describe the difficulty with job opportunities', type: 'textarea', condition: { field: 'difficultyOpportunities', value: true } },
-        { id: 'difficultySatisfaction', label: 'Difficulty with job satisfaction', type: 'checkbox' },
-        { id: 'difficultySatisfactionDesc', label: 'Describe the difficulty with job satisfaction', type: 'textarea', condition: { field: 'difficultySatisfaction', value: true } },
-        { id: 'difficultyManagers', label: 'Difficulty with manager relations', type: 'checkbox' },
-        { id: 'difficultyManagersDesc', label: 'Describe the difficulty with manager relations', type: 'textarea', condition: { field: 'difficultyManagers', value: true } },
-        { id: 'difficultyMissedTime', label: 'Missed time at work', type: 'checkbox' },
-        { id: 'difficultyMissedTimeDesc', label: 'Describe the missed time at work', type: 'textarea', condition: { field: 'difficultyMissedTime', value: true } },
-        { id: 'difficultyOther', label: 'Other difficulties', type: 'checkbox' },
-        { id: 'difficultyOtherDesc', label: 'Describe the other difficulties', type: 'textarea', condition: { field: 'difficultyOther', value: true } },
-      ],
-    },
+    // Item 9 (difficulties at work due to SCDs) is intentionally NOT a wizard
+    // step: the form frames it as the VRC's review at the initial evaluation.
     {
       id: 'militaryHistory',
       title: 'Military Employment History (Items 10-13)',
@@ -331,7 +351,13 @@ export const va281902w: FormDefinition = {
       description: 'Section VII reviews your service-connected and non-service-connected disabilities and how they impact your ability to obtain and maintain employment.',
       fields: [
         { id: 'scdList', label: 'List your service-connected disabilities and impairments (Item 19)', type: 'textarea', helpText: 'Your service-connected disabilities are listed on your VA rating decision letter.' },
-        { id: 'iuTdiu', label: 'Have you filed a claim for, or are you receiving, Individual Unemployability (IU) or Total Disability based on Individual Unemployability (TDIU)? (Item 20)', type: 'textarea', helpText: 'Answer Yes or No. If yes, discuss in detail.' },
+        {
+          id: 'iuTdiu',
+          label: 'Have you filed a claim for, or are you receiving, Individual Unemployability (IU) or Total Disability based on Individual Unemployability (TDIU)? If yes, describe in detail your service-connected disabilities, feasibility, and potential independent living needs. (Item 20)',
+          type: 'textarea',
+          aiAssist: true,
+          helpText: 'Answer Yes or No. If yes, describe in detail your service-connected disabilities, feasibility, and potential independent living needs: which disabilities are involved, whether you believe working is feasible for you right now, and any support you may need to live independently. Rough notes are fine; you can use the help button to organize them in your own words.',
+        },
         { id: 'driversLicense', label: "Do you have a valid driver's license? (Item 21)", type: 'textarea', helpText: "Answer Yes or No. If no, please explain the reason for not having a valid driver's license." },
         { id: 'treatmentFacilities', label: 'Name of the medical treatment facilities you are attending (Item 22)', type: 'textarea' },
         { id: 'treatmentFrequency', label: 'How often are you seen for treatment? (Item 23)', type: 'textarea' },
@@ -379,7 +405,12 @@ export const va281902w: FormDefinition = {
       title: 'Additional Comments (Item 28)',
       description: 'Section IX: other relevant information or additional comments that are relevant to the entitlement determination.',
       fields: [
-        { id: 'additionalComments', label: 'Other relevant information or additional comments', type: 'textarea' },
+        {
+          id: 'additionalComments',
+          label: 'Other relevant information or additional comments',
+          type: 'textarea',
+          helpText: 'If you provided a resume instead of filling in the job sections, describe here: how your job duties affected or aggravated your service-connected disabilities, any difficulties obtaining and maintaining employment, your salary, whether each job was full-time or part-time, and why you left each position. Anything else relevant to your entitlement determination also goes here.',
+        },
       ],
     },
     {
@@ -387,7 +418,7 @@ export const va281902w: FormDefinition = {
       title: 'Helpful Documents to Provide',
       description: 'The form works best when your counselor can see these documents. Each one you provide means fewer items to fill in by hand.',
       optionalAttachments: [
-        { label: 'Resume', helpText: 'If provided, you do not need to repeat work history details that are already on it (Items 1-9).' },
+        { label: 'Resume', condition: 'If you answered that you are providing your resume', helpText: 'Upload it here. With a resume attached you can skip the job sections (Items 4-8); describe anything the resume does not show on the Additional Comments step (Item 28).' },
         { label: 'DD-214 or other military records', condition: 'If not already on file with VA', helpText: 'If provided, you only need to fill in military history details that are not on them (Items 10-13).' },
         { label: 'Academic transcripts, certifications, and/or licenses', helpText: 'If provided, you do not need to complete every education field (Items 16-18).' },
       ],
@@ -396,14 +427,14 @@ export const va281902w: FormDefinition = {
     {
       id: 'certification',
       title: 'Privacy Act Notice & Acknowledgment',
-      description: 'PRIVACY ACT INFORMATION: The responses you submit are considered confidential (38 U.S.C. 5701). Your obligation to respond is required in order to obtain benefits. VA will not disclose information collected on this form to any source other than what has been authorized under the Privacy Act of 1974 or Title 38, Code of Federal Regulations 1.576 for routine uses (i.e., civil or criminal law enforcement, congressional communications, epidemiological or research studies, the collection of money owed to the United States, litigation in which the United States is a party or has an interest, the administration of VA programs and delivery of VA benefits, verification of identity and status, and personnel administration) as identified in the VA system of records, 58VA21/22/28, Compensation, Pension, Education, and Veteran Readiness and Employment Records - VA, published in the Federal Register. Information that you furnish may be utilized in computer matching programs with other Federal or State agencies for the purpose of determining your eligibility to receive VA benefits, as well as to collect any amount owed to the United States by virtue of your participation in any benefit program administered by the Department of Veterans Affairs.\n\nNOTE: This form has no claimant signature block. Your Vocational Rehabilitation Counselor completes Items 29 and 30 (counselor name and date) during your initial evaluation.',
+      description: `${VA_28_1902W_PRIVACY_ACT_TEXT}\n\nNOTE: This form has no claimant signature block. Your Vocational Rehabilitation Counselor completes Items 29 and 30 (counselor name and date) during your initial evaluation.`,
       fields: [
         {
           id: 'privacyAct',
-          label: 'I have read and understand the Privacy Act Information above.',
+          label: 'I have read and understand the Privacy Act Information and Respondent Burden statement above for VA Form 28-1902w.',
           type: 'checkbox',
           required: true,
-          helpText: 'You must check this box to confirm that you have read the Privacy Act Information before generating your form.',
+          helpText: 'You must check this box to confirm that you have read the notice above before generating your form. The printed form has no acknowledgment box, so this checkmark stays with your submission record.',
         },
       ],
     },

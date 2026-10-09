@@ -1,10 +1,17 @@
 'use client';
 
-import { useState } from 'react';
-import type { FormStepDef } from '@/lib/forms/types';
+import { useEffect, useRef, useState } from 'react';
+import type { FieldDef, FormStepDef } from '@/lib/forms/types';
 import SignaturePad from '@/components/SignaturePad';
+import Button from '@/components/ui/Button';
+
+// Inlined at build time by Next.js. When the flag is off the assist button
+// never renders, so nothing on the page references the API.
+const AI_ASSIST_ENABLED = process.env.NEXT_PUBLIC_AI_ASSIST === 'true';
 
 interface FormStepProps {
+  /** Sent with every draft-assist request so the server knows which form the notes belong to. */
+  formId: string;
   step: FormStepDef;
   answers: Record<string, string | boolean>;
   errors: Record<string, string>;
@@ -12,7 +19,165 @@ interface FormStepProps {
   onAnswer: (fieldId: string, value: string | boolean) => void;
 }
 
-export default function FormStep({ step, answers, errors, preFilledFields, onAnswer }: FormStepProps) {
+type AssistState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'ready'; draft: string; questions: string[] }
+  /** The server answered 200 with no draft (declined or nothing to work with). */
+  | { status: 'notice'; message: string }
+  | { status: 'error'; message: string };
+
+/** Plain-language text for a failed /api/draft-assist call. */
+function assistErrorMessage(status: number, serverError: unknown): string {
+  const fromServer = typeof serverError === 'string' && serverError.trim() ? serverError.trim() : '';
+  switch (status) {
+    case 400:
+      return fromServer || 'Please write a few notes first (up to 4,000 characters), then try again.';
+    case 401:
+      return 'Your session has expired. Please sign in again, then try once more.';
+    case 429:
+      return 'You have asked for help several times in a short period. Please wait a minute and try again.';
+    case 503:
+      return 'AI assistance is not available right now. You can keep writing your answer in your own words.';
+    default:
+      return 'Something went wrong while organizing your notes. Please try again.';
+  }
+}
+
+interface DraftAssistProps {
+  formId: string;
+  field: FieldDef;
+  /** The textarea's current text; sent as-is, nothing else about the veteran goes with it. */
+  notes: string;
+  onUseDraft: (draft: string) => void;
+}
+
+/**
+ * "Help me organize my answer": sends the veteran's own rough notes to
+ * POST /api/draft-assist and shows the returned draft in a preview. The
+ * veteran chooses "Use this draft" or "Keep mine"; nothing overwrites the
+ * textarea on its own.
+ */
+function DraftAssist({ formId, field, notes, onUseDraft }: DraftAssistProps) {
+  const [state, setState] = useState<AssistState>({ status: 'idle' });
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Drop an in-flight request if the step changes under it.
+  useEffect(() => () => abortRef.current?.abort(), []);
+
+  async function requestDraft() {
+    if (!notes.trim()) {
+      setState({ status: 'error', message: 'Write a few notes in the box first, then I can help organize them.' });
+      return;
+    }
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setState({ status: 'loading' });
+    try {
+      const res = await fetch('/api/draft-assist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          formId,
+          fieldId: field.id,
+          label: field.label,
+          helpText: field.helpText,
+          notes,
+        }),
+        signal: controller.signal,
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        setState({ status: 'error', message: assistErrorMessage(res.status, body?.error) });
+        return;
+      }
+      const draft = typeof body?.draft === 'string' ? body.draft.trim() : '';
+      const questions: string[] = Array.isArray(body?.questions)
+        ? body.questions.filter((q: unknown): q is string => typeof q === 'string' && q.trim() !== '')
+        : [];
+      if (!draft) {
+        const message = typeof body?.message === 'string' && body.message.trim()
+          ? body.message.trim()
+          : 'No draft came back this time. Your notes are unchanged.';
+        setState({ status: 'notice', message });
+        return;
+      }
+      setState({ status: 'ready', draft, questions });
+    } catch {
+      if (controller.signal.aborted) return;
+      setState({ status: 'error', message: 'We could not reach the assistant. Check your connection and try again.' });
+    }
+  }
+
+  const isLoading = state.status === 'loading';
+  const previewId = `${field.id}-draft-preview`;
+
+  return (
+    <div className="mt-2">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        loading={isLoading}
+        onClick={requestDraft}
+        aria-controls={state.status === 'ready' ? previewId : undefined}
+      >
+        {isLoading ? 'Organizing your notes…' : 'Help me organize my answer'}
+      </Button>
+      <p className="mt-1 text-xs text-gray-500">
+        The draft only reorganizes what you wrote. Review it before using it.
+      </p>
+
+      {/* Status messages (polite live region so screen readers hear the outcome) */}
+      <div aria-live="polite">
+        {state.status === 'error' && (
+          <p className="mt-1 text-xs text-red-600">{state.message}</p>
+        )}
+        {state.status === 'notice' && (
+          <p className="mt-1 text-xs text-gray-700">{state.message}</p>
+        )}
+      </div>
+
+      {state.status === 'ready' && (
+        <div
+          id={previewId}
+          role="region"
+          aria-label={`Suggested draft for ${field.label}`}
+          className="mt-2 rounded-md border border-blue-200 bg-blue-50 p-3"
+        >
+          <p className="text-xs font-semibold text-blue-900 mb-1">Suggested draft, based only on your notes</p>
+          <p className="text-sm text-gray-800 whitespace-pre-wrap">{state.draft}</p>
+          {state.questions.length > 0 && (
+            <div className="mt-3 rounded border border-blue-200 bg-white p-2">
+              <p className="text-xs font-semibold text-blue-900">Still to answer in your own words (not added to the form):</p>
+              <ul className="mt-1 list-disc list-inside text-xs text-gray-700 space-y-0.5">
+                {state.questions.map((q, i) => <li key={i}>{q}</li>)}
+              </ul>
+            </div>
+          )}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => {
+                onUseDraft(state.draft);
+                setState({ status: 'idle' });
+              }}
+            >
+              Use this draft
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => setState({ status: 'idle' })}>
+              Keep mine
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function FormStep({ formId, step, answers, errors, preFilledFields, onAnswer }: FormStepProps) {
   const [visibleFields, setVisibleFields] = useState<Set<string>>(new Set());
 
   function toggleVisible(fieldId: string) {
@@ -27,8 +192,10 @@ export default function FormStep({ step, answers, errors, preFilledFields, onAns
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-semibold text-gray-900">{step.title}</h2>
+        {/* whitespace-pre-line keeps the paragraph breaks in multi-part
+            descriptions (e.g. the certification step's two Privacy Act notices). */}
         {step.description && (
-          <p className="mt-1 text-sm text-gray-600">{step.description}</p>
+          <p className="mt-1 text-sm text-gray-600 whitespace-pre-line">{step.description}</p>
         )}
       </div>
 
@@ -124,6 +291,23 @@ export default function FormStep({ step, answers, errors, preFilledFields, onAns
                       </label>
                     ))}
                   </div>
+                  {/* Radios can't be un-picked natively. Once something is
+                      selected, offer a way back to "no answer" (e.g. a second
+                      branch of service chosen by mistake). Focus moves to the
+                      first option so keyboard users aren't dropped. */}
+                  {value !== '' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onAnswer(field.id, '');
+                        document.getElementById(field.id)?.focus();
+                      }}
+                      aria-label={`Clear selection for ${field.label}`}
+                      className="mt-1.5 text-xs text-blue-600 hover:text-blue-800 underline underline-offset-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      Clear selection
+                    </button>
+                  )}
                 </fieldset>
               ) : field.type === 'checkbox' ? (
                 <label className="flex items-start gap-2 text-sm mt-1">
@@ -248,6 +432,18 @@ export default function FormStep({ step, answers, errors, preFilledFields, onAns
 
               {/* Error message */}
               {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+
+              {/* Optional AI assist for long answers (feature-flagged) */}
+              {AI_ASSIST_ENABLED && field.type === 'textarea' && field.aiAssist && (
+                <DraftAssist
+                  formId={formId}
+                  field={field}
+                  notes={String(value)}
+                  onUseDraft={draft =>
+                    onAnswer(field.id, field.maxLength ? draft.slice(0, field.maxLength) : draft)
+                  }
+                />
+              )}
             </div>
           );
         })}

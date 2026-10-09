@@ -111,7 +111,9 @@ export const va221990: FormDefinition = {
           id: 'street2',
           label: 'Address Line 2',
           type: 'text',
-          profilePath: 'profile.address_apt2',
+          // No profilePath: profiles has no address_apt2 column (the apt field
+          // below already carries profile.address_apt), so this never pre-filled
+          // and a path here only made the profile write-back report an unknown column.
           placeholder: 'Suite, Building, PO Box (optional)',
         },
         {

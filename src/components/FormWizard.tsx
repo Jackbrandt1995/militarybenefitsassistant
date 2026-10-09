@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { FieldDef, FormDefinition, FormStepDef } from '@/lib/forms/types';
-import { useFormWizard } from '@/hooks/useFormWizard';
+import type { FormDefinition, FormStepDef } from '@/lib/forms/types';
+import { useFormWizard, isFieldConditionMet, isStepConditionMet } from '@/hooks/useFormWizard';
 import { useAutoFill } from '@/hooks/useAutoFill';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/components/AuthProvider';
@@ -19,21 +19,18 @@ interface FormWizardProps {
 
 const UPLOAD_STEP_IDS = ['requiredDocs', 'optionalDocs', 'attachments'];
 
-/** True when a field has no condition, or its condition is currently met. */
-function isConditionMet(field: FieldDef, answers: Record<string, string | boolean>): boolean {
-  return !field.condition || answers[field.condition.field] === field.condition.value;
-}
-
 /**
  * Validate one step against the current answers. Skips fields whose condition
- * is unmet — they are hidden, so an error on them could never be seen or
- * fixed. Also checks SSN / phone / email formats so malformed values don't
- * reach the generated federal form.
+ * is unmet (they are hidden, so an error on them could never be seen or
+ * fixed) and whole steps whose own condition is unmet, for the same reason.
+ * Also checks SSN / phone / email formats so malformed values don't reach the
+ * generated federal form.
  */
 function getStepErrors(step: FormStepDef, answers: Record<string, string | boolean>): Record<string, string> {
   const stepErrors: Record<string, string> = {};
+  if (!isStepConditionMet(step, answers)) return stepErrors;
   for (const field of step.fields) {
-    if (!isConditionMet(field, answers)) continue;
+    if (!isFieldConditionMet(field, answers)) continue;
     const value = answers[field.id];
     const isEmpty = value === undefined || value === null || value === '' || value === false;
     if (field.required && isEmpty) {
@@ -67,7 +64,7 @@ function focusFirstError(step: FormStepDef, stepErrors: Record<string, string>) 
 
 export default function FormWizard({ form }: FormWizardProps) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { profile } = useProfile();
   const { preFilledAnswers, filledCount, totalCount, percentage } = useAutoFill(form, profile);
   const preFilledFields = new Set(Object.keys(preFilledAnswers));
@@ -88,9 +85,11 @@ export default function FormWizard({ form }: FormWizardProps) {
 
   const {
     currentStep,
-    totalSteps,
     answers,
     errors,
+    visibleStepIndices,
+    visibleStepCount,
+    currentStepPosition,
     setAnswer,
     goBack,
     goToStep,
@@ -99,6 +98,13 @@ export default function FormWizard({ form }: FormWizardProps) {
   } = useFormWizard(form, preFilledAnswers);
 
   const stepDef = form.steps[currentStep];
+
+  // Group skip: the first step AFTER this step's group that still applies
+  // (e.g. from any VR&E job step straight to "Military Employment History").
+  // Undefined when the step has no group or the group runs to the end.
+  const groupSkipTarget = stepDef.group
+    ? visibleStepIndices.find(i => i > currentStep && form.steps[i].group !== stepDef.group)
+    : undefined;
 
   // Honor ?step= deep-links from the review page's "Edit" buttons (once, on mount).
   useEffect(() => {
@@ -146,11 +152,19 @@ export default function FormWizard({ form }: FormWizardProps) {
       return needsFiles ? attachedFiles.length > 0 : idx < currentStep;
     }
     if (step.fields.length === 0) return idx < currentStep;
+    // Repeatable group steps (job 1..5) only count as done when something was
+    // actually entered, so steps skipped via "No more jobs to add" stay neutral.
+    if (step.group) {
+      return step.fields.some(f => {
+        const v = answers[f.id];
+        return v !== undefined && v !== null && v !== '' && v !== false;
+      });
+    }
     // All-optional steps would be vacuously "complete" before the user ever
     // saw them — fall back to position for those.
-    if (!step.fields.some(f => f.required && isConditionMet(f, answers))) return idx < currentStep;
+    if (!step.fields.some(f => f.required && isFieldConditionMet(f, answers))) return idx < currentStep;
     return step.fields.every(f => {
-      if (!f.required || !isConditionMet(f, answers)) return true;
+      if (!f.required || !isFieldConditionMet(f, answers)) return true;
       const v = answers[f.id];
       return v !== undefined && v !== null && v !== '' && v !== false;
     });
@@ -179,7 +193,8 @@ export default function FormWizard({ form }: FormWizardProps) {
     if (isLastStep) {
       // Users can jump to any step via the sidebar without validation, so
       // before review re-check every step and send the user to the first one
-      // with missing or invalid required fields — with visible errors.
+      // with missing or invalid required fields, with visible errors. Steps
+      // whose condition is unmet return no errors, so they never block here.
       for (let i = 0; i < form.steps.length; i++) {
         const gateErrors = getStepErrors(form.steps[i], answers);
         if (Object.keys(gateErrors).length > 0) {
@@ -193,28 +208,40 @@ export default function FormWizard({ form }: FormWizardProps) {
         }
       }
 
-      // Save answers back to profile so other forms can pre-fill from them
-      if (user) {
-        setIsSaving(true);
-        try {
-          await saveFormAnswersToProfile(user.id, form, answers);
-        } catch (e) {
-          console.error('Profile save error (non-fatal):', e);
-        } finally {
-          setIsSaving(false);
-        }
-      }
-
       // Build final answers, applying any form-specific computed fields
       const finalAnswers = { ...answers };
 
       // Drop answers for conditional fields that are no longer visible so
       // stale values (e.g. insurance details entered before switching the
-      // controlling answer to "No") never reach the generated PDF.
+      // controlling answer to "No") never reach the generated PDF. A step
+      // whose own condition is unmet is scrubbed whole, for the same reason
+      // (e.g. jobs typed before the veteran said they are providing a resume).
       for (const s of form.steps) {
+        const stepHidden = !isStepConditionMet(s, finalAnswers);
         for (const f of s.fields) {
-          if (!isConditionMet(f, finalAnswers)) delete finalAnswers[f.id];
+          if (stepHidden || !isFieldConditionMet(f, finalAnswers)) delete finalAnswers[f.id];
         }
+      }
+
+      // Save answers back to the profile so other forms can pre-fill from
+      // them. Runs for every definition, bundles included (the VR&E package
+      // composes the member fields, so their profilePaths come along), and is
+      // awaited BEFORE the route change so the write is never cut off. The
+      // scrubbed set is used so a hidden job or branch never lands in the
+      // profile. Failure is non-fatal: the PDF must still generate.
+      if (user) {
+        setIsSaving(true);
+        try {
+          await saveFormAnswersToProfile(user.id, form, finalAnswers);
+        } catch (e) {
+          console.error('[profile save] failed (non-fatal), continuing to review:', e);
+        } finally {
+          setIsSaving(false);
+        }
+      } else {
+        console.warn(
+          `[profile save] skipped: no signed-in user at submit time (auth ${authLoading ? 'still loading' : 'resolved to signed out'})`,
+        );
       }
 
       // NOTE: Removed the phone "None" auto-checkbox injection. These VA forms have
@@ -230,9 +257,30 @@ export default function FormWizard({ form }: FormWizardProps) {
       sessionStorage.setItem(`form-wizard-${form.id}`, JSON.stringify({ answers: finalAnswers }));
       router.push(`/forms/${form.id}/review`);
     } else {
-      // This step was just validated above, so advance directly.
-      goToStep(currentStep + 1);
+      // This step was just validated above, so advance directly to the next
+      // step that applies (skipping any whose condition is unmet).
+      const next = visibleStepIndices.find(i => i > currentStep);
+      if (next !== undefined) goToStep(next);
     }
+  }
+
+  /**
+   * "No more jobs to add" and similar: leave a repeatable group early and
+   * land on the first step after it. Group steps carry no required fields,
+   * so an untouched step passes straight through; format checks still run so
+   * a mistyped value is never skipped past.
+   */
+  function handleGroupSkip() {
+    if (groupSkipTarget === undefined) return;
+    const stepErrors = getStepErrors(stepDef, answers);
+    if (Object.keys(stepErrors).length > 0) {
+      setLocalErrors(prev => ({ ...prev, ...stepErrors }));
+      focusFirstError(stepDef, stepErrors);
+      return;
+    }
+    setUploadError('');
+    setStepNotice('');
+    goToStep(groupSkipTarget);
   }
 
   function handleStepClick(idx: number) {
@@ -263,12 +311,18 @@ export default function FormWizard({ form }: FormWizardProps) {
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Sections</p>
             </div>
             <ul>
-              {form.steps.map((step, i) => {
+              {/* Only steps whose condition is met are listed, numbered by
+                  their position among those, so a hidden step can't be
+                  jumped to and the numbering never shows a gap. */}
+              {visibleStepIndices.map((i, pos) => {
+                const step = form.steps[i];
                 const isDone = isStepComplete(step, i);
                 const isActive = i === currentStep;
                 return (
                   <li key={step.id}>
                     <button
+                      type="button"
+                      aria-current={isActive ? 'step' : undefined}
                       onClick={() => handleStepClick(i)}
                       className={`w-full text-left px-4 py-2.5 text-sm flex items-start gap-2.5 transition-colors border-l-[3px] ${
                         isActive
@@ -285,7 +339,7 @@ export default function FormWizard({ form }: FormWizardProps) {
                           <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
-                        ) : i + 1}
+                        ) : pos + 1}
                       </span>
                       <span className="leading-tight">{step.title}</span>
                     </button>
@@ -302,7 +356,7 @@ export default function FormWizard({ form }: FormWizardProps) {
           {/* Mobile top bar */}
           <div className="lg:hidden mb-4 bg-white rounded-lg shadow-sm border border-gray-100 px-4 py-3 flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-500">Step {currentStep + 1} of {totalSteps}</p>
+              <p className="text-xs text-gray-500">Step {currentStepPosition} of {visibleStepCount}</p>
               <p className="text-sm font-semibold text-gray-800">{stepDef.title}</p>
             </div>
             <button
@@ -321,12 +375,15 @@ export default function FormWizard({ form }: FormWizardProps) {
           {/* Mobile dropdown nav */}
           {sidebarOpen && (
             <div id="wizard-mobile-sections" className="lg:hidden mb-4 bg-white rounded-lg shadow border border-gray-200 overflow-hidden">
-              {form.steps.map((step, i) => {
+              {visibleStepIndices.map((i, pos) => {
+                const step = form.steps[i];
                 const isDone = isStepComplete(step, i);
                 const isActive = i === currentStep;
                 return (
                   <button
                     key={step.id}
+                    type="button"
+                    aria-current={isActive ? 'step' : undefined}
                     onClick={() => handleStepClick(i)}
                     className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 border-b border-gray-100 last:border-0 ${
                       isActive ? 'bg-blue-50 text-blue-700 font-semibold' : isDone ? 'bg-green-50 text-green-700' : 'text-gray-500'
@@ -335,7 +392,7 @@ export default function FormWizard({ form }: FormWizardProps) {
                     <span className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
                       isActive ? 'bg-blue-600 text-white' : isDone ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'
                     }`}>
-                      {isDone && !isActive ? '✓' : i + 1}
+                      {isDone && !isActive ? '✓' : pos + 1}
                     </span>
                     {step.title}
                   </button>
@@ -367,7 +424,7 @@ export default function FormWizard({ form }: FormWizardProps) {
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900">{stepDef.title}</h2>
                   {stepDef.description && (
-                    <p className="mt-1 text-sm text-gray-600">{stepDef.description}</p>
+                    <p className="mt-1 text-sm text-gray-600 whitespace-pre-line">{stepDef.description}</p>
                   )}
                 </div>
 
@@ -510,6 +567,7 @@ export default function FormWizard({ form }: FormWizardProps) {
             ) : (
               /* ── Regular step ───────────────────────────────────────────── */
               <FormStep
+                formId={form.id}
                 step={stepDef}
                 answers={answers}
                 errors={{ ...errors, ...localErrors }}
@@ -518,16 +576,26 @@ export default function FormWizard({ form }: FormWizardProps) {
               />
             )}
 
-            <div className="flex justify-between items-center mt-8 pt-4 border-t border-gray-100">
+            <div className="flex flex-wrap justify-between items-center gap-y-3 mt-8 pt-4 border-t border-gray-100">
               <Button type="button" variant="outline" onClick={goBack} disabled={isFirstStep}>
                 ← Back
               </Button>
               <div className="text-xs text-gray-400">
-                {currentStep + 1} / {totalSteps}
+                {currentStepPosition} / {visibleStepCount}
               </div>
-              <Button type="submit" disabled={isSaving}>
-                {isSaving ? 'Saving…' : isLastStep ? 'Review Answers →' : 'Continue →'}
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Secondary exit from a repeatable group (e.g. "No more jobs
+                    to add"); sits beside Continue so the two choices read as
+                    "add another" vs "move on". */}
+                {stepDef.group && groupSkipTarget !== undefined && (
+                  <Button type="button" variant="outline" onClick={handleGroupSkip} disabled={isSaving}>
+                    {stepDef.groupSkipLabel ?? 'Skip the rest of this section'}
+                  </Button>
+                )}
+                <Button type="submit" disabled={isSaving}>
+                  {isSaving ? 'Saving…' : isLastStep ? 'Review Answers →' : 'Continue →'}
+                </Button>
+              </div>
             </div>
           </form>
         </div>

@@ -3,6 +3,7 @@
 import { use, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { notFound, useRouter } from 'next/navigation';
 import { getFormById } from '@/lib/forms/registry';
+import { isFieldConditionMet, isStepConditionMet } from '@/hooks/useFormWizard';
 import Button from '@/components/ui/Button';
 
 // Subscribe to nothing — we only need useSyncExternalStore's hydration-safe
@@ -59,11 +60,13 @@ export default function ReviewPage({ params }: { params: Promise<{ formId: strin
       // The wizard scrubs answers whose condition is no longer met before it
       // writes the snapshot, but the raw draft can reintroduce them (e.g.
       // insurance details after switching "other insurance" back to No). Scrub
-      // again here so neither this page nor the generated PDF shows them.
+      // again here so neither this page nor the generated PDF shows them. A
+      // step whose own condition is unmet is scrubbed whole, same as the wizard.
       if (form) {
         for (const step of form.steps) {
+          const stepHidden = !isStepConditionMet(step, merged);
           for (const field of step.fields) {
-            if (field.condition && merged[field.condition.field] !== field.condition.value) {
+            if (stepHidden || !isFieldConditionMet(field, merged)) {
               delete merged[field.id];
             }
           }
@@ -123,12 +126,13 @@ export default function ReviewPage({ params }: { params: Promise<{ formId: strin
   }
 
   // A required field only counts as missing if its show-when condition (if any)
-  // is met — mirrors the wizard's own visibility rules.
+  // is met and its step applies, mirroring the wizard's own visibility rules.
   const missingRequired = form.steps
+    .filter(step => isStepConditionMet(step, answers))
     .flatMap(step => step.fields)
     .filter(f => {
       if (!f.required) return false;
-      if (f.condition && answers[f.condition.field] !== f.condition.value) return false;
+      if (!isFieldConditionMet(f, answers)) return false;
       return !answers[f.id];
     });
 
@@ -139,7 +143,11 @@ export default function ReviewPage({ params }: { params: Promise<{ formId: strin
         <p className="text-slate-600 mb-6">{form.formNumber} &mdash; {form.title}</p>
 
         <div className="space-y-6">
-          {form.steps.map((step, stepIdx) => (
+          {form.steps.map((step, stepIdx) => {
+            // Steps that do not apply (condition unmet) are not shown at all;
+            // stepIdx stays absolute so the Edit deep-link lands on the right step.
+            if (!isStepConditionMet(step, answers)) return null;
+            return (
             <div key={step.id} className="bg-white rounded-lg shadow p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold text-slate-900">{step.title}</h2>
@@ -154,7 +162,7 @@ export default function ReviewPage({ params }: { params: Promise<{ formId: strin
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
                 {step.fields.map((field) => {
                   // Skip fields whose show-when condition isn't met.
-                  if (field.condition && answers[field.condition.field] !== field.condition.value) {
+                  if (!isFieldConditionMet(field, answers)) {
                     return null;
                   }
                   const value = answers[field.id];
@@ -183,7 +191,8 @@ export default function ReviewPage({ params }: { params: Promise<{ formId: strin
                 })}
               </dl>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {missingRequired.length > 0 && (

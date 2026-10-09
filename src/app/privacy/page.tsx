@@ -84,6 +84,12 @@ export default function PrivacyPage() {
               <li>Your data is <strong>never sold</strong> to third parties</li>
               <li>Your data is <strong>not used</strong> for advertising or marketing</li>
               <li>Your data is <strong>not used</strong> to train AI or machine learning models</li>
+              <li>
+                <strong>Optional writing help:</strong> if you click &quot;Help me organize my answer&quot; on a
+                form field, the text you typed in that box (and only that text) is sent to Anthropic, our
+                AI provider, to produce a suggested draft you can accept or discard. Nothing else from your
+                profile is sent, and Anthropic does not use it to train its models
+              </li>
             </ul>
           </Section>
 

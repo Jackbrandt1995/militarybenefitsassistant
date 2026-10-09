@@ -29,9 +29,11 @@ export function useProfile() {
     // pre-fill keep working unchanged.
     const [profileRes, serviceRes, educationRes, employmentRes, depositRes, dependentsRes, piiProfile, piiDeposit] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', user.id).single(),
-      supabase.from('service_periods').select('*').eq('user_id', user.id).order('sort_order'),
-      supabase.from('education_history').select('*').eq('user_id', user.id).order('sort_order'),
-      supabase.from('employment_history').select('*').eq('user_id', user.id).order('sort_order'),
+      // created_at breaks sort_order ties so row positions stay deterministic;
+      // saveToProfile matches rows by the same (sort_order, created_at) order.
+      supabase.from('service_periods').select('*').eq('user_id', user.id).order('sort_order').order('created_at'),
+      supabase.from('education_history').select('*').eq('user_id', user.id).order('sort_order').order('created_at'),
+      supabase.from('employment_history').select('*').eq('user_id', user.id).order('sort_order').order('created_at'),
       supabase.from('direct_deposit').select('*').eq('user_id', user.id).maybeSingle(),
       supabase.from('dependents').select('*').eq('user_id', user.id).order('sort_order'),
       fetch('/api/profile').then(r => (r.ok ? r.json() : null)).catch(() => null),

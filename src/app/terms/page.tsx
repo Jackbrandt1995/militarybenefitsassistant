@@ -182,6 +182,11 @@ export default function TermsPage() {
               <li>We do <strong>not</strong> submit forms to the VA unless you have explicitly authorized agent filing as described above</li>
               <li>We do <strong>not</strong> sell, rent, or share your personal information with third parties for marketing</li>
               <li>We do <strong>not</strong> use your data to train AI or machine learning models</li>
+              <li>
+                The optional &quot;Help me organize my answer&quot; feature sends only the text you typed in
+                that field to Anthropic, our AI provider, to suggest a draft. You decide whether to use it,
+                and you are responsible for the accuracy of what you submit
+              </li>
               <li>We do <strong>not</strong> store filled PDF files on our servers</li>
               <li>We do <strong>not</strong> access your data for any purpose other than providing this Service</li>
             </ul>

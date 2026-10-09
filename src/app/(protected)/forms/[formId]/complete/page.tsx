@@ -8,6 +8,7 @@ import { fillPdf, downloadPdf, mergePdfsWithAttachments, concatPdfs } from '@/li
 import { getFieldMapping } from '@/lib/pdf/fieldMappings';
 import { getFormFiles, clearFormFiles } from '@/lib/fileCache';
 import { createClient } from '@/lib/supabase/client';
+import { saveFormAnswersToProfile } from '@/lib/profile/saveToProfile';
 import {
   SUBMISSION_GUIDES,
   getRpoForState,
@@ -244,6 +245,21 @@ export default function CompletePage({ params }: { params: Promise<{ formId: str
   // Clear saved answers only once the veteran actually has the PDF (download
   // or agent filing) — until then, a refresh can regenerate from the draft.
   function clearStoredDrafts() {
+    // This is also the last moment the veteran's final answers exist in the
+    // browser, so persist them to the profile first. The wizard saves when
+    // "Review Answers" is submitted, but edits made through the review page's
+    // Edit links (or a reloaded draft) only live in storage until now.
+    try {
+      const raw = sessionStorage.getItem(`form-wizard-${formId}`);
+      const snapshot = raw ? (JSON.parse(raw).answers as Record<string, string | boolean> | undefined) : undefined;
+      if (user && form && snapshot) {
+        void saveFormAnswersToProfile(user.id, form, snapshot).catch(err =>
+          console.error('[profile save] at download failed (non-fatal)', err),
+        );
+      }
+    } catch (err) {
+      console.error('[profile save] could not read final answers (non-fatal)', err);
+    }
     sessionStorage.removeItem(`form-wizard-${formId}`);
     sessionStorage.removeItem(`form-wizard-${formId}-sid`); // next submission gets its own row
     localStorage.removeItem(`wizard-${formId}`); // stops showing under "In Progress"

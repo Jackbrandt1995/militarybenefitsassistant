@@ -1,6 +1,6 @@
 import type { FormDefinition, FormStepDef, FieldDef } from '../types';
 import { va281900 } from './va-28-1900';
-import { va281902w } from './va-28-1902w';
+import { va281902w, VA_28_1902W_PRIVACY_ACT_TEXT } from './va-28-1902w';
 
 /**
  * VR&E Complete Package: one guided wizard that fills BOTH Chapter 31 forms
@@ -26,11 +26,17 @@ import { va281902w } from './va-28-1902w';
  *     - vaFileNumber                        (identical fact; the 1902w mapping
  *                                            prints only the last 4 digits via
  *                                            its own transform)
- *     - privacyAct                          (one acknowledgment gate covering
- *                                            both Privacy Act notices; mapped
- *                                            as the 28-1900 draw-check, and a
- *                                            documented no-PDF-cell residual
- *                                            on the 28-1902w)
+ *
+ *   PRIVACY ACT ACKNOWLEDGMENTS (two checkboxes on the certification step,
+ *   one per form, each beside its own notice):
+ *     - privacyAct                          (28-1900 notice; mapped as the
+ *                                            28-1900 draw-check)
+ *     - privacyAct1902w                     (28-1902w Privacy Act Information
+ *                                            + Respondent Burden; the printed
+ *                                            inventory has no acknowledgment
+ *                                            cell, so it is a documented
+ *                                            INTENTIONAL_UNMAPPED residual in
+ *                                            scripts/verify-forms.mjs)
  *
  *   ALIASES: none. The diff found NO pair of questions asking the same fact
  *   under different ids (e.g. the 28-1900's yearsOfEducation counts years of
@@ -45,10 +51,17 @@ import { va281902w } from './va-28-1902w';
  *   country, mainPhone, cellPhone, intlPhone, email, agreeElectronic),
  *   yearsOfEducation, signaturePad, signatureDate.
  *   28-1902w ONLY: every inventory item (contact verification, employment,
- *   jobs 1-5, work difficulties, military history, legal history, substance
- *   history, education/training items 16-18, disabilities, referrals,
- *   comments). The 1902w has no claimant signature block, so the single
- *   signature step feeds the 28-1900 only.
+ *   jobs 1-5, military history, legal history, substance history,
+ *   education/training items 16-18, disabilities, referrals, comments).
+ *   Item 9 (work difficulties) is the counselor's review and is not asked.
+ *   The 1902w has no claimant signature block, so the single signature step
+ *   feeds the 28-1900 only.
+ *
+ *   FLOW (inherited from the 1902w member steps): the five job steps carry
+ *   group 'jobs' with a "No more jobs to add" skip button and show ONLY when
+ *   providedResume === 'CLAIMANT DID NOT PROVIDE RESUME (Please complete the
+ *   section below)'. Veterans who attach a resume describe job impacts in
+ *   Item 28 (comments) instead, as the form's Section II instruction says.
  */
 
 /** Look up a member step by id; throws at module load if a member changed. */
@@ -91,13 +104,15 @@ const educationStep: FormStepDef = {
 
 // ── Documents: the 28-1900's required uploads plus the 1902w's optional ones.
 //    The DD-214 appears on both lists; it is kept once, as required, with a
-//    note that providing it also covers the inventory's military items. ──────
+//    note that providing it also covers the inventory's military items. The
+//    resume stays optional (the form allows either path) but is called out
+//    clearly because attaching it is what lets the veteran skip Items 4-8. ───
 const requiredDocs1900 = memberStep(va281900, 'requiredDocs');
 const optionalDocs1902w = memberStep(va281902w, 'optionalDocs');
 const documentsStep: FormStepDef = {
   id: 'attachments',
   title: 'Supporting Documents',
-  description: 'Upload the required documents for your VR&E application. The optional documents help your Vocational Rehabilitation Counselor at the initial evaluation: each one you provide means fewer inventory items to fill in by hand.',
+  description: 'Upload the required documents for your VR&E application. If you said you are providing your resume, upload it here too: it lets you skip the job sections of the Rehabilitation Needs Inventory. The other optional documents help your Vocational Rehabilitation Counselor at the initial evaluation; each one you provide means fewer inventory items to fill in by hand.',
   requiredAttachments: (requiredDocs1900.requiredAttachments ?? []).map(a =>
     a.label.startsWith('DD-214')
       ? { ...a, helpText: 'Also covers Items 10-13 of the Rehabilitation Needs Inventory, so your counselor only needs military details that are not on it.' }
@@ -109,28 +124,38 @@ const documentsStep: FormStepDef = {
   fields: [],
 };
 
-// ── Certification: ONE privacyAct acknowledgment covering both notices, plus
-//    the 28-1900 signature (the 1902w has no claimant signature block) ────────
+// ── Certification: TWO acknowledgments on one page (one per form, each with
+//    its own checkmark beside its own notice), plus the 28-1900 signature
+//    (the 1902w has no claimant signature block) ──────────────────────────────
 const sig1900 = memberStep(va281900, 'signature');
-const cert1902w = memberStep(va281902w, 'certification');
+const privacyAct1902wField: FieldDef = {
+  id: 'privacyAct1902w',
+  label: 'I have read and understand the Privacy Act Information and Respondent Burden statement above for VA Form 28-1902w (Rehabilitation Needs Inventory).',
+  type: 'checkbox',
+  required: true,
+  helpText: 'Required. The printed inventory has no acknowledgment box, so this checkmark stays with your submission record. The full text is in the "FOR VA FORM 28-1902w" section above.',
+};
 const signatureStep: FormStepDef = {
   ...sig1900,
   title: 'Certification & Signature',
-  description: `FOR VA FORM 28-1900 (APPLICATION):\n\n${sig1900.description ?? ''}\n\nFOR VA FORM 28-1902w (REHABILITATION NEEDS INVENTORY):\n\n${cert1902w.description ?? ''}`,
-  fields: sig1900.fields.map(f =>
+  description: `FOR VA FORM 28-1900 (APPLICATION):\n\n${sig1900.description ?? ''}\n\nFOR VA FORM 28-1902w (REHABILITATION NEEDS INVENTORY):\n\n${VA_28_1902W_PRIVACY_ACT_TEXT}\n\nNOTE: Your signature below prints on VA Form 28-1900 only. The Rehabilitation Needs Inventory has no claimant signature block; your Vocational Rehabilitation Counselor completes Items 29 and 30 (counselor name and date) at the initial evaluation.`,
+  fields: sig1900.fields.flatMap(f =>
     f.id === 'privacyAct'
-      ? {
-          ...f,
-          label: 'I have read and understand the Privacy Act notices above for both forms.',
-          helpText: 'You must check this box to certify that you have read both Privacy Act notices before signing. Your signature below prints on VA Form 28-1900 only; the Rehabilitation Needs Inventory has no claimant signature block.',
-        }
-      : f,
+      ? [
+          {
+            ...f,
+            label: 'I have read and understand the Certification and Privacy Act Notice above for VA Form 28-1900 (Application).',
+            helpText: 'Required. This checkmark prints on the application as your acknowledgment. The full text is in the "FOR VA FORM 28-1900" section above.',
+          },
+          privacyAct1902wField,
+        ]
+      : [f],
   ),
 };
 
 export const vaVrePackage: FormDefinition = {
   id: 'va-vre-package',
-  version: 1,
+  version: 2,
   formNumber: 'VA 28-1900 + 28-1902w',
   title: 'VR&E Complete Package: Application + Rehabilitation Needs Inventory',
   description: 'One guided process for Veteran Readiness & Employment (Chapter 31). Answer the questions once and generate both VA Form 28-1900 (the application) and VA Form 28-1902w (the Rehabilitation Needs Inventory) filled out together.',
@@ -149,7 +174,6 @@ export const vaVrePackage: FormDefinition = {
     memberStep(va281902w, 'job3'),
     memberStep(va281902w, 'job4'),
     memberStep(va281902w, 'job5'),
-    memberStep(va281902w, 'workDifficulties'),
     memberStep(va281902w, 'militaryHistory'),
     memberStep(va281902w, 'legalHistory'),
     memberStep(va281902w, 'substanceHistory'),

@@ -31,6 +31,7 @@ const ROUTES = [
   ['/api/notify-filing', 'api'],
   ['/api/notify-message', 'api'],
   ['/api/notify-return', 'api'],
+  ['/api/draft-assist', 'api'],
 ];
 
 let failures = 0;

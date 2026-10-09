@@ -13,6 +13,14 @@ export interface FieldDef {
   maxLength?: number;
   condition?: { field: string; value: string | boolean };
   sensitive?: boolean; // show/hide toggle for bank account numbers, etc.
+  /**
+   * Textarea only. Shows a "Help me organize my answer" button (when
+   * NEXT_PUBLIC_AI_ASSIST === 'true') that sends the veteran's own rough notes
+   * to POST /api/draft-assist and offers back a clearer draft they can edit.
+   * The assistant only restructures what the veteran wrote; it never invents
+   * facts, and it is hidden entirely when the feature flag is off.
+   */
+  aiAssist?: boolean;
 }
 
 export interface AttachmentSpec {
@@ -33,6 +41,22 @@ export interface FormStepDef {
   requiredAttachments?: AttachmentSpec[];
   /** For the 'attachments' step — items the user may optionally upload */
   optionalAttachments?: AttachmentSpec[];
+  /**
+   * Show this step only when the referenced answer equals `value`. A step whose
+   * condition is unmet is skipped by Next/Back and the sidebar, excluded from
+   * validation and the submit-time gate, hidden on the review page, and its
+   * answers are scrubbed before the snapshot (same treatment as a field-level
+   * condition). Example: the VR&E job steps only show when no resume was provided.
+   */
+  condition?: { field: string; value: string | boolean };
+  /**
+   * Steps sharing a `group` form a repeatable sequence (e.g. job1..job5). The
+   * wizard renders a secondary button labelled `groupSkipLabel` ("No more jobs
+   * to add") on every step in the group that jumps to the first step AFTER the
+   * group. Fields in skippable group steps should not be `required`.
+   */
+  group?: string;
+  groupSkipLabel?: string;
 }
 
 export type FormCategory = 'application' | 'change' | 'reimbursement' | 'dependent' | 'healthcare' | 'home-loan' | 'other';
