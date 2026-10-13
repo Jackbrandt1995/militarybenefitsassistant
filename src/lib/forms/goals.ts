@@ -1,8 +1,9 @@
 /**
  * Top-level benefit categories for the dashboard finder.
  *
- * The dashboard shows these four categories as full-screen quadrant tiles
- * (Education · Certifications · Home Loan · Healthcare). Selecting one expands
+ * The dashboard shows these categories as full-screen tiles (currently
+ * Education · Certifications; Home Loan and Healthcare are parked in
+ * HIDDEN_GOALS below until those forms are ready). Selecting one expands
  * it to fill the screen and lists its forms with plain-language action labels.
  *
  * `icon` is a string key resolved to a lucide-react component in the dashboard.
@@ -66,6 +67,14 @@ export const goals: Goal[] = [
       { formId: 'va-vre-package', actionLabel: 'Complete the VR&E process (fills both forms at once)' },
     ],
   },
+];
+
+/**
+ * Parked categories (owner decision, Oct 2026): not shown on the dashboard for
+ * now. To restore one, move its entry back into `goals` and remove `hidden: true`
+ * from its forms' definitions.
+ */
+export const HIDDEN_GOALS: Goal[] = [
   {
     id: 'home',
     label: 'Home Loan',

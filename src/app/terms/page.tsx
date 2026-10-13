@@ -28,8 +28,6 @@ export default function TermsPage() {
             <p className="mt-3">The Service currently supports forms in the following categories:</p>
             <ul className="mt-2 space-y-1 list-disc list-inside text-gray-700">
               <li><strong>VA Education Benefits</strong> — GI Bill, transfer of entitlement, work-study, vocational rehabilitation, and related forms</li>
-              <li><strong>VA Health Care</strong> — Application for VA Health Care Enrollment (VA 10-10EZ)</li>
-              <li><strong>VA Home Loan</strong> — Request for Certificate of Eligibility (VA 26-1880)</li>
               <li><strong>Representation</strong> — Appointment of Individual as Claimant&rsquo;s Representative (VA 21-22A)</li>
             </ul>
             <p className="mt-4 font-medium text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-4 py-3 text-sm">

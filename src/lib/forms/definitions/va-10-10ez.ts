@@ -10,6 +10,7 @@ export const va1010ez: FormDefinition = {
     'Enroll in VA health care benefits. Most veterans who served on active duty and were discharged under conditions other than dishonorable qualify. Enrollment is free and covers a wide range of medical services.',
   pdfTemplate: '/forms/VA-10-10EZ.pdf',
   category: 'healthcare',
+  hidden: true, // parked for now (owner decision Oct 2026): not in the catalog, still fillable by direct link
   nextSteps:
     'Submit this form to your nearest VA medical center or mail it to the VA Health Eligibility Center, P.O. Box 17885, Denver, CO 80217-0885.',
   steps: [

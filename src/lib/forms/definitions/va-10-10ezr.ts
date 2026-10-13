@@ -10,6 +10,7 @@ export const va1010ezr: FormDefinition = {
     'Already enrolled in VA health care? Use VA Form 10-10EZR to keep your information current — update your address and contact details, insurance, income, and dependents so VA can correctly determine your enrollment priority and copays.',
   pdfTemplate: '/forms/VA-10-10EZR.pdf',
   category: 'healthcare',
+  hidden: true, // parked for now (owner decision Oct 2026): not in the catalog, still fillable by direct link
   nextSteps:
     'Sign and date the form, then mail it to the VA Health Eligibility Center, PO Box 5207, Janesville, WI 53547-5207. You can also update your information at VA.gov or by calling 1-877-222-8387.',
   steps: [

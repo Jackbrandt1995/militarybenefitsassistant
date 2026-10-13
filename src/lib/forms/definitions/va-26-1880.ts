@@ -17,6 +17,7 @@ export const va261880: FormDefinition = {
     'Request your VA Home Loan Certificate of Eligibility (COE). This document proves to lenders that you qualify for a VA-backed home loan, which offers competitive interest rates, no down payment requirement, and no private mortgage insurance.',
   pdfTemplate: '/forms/VA-26-1880.pdf',
   category: 'home-loan',
+  hidden: true, // parked for now (owner decision Oct 2026): not in the catalog, still fillable by direct link
   nextSteps:
     'Mail the completed form to your VA Regional Loan Center of jurisdiction (addresses are on page 4 of the form). For faster service, most veterans can get a COE instantly at VA.gov or through their lender.',
   steps: [
